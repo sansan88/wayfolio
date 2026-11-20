@@ -1,8 +1,21 @@
 .location {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 2px;
+  width: 100%;
   margin-bottom: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tile--soon {
+  opacity: 0.55;
 }
 
 .grid {

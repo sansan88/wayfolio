@@ -33,6 +33,10 @@ Wayfolio ist ein Reisetagebuch als Progressive Web App (PWA). Reisende erfassen 
 - **Phase 2:** Sprachnachrichten mit Transkription, Video, Hintergrund-Stories, Galerie, Gruppen-Links, Reise-Pass
 - **Phase 3:** iOS-App, WhatsApp-Zustellung, Co-Autor:innen, Fotobuch-Export
 
+## Live
+
+https://sansan88.github.io/wayfolio/ – wird bei jedem Push auf `main` automatisch über GitHub Actions veröffentlicht (`.github/workflows/deploy-pages.yml`).
+
 ## Lokal starten
 
 ```bash
