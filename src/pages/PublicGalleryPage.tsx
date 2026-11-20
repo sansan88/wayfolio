@@ -1,0 +1,65 @@
+import { IonContent, IonHeader, IonNote, IonPage, IonSpinner, IonText, IonTitle, IonToolbar } from '@ionic/react'
+import { useEffect, useState } from 'react'
+
+import GalleryGrid from '../components/GalleryGrid'
+import { galleryApi } from '../lib/follower'
+import type { GalleryDay } from '../lib/gallery'
+import './LoginPage.css'
+
+/** Galerie für Familie per eigenem Link – ohne Konto, mit Download. */
+const PublicGalleryPage = ({ token }: { token: string }) => {
+  const [data, setData] = useState<{ trip: { title: string }; days: GalleryDay[] } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    galleryApi(token)
+      .then((d) => {
+        setData(d)
+        document.title = `Fotos: ${d.trip.title} · Wayfolio`
+      })
+      .catch((e: Error) => setError(e.message))
+  }, [token])
+
+  if (error)
+    return (
+      <IonPage>
+        <IonContent className="ion-padding">
+          <div className="login">
+            <h1>Wayfolio</h1>
+            <IonText color="danger">
+              <p>{error}</p>
+            </IonText>
+          </div>
+        </IonContent>
+      </IonPage>
+    )
+
+  return (
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>{data ? `Fotos: ${data.trip.title}` : 'Galerie'}</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>
+        {!data ? (
+          <div className="ion-text-center">
+            <IonSpinner style={{ marginTop: '40vh' }} />
+          </div>
+        ) : (
+          <>
+            {data.days.length === 0 && <p className="ion-padding">Noch keine Fotos.</p>}
+            <GalleryGrid days={data.days} />
+            <p className="ion-text-center ion-padding">
+              <IonNote>
+                Privat geteilt mit Wayfolio · <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutz</a>
+              </IonNote>
+            </p>
+          </>
+        )}
+      </IonContent>
+    </IonPage>
+  )
+}
+
+export default PublicGalleryPage

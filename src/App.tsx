@@ -11,17 +11,19 @@ import {
   IonTabs,
 } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
-import { addCircle, map, newspaper, settingsOutline } from 'ionicons/icons'
+import { addCircle, images, map, newspaper, settingsOutline } from 'ionicons/icons'
 import { lazy, Suspense } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 
 import { AuthProvider, useAuth } from './lib/auth'
 import { followerTokenFromPath } from './lib/follower'
+import { galleryTokenFromPath } from './lib/gallery'
 import { inviteTokenFromPath } from './lib/members'
 import { TripProvider, useTrip } from './lib/trip'
 import CapturePage from './pages/CapturePage'
 import CreateTripPage from './pages/CreateTripPage'
 import FeedPage from './pages/FeedPage'
+import GalleryPage from './pages/GalleryPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
 import TripSettingsPage from './pages/TripSettingsPage'
@@ -30,6 +32,7 @@ const FollowerPage = lazy(() => import('./pages/FollowerPage'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
 const LegalPage = lazy(() => import('./pages/LegalPage'))
+const PublicGalleryPage = lazy(() => import('./pages/PublicGalleryPage'))
 
 /** Unterpfad der App, z.B. "/wayfolio" auf GitHub Pages ("" lokal). */
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -38,6 +41,7 @@ const path = window.location.pathname.slice(basename.length) || '/'
 /** Öffentliche Pfade, die ohne Anmeldung funktionieren. */
 const followerToken = followerTokenFromPath(window.location.pathname)
 const inviteToken = inviteTokenFromPath(window.location.pathname)
+const galleryToken = galleryTokenFromPath(window.location.pathname)
 const wantsLogin = path.startsWith('/login')
 const legalPage = path.startsWith('/impressum') ? 'impressum' : path.startsWith('/datenschutz') ? 'datenschutz' : null
 
@@ -55,6 +59,7 @@ const Tabs = () => (
       <Route path="/feed" element={<FeedPage />} />
       <Route path="/karte" element={<MapPage />} />
       <Route path="/erfassen" element={<CapturePage />} />
+      <Route path="/galerie" element={<GalleryPage />} />
       <Route path="/reise" element={<TripSettingsPage />} />
       <Route path="*" element={<Navigate to="/erfassen" replace />} />
     </IonRouterOutlet>
@@ -71,6 +76,10 @@ const Tabs = () => (
       <IonTabButton tab="karte" href="/karte">
         <IonIcon aria-hidden="true" icon={map} />
         <IonLabel>Karte</IonLabel>
+      </IonTabButton>
+      <IonTabButton tab="galerie" href="/galerie">
+        <IonIcon aria-hidden="true" icon={images} />
+        <IonLabel>Galerie</IonLabel>
       </IonTabButton>
       <IonTabButton tab="reise" href="/reise">
         <IonIcon aria-hidden="true" icon={settingsOutline} />
@@ -124,6 +133,10 @@ const App = () => (
     {legalPage ? (
       <Suspense fallback={<Loading />}>
         <LegalPage page={legalPage} />
+      </Suspense>
+    ) : galleryToken ? (
+      <Suspense fallback={<Loading />}>
+        <PublicGalleryPage token={galleryToken} />
       </Suspense>
     ) : followerToken ? (
       <Suspense fallback={<Loading />}>

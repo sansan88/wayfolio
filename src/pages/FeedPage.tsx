@@ -16,6 +16,7 @@ import {
   IonTitle,
   IonToolbar,
   useIonActionSheet,
+  useIonAlert,
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
@@ -28,11 +29,13 @@ import { useAuth } from '../lib/auth'
 import { useTrip } from '../lib/trip'
 import {
   addOwnerReply,
+  deletePost,
   getOrCreateShareLink,
   hideReply,
   loadUpdates,
   resolvePoll,
   rotateShareLink,
+  updatePost,
   type FeedPost,
 } from '../lib/updates'
 import './FeedPage.css'
@@ -42,6 +45,7 @@ const FeedPage = () => {
   const { trip } = useTrip()
   const [presentToast] = useIonToast()
   const [presentSheet] = useIonActionSheet()
+  const [presentAlert] = useIonAlert()
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -103,6 +107,48 @@ const FeedPage = () => {
       .then(refresh)
       .catch((e: Error) => toast(e.message, 'danger'))
 
+  const confirmDelete = (post: FeedPost) =>
+    presentAlert({
+      header: post.kind === 'story' ? 'Story löschen?' : 'Beitrag löschen?',
+      message: 'Reaktionen und Antworten werden mitgelöscht. Fotos und Videos bleiben in der Galerie.',
+      buttons: [
+        { text: 'Abbrechen', role: 'cancel' },
+        { text: 'Löschen', role: 'destructive', handler: () => void act(() => deletePost(post.id)) },
+      ],
+    })
+
+  const editPost = (post: FeedPost) =>
+    presentAlert({
+      header: 'Beitrag bearbeiten',
+      inputs: [
+        { name: 'title', type: 'text', placeholder: 'Titel', value: post.title ?? '' },
+        {
+          name: 'text',
+          type: 'textarea',
+          placeholder: 'Text',
+          value: post.blocks.find((b) => b.kind === 'text')?.text ?? '',
+          attributes: { rows: 6 },
+        },
+      ],
+      buttons: [
+        { text: 'Abbrechen', role: 'cancel' },
+        {
+          text: 'Speichern',
+          handler: (v: { title: string; text: string }) => void act(() => updatePost(post, v.title, v.text)),
+        },
+      ],
+    })
+
+  const openMenu = (post: FeedPost) =>
+    presentSheet({
+      header: post.title ?? 'Beitrag',
+      buttons: [
+        ...(post.kind !== 'poll' ? [{ text: 'Bearbeiten', handler: () => void editPost(post) }] : []),
+        { text: 'Löschen', role: 'destructive', handler: () => void confirmDelete(post) },
+        { text: 'Abbrechen', role: 'cancel' },
+      ],
+    })
+
   const now = Date.now()
   const stories = posts.filter((p) => p.story_expires_at && Date.parse(p.story_expires_at) > now).reverse()
   const feed = posts.filter((p) => p.kind !== 'story')
@@ -115,6 +161,7 @@ const FeedPage = () => {
       onReply={(postId, body) => act(() => addOwnerReply(postId, session!.user.id, body))}
       onResolve={(pollId, optionId, text) => act(() => resolvePoll(pollId, optionId, text))}
       onHideReply={(id) => void act(() => hideReply(id))}
+      onMenu={openMenu}
     />
   )
 
@@ -135,7 +182,11 @@ const FeedPage = () => {
           <IonRefresherContent />
         </IonRefresher>
 
-        <StoryBar stories={stories} renderDetail={(p) => (p.kind !== 'story' ? card(p) : null)} />
+        <StoryBar
+          stories={stories}
+          renderDetail={(p) => (p.kind !== 'story' ? card(p) : null)}
+          onDelete={(p) => void confirmDelete(p)}
+        />
 
         {error && (
           <IonText color="danger">

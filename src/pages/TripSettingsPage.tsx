@@ -10,6 +10,8 @@ import {
   IonListHeader,
   IonNote,
   IonPage,
+  IonSelect,
+  IonSelectOption,
   IonTextarea,
   IonTitle,
   IonToolbar,
@@ -35,6 +37,7 @@ const TripSettingsPage = () => {
   const [description, setDescription] = useState('')
   const [startsOn, setStartsOn] = useState('')
   const [endsOn, setEndsOn] = useState('')
+  const [delay, setDelay] = useState(0)
   const [members, setMembers] = useState<Member[]>([])
   const [myName, setMyName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -48,6 +51,7 @@ const TripSettingsPage = () => {
     setDescription(trip?.description ?? '')
     setStartsOn(trip?.starts_on ?? '')
     setEndsOn(trip?.ends_on ?? '')
+    setDelay(trip?.location_delay_minutes ?? 0)
   }, [trip])
 
   const refreshMembers = () => {
@@ -67,6 +71,7 @@ const TripSettingsPage = () => {
         description: description.trim() || null,
         starts_on: startsOn || null,
         ends_on: endsOn || null,
+        location_delay_minutes: delay,
       })
       toast('Reise gespeichert')
     } catch (e) {
@@ -159,8 +164,25 @@ const TripSettingsPage = () => {
           <IonItem>
             <IonInput type="date" label="Ende" labelPlacement="stacked" value={endsOn} onIonInput={(e) => setEndsOn(String(e.detail.value ?? ''))} />
           </IonItem>
+          <IonItem>
+            <IonSelect
+              label="Standort für Follower"
+              labelPlacement="stacked"
+              value={delay}
+              onIonChange={(e) => setDelay(Number(e.detail.value))}
+            >
+              <IonSelectOption value={0}>sofort zeigen</IonSelectOption>
+              <IonSelectOption value={60}>1 Stunde verzögert</IonSelectOption>
+              <IonSelectOption value={360}>6 Stunden verzögert</IonSelectOption>
+              <IonSelectOption value={1440}>24 Stunden verzögert</IonSelectOption>
+            </IonSelect>
+          </IonItem>
         </IonList>
-        <div className="ion-padding-horizontal">
+        <IonNote className="ion-padding-horizontal ion-display-block">
+          Mit Verzögerung sehen Follower neue Orte, Route-Updates und Routenpunkte erst später – praktisch, wenn ihr nicht
+          live zeigen wollt, wo ihr gerade übernachtet.
+        </IonNote>
+        <div className="ion-padding">
           <IonButton expand="block" disabled={saving || !title.trim()} onClick={() => void save()}>
             Speichern
           </IonButton>

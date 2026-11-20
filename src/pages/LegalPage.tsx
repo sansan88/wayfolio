@@ -92,8 +92,10 @@ const Datenschutz = () => (
 
     <h2>4. Sichtbarkeit</h2>
     <p>
-      Reisen sind nicht öffentlich auffindbar. Inhalte sieht nur, wer den geheimen Follower-Link einer Reise hat. Die
-      Reisenden können den Link jederzeit sperren und ersetzen. Antworten, die Follower als «privat» markieren, sehen
+      Reisen sind nicht öffentlich auffindbar. Inhalte sieht nur, wer den geheimen Follower-Link einer Reise hat. Für
+      die Fotogalerie gibt es einen separaten Galerie-Link, über den Fotos und Videos angesehen und heruntergeladen
+      werden können. Die Reisenden können beide Links jederzeit sperren und ersetzen und Standorte für Follower
+      zeitverzögert anzeigen lassen. Antworten, die Follower als «privat» markieren, sehen
       nur die Reisenden. Fotos werden vor dem Hochladen verkleinert; dabei werden die eingebetteten Metadaten
       einschliesslich GPS-Position entfernt.
     </p>

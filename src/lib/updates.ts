@@ -241,6 +241,29 @@ export const hideReply = async (replyId: string) => {
   if (error) fail(error.message)
 }
 
+/** Titel und Text eines Beitrags ändern (erster Text-Baustein; fehlt er, wird er angehängt). */
+export const updatePost = async (post: FeedPost, title: string, text: string) => {
+  const { error } = await supabase.from('posts').update({ title: title.trim() || null }).eq('id', post.id)
+  if (error) fail(error.message)
+  const textBlock = post.blocks.find((b) => b.kind === 'text' && b.id)
+  if (textBlock) {
+    const res = text.trim()
+      ? await supabase.from('post_blocks').update({ text_content: text.trim() }).eq('id', textBlock.id!)
+      : await supabase.from('post_blocks').delete().eq('id', textBlock.id!)
+    if (res.error) fail(res.error.message)
+  } else if (text.trim()) {
+    const position = Math.max(-1, ...post.blocks.map((b) => b.position)) + 1
+    const { error: e } = await supabase.from('post_blocks').insert({ post_id: post.id, position, kind: 'text', text_content: text.trim() })
+    if (e) fail(e.message)
+  }
+}
+
+/** Beitrag löschen. Fotos und Videos bleiben in der Galerie. */
+export const deletePost = async (postId: string) => {
+  const { error } = await supabase.from('posts').delete().eq('id', postId)
+  if (error) fail(error.message)
+}
+
 // ---------------------------------------------------------------------------
 // Secret Link
 // ---------------------------------------------------------------------------
@@ -275,6 +298,7 @@ export const rotateShareLink = async (tripId: string): Promise<string> => {
 // ---------------------------------------------------------------------------
 
 export interface FeedBlock {
+  id?: string
   position: number
   kind: string
   text: string | null
@@ -343,7 +367,7 @@ interface RawPost {
   story_expires_at: string | null
   author: { display_name: string | null } | null
   checkin: { place_name: string | null } | null
-  post_blocks: { position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string } | null }[]
+  post_blocks: { id: string; position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string } | null }[]
   polls: RawPoll | RawPoll[] | null
   reactions: { emoji: string }[]
   replies: {
@@ -365,7 +389,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
       `id, kind, title, published_at, story_expires_at,
        author:profiles(display_name),
        checkin:checkins(place_name),
-       post_blocks!post_blocks_post_id_fkey(position, kind, text_content, url, media(storage_path)),
+       post_blocks!post_blocks_post_id_fkey(id, position, kind, text_content, url, media(storage_path)),
        polls(id, question, description, closes_at, status, chosen_option_id, decision_text, poll_options!poll_options_poll_id_fkey(id, position, label), votes(option_id)),
        reactions(emoji),
        replies(id, body, visibility, hidden_at, created_at, author_profile_id, follower:followers(display_name))`,
@@ -399,6 +423,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
       blocks: [...p.post_blocks]
         .sort((a, b) => a.position - b.position)
         .map((b) => ({
+          id: b.id,
           position: b.position,
           kind: b.kind,
           text: b.text_content,

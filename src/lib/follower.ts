@@ -1,3 +1,4 @@
+import { groupByDay, type GalleryDay, type GalleryItem } from './gallery'
 import type { RoutePoint } from './route'
 import type { FeedPost } from './updates'
 
@@ -53,4 +54,14 @@ export const followerTokenFromPath = (pathname: string) => {
   const base = import.meta.env.BASE_URL.replace(/\/$/, '')
   const m = pathname.slice(base.length).match(/^\/t\/([a-f0-9]{32,})\/?$/)
   return m?.[1] ?? null
+}
+
+/** Öffentliche Galerie per Galerie-Link. */
+export const galleryApi = async (token: string): Promise<{ trip: { title: string }; days: GalleryDay[] }> => {
+  const data = await call<{
+    trip: { title: string }
+    items: GalleryItem[]
+    points: { place_name: string | null; recorded_at: string }[]
+  }>(token, 'gallery')
+  return { trip: data.trip, days: groupByDay(data.items, data.points) }
 }

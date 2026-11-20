@@ -1,5 +1,5 @@
 import { IonButton, IonIcon, IonModal } from '@ionic/react'
-import { barChart, bookOutline, close, mic, videocam } from 'ionicons/icons'
+import { barChart, bookOutline, close, mic, trashOutline, videocam } from 'ionicons/icons'
 import { useState, type ReactNode } from 'react'
 
 import type { FeedPost } from '../lib/updates'
@@ -17,10 +17,12 @@ interface Props {
   stories: FeedPost[]
   /** Inhalt unter dem Medium in der Vollbild-Ansicht (z.B. Abstimmung, Hintergrundtext) */
   renderDetail?: (post: FeedPost) => ReactNode
+  /** Story löschen (nur Reisende) */
+  onDelete?: (post: FeedPost) => void
 }
 
 /** Story-Kreise mit Vollbild-Ansicht. Ein Tipp auf die Story schaltet zur nächsten. */
-const StoryBar = ({ stories, renderDetail }: Props) => {
+const StoryBar = ({ stories, renderDetail, onDelete }: Props) => {
   const [index, setIndex] = useState<number | null>(null)
   const open = index !== null ? stories[index] : null
 
@@ -53,6 +55,20 @@ const StoryBar = ({ stories, renderDetail }: Props) => {
             <IonButton fill="clear" color="light" className="story-view__close" aria-label="Schliessen" onClick={() => setIndex(null)}>
               <IonIcon slot="icon-only" icon={close} />
             </IonButton>
+            {onDelete && open.kind === 'story' && (
+              <IonButton
+                fill="clear"
+                color="light"
+                className="story-view__delete"
+                aria-label="Story löschen"
+                onClick={() => {
+                  setIndex(null)
+                  onDelete(open)
+                }}
+              >
+                <IonIcon slot="icon-only" icon={trashOutline} />
+              </IonButton>
+            )}
             {renderDetail && <div className="story-view__detail">{renderDetail(open)}</div>}
           </div>
         )}

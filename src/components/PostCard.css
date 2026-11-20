@@ -188,3 +188,25 @@
   display: block;
   margin: 6px 0;
 }
+
+.post__header {
+  position: relative;
+}
+
+.post__menu {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 8px;
+  padding: 6px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ion-color-medium);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.post__header .post__meta {
+  padding-right: 32px;
+}

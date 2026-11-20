@@ -119,3 +119,9 @@
 .share-hint {
   margin: 0 16px;
 }
+
+.story-view__delete {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 8px);
+  right: 52px;
+}

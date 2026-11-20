@@ -36,13 +36,13 @@ interface Link {
   trip_id: string
 }
 
-const getLink = async (token: unknown): Promise<Link> => {
+const getLink = async (token: unknown, role: 'follower' | 'gallery' = 'follower'): Promise<Link> => {
   if (typeof token !== 'string' || token.length < 32) throw new HttpError(404, 'Link ungültig')
   const { data } = await supabase
     .from('share_links')
     .select('id, trip_id, expires_at, revoked_at')
     .eq('token', token)
-    .eq('role', 'follower')
+    .eq('role', role)
     .maybeSingle()
   if (!data || data.revoked_at || (data.expires_at && Date.parse(data.expires_at) < Date.now()))
     throw new HttpError(404, 'Dieser Link ist nicht mehr gültig.')
@@ -80,8 +80,15 @@ const requirePost = async (link: Link, postId: unknown) => {
   return data
 }
 
+/** Standort-Verzögerung: Orte jünger als dieser Zeitpunkt sehen Follower noch nicht. */
+const locationCutoff = async (tripId: string) => {
+  const { data } = await supabase.from('trips').select('location_delay_minutes').eq('id', tripId).single()
+  return Date.now() - (data?.location_delay_minutes ?? 0) * 60_000
+}
+
 const feed = async (link: Link, device: unknown) => {
   const follower = await findFollower(link, device)
+  const cutoff = await locationCutoff(link.trip_id)
   const [{ data: trip }, { data: posts, error }, { data: route }] = await Promise.all([
     supabase.from('trips').select('title, description, starts_on').eq('id', link.trip_id).single(),
     supabase
@@ -103,8 +110,9 @@ const feed = async (link: Link, device: unknown) => {
   ])
   if (error) throw new HttpError(500, error.message)
 
+  // Route-Updates innerhalb der Verzögerung ganz ausblenden
   // deno-lint-ignore no-explicit-any
-  const rows = (posts ?? []) as any[]
+  const rows = ((posts ?? []) as any[]).filter((p) => p.kind !== 'route_update' || Date.parse(p.published_at) <= cutoff)
   const paths = rows.flatMap((p) => p.post_blocks.map((b: { media: { storage_path: string } | null }) => b.media?.storage_path).filter(Boolean))
   const urls = new Map<string, string>()
   if (paths.length) {
@@ -148,7 +156,8 @@ const feed = async (link: Link, device: unknown) => {
       title: p.title,
       published_at: p.published_at,
       story_expires_at: p.story_expires_at,
-      place_name: p.checkin?.place_name ?? null,
+      // Ortsname erst nach Ablauf der Verzögerung
+      place_name: Date.parse(p.published_at) <= cutoff ? (p.checkin?.place_name ?? null) : null,
       replies_enabled: p.replies_enabled,
       blocks: [...p.post_blocks]
         .sort((a, b) => a.position - b.position)
@@ -195,7 +204,47 @@ const feed = async (link: Link, device: unknown) => {
     follower: follower ? { display_name: follower.display_name } : null,
     subscription,
     posts: out,
-    route: route ?? [],
+    route: ((route ?? []) as { recorded_at: string }[]).filter((r) => Date.parse(r.recorded_at) <= cutoff),
+  }
+}
+
+/** Galerie-Link: alle Fotos und Videos mit Ansichts- und Download-URL. */
+const gallery = async (link: Link) => {
+  const cutoff = await locationCutoff(link.trip_id)
+  const [{ data: trip }, { data: media }, { data: route }] = await Promise.all([
+    supabase.from('trips').select('title').eq('id', link.trip_id).single(),
+    supabase
+      .from('media')
+      .select('id, kind, storage_path, taken_at, created_at')
+      .eq('trip_id', link.trip_id)
+      .in('kind', ['photo', 'video'])
+      .order('taken_at', { ascending: false }),
+    supabase.rpc('trip_checkins', { p_trip_id: link.trip_id }),
+  ])
+  const rows = media ?? []
+  const paths = rows.map((m) => m.storage_path)
+  const [view, download] = paths.length
+    ? await Promise.all([
+        supabase.storage.from('media').createSignedUrls(paths, 3600),
+        supabase.storage.from('media').createSignedUrls(paths, 3600, { download: true }),
+      ])
+    : [{ data: [] }, { data: [] }]
+  const urlOf = (list: { path: string | null; signedUrl: string | null }[] | null, p: string) =>
+    list?.find((s) => s.path === p)?.signedUrl ?? ''
+  return {
+    trip,
+    items: rows
+      .map((m) => ({
+        id: m.id,
+        kind: m.kind,
+        url: urlOf(view.data, m.storage_path),
+        download_url: urlOf(download.data, m.storage_path),
+        taken_at: m.taken_at ?? m.created_at,
+      }))
+      .filter((i) => i.url),
+    points: ((route ?? []) as { place_name: string | null; recorded_at: string }[])
+      .filter((r) => Date.parse(r.recorded_at) <= cutoff)
+      .map((r) => ({ place_name: r.place_name, recorded_at: r.recorded_at })),
   }
 }
 
@@ -205,6 +254,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
+    if (body.action === 'gallery') return json(await gallery(await getLink(body.token, 'gallery')))
     const link = await getLink(body.token)
 
     switch (body.action) {

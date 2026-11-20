@@ -10,9 +10,11 @@ export interface Trip {
   description: string | null
   starts_on: string | null
   ends_on: string | null
+  /** Follower sehen Orte erst nach dieser Zeit */
+  location_delay_minutes: number
 }
 
-export type TripDetails = Pick<Trip, 'title' | 'description' | 'starts_on' | 'ends_on'>
+export type TripDetails = Pick<Trip, 'title' | 'description' | 'starts_on' | 'ends_on' | 'location_delay_minutes'>
 
 interface TripState {
   trips: Trip[]
@@ -27,7 +29,7 @@ interface TripState {
 
 const TripContext = createContext<TripState | undefined>(undefined)
 const STORAGE_KEY = 'wayfolio-current-trip'
-const COLUMNS = 'id, owner_id, title, description, starts_on, ends_on'
+const COLUMNS = 'id, owner_id, title, description, starts_on, ends_on, location_delay_minutes'
 
 const remember = (id: string) => {
   try {

@@ -14,7 +14,7 @@ import {
   IonRadioGroup,
   IonTextarea,
 } from '@ionic/react'
-import { barChart, bookOutline, checkmarkCircle, eyeOffOutline, link, location, lockClosedOutline } from 'ionicons/icons'
+import { barChart, bookOutline, checkmarkCircle, ellipsisHorizontal, eyeOffOutline, link, location, lockClosedOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { EMOJIS, type FeedPost } from '../lib/updates'
@@ -37,6 +37,8 @@ interface Props {
   onVote?: (pollId: string, optionId: string) => void
   onResolve?: (pollId: string, optionId: string, text: string) => Promise<void>
   onHideReply?: (replyId: string) => void
+  /** Menü «Bearbeiten / Löschen» (nur Reisende) */
+  onMenu?: (post: FeedPost) => void
 }
 
 /** Ein Beitrag im Feed – für Reisende und Follower. */
@@ -138,7 +140,7 @@ const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode'
   )
 }
 
-const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply }: Props) => {
+const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply, onMenu }: Props) => {
   const [reply, setReply] = useState('')
   const [privateReply, setPrivateReply] = useState(false)
   const [sending, setSending] = useState(false)
@@ -160,7 +162,12 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
   return (
     <IonCard className={`post post--${post.kind}`}>
       {post.kind !== 'poll' && <MediaBlocks post={post} />}
-      <IonCardHeader>
+      <IonCardHeader className="post__header">
+        {onMenu && (
+          <button type="button" className="post__menu" onClick={() => onMenu(post)} aria-label="Beitrag bearbeiten oder löschen">
+            <IonIcon icon={ellipsisHorizontal} />
+          </button>
+        )}
         <IonCardSubtitle className="post__meta">
           {label && (
             <span className="post__kind">
