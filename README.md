@@ -33,6 +33,31 @@ Wayfolio ist ein Reisetagebuch als Progressive Web App (PWA). Reisende erfassen 
 - **Phase 2:** Sprachnachrichten mit Transkription, Video, Hintergrund-Stories, Galerie, Gruppen-Links, Reise-Pass
 - **Phase 3:** iOS-App, WhatsApp-Zustellung, Co-Autor:innen, Fotobuch-Export
 
+## Lokal starten
+
+```bash
+npm install
+cp .env.example .env.local   # Supabase-URL und Publishable Key eintragen
+npm run dev                  # http://localhost:5173
+npm run build                # Produktions-Build inkl. Service Worker (PWA)
+```
+
+## Projektstruktur
+
+```
+src/
+  App.tsx              Tabs: Feed · Erfassen · Karte (Ionic React Router)
+  pages/               CapturePage (Aktions-Raster), FeedPage (Stories + Feed), MapPage
+  lib/supabase.ts      Supabase-Client
+  theme/variables.css  Farben
+supabase/migrations/   Datenbankschema mit Row-Level-Security
+capacitor.config.ts    Vorbereitung iOS-App (Phase 3)
+```
+
+## Datenbank
+
+Das Schema liegt in `supabase/migrations/`. Reisende haben ein Konto, Follower nicht: Sie greifen nur über Edge Functions zu, die den Secret Link prüfen. Deshalb gibt es keine Policies für die Rolle `anon`.
+
 ## Status
 
-Konzeptphase. Das vollständige Produktkonzept liegt separat vor.
+Phase 0: Grundgerüst. Das vollständige Produktkonzept liegt separat vor.
