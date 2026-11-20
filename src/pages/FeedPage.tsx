@@ -9,34 +9,41 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
-  IonModal,
+  IonPage,
   IonRefresher,
   IonRefresherContent,
   IonText,
   IonTitle,
   IonToolbar,
-  IonPage,
+  useIonActionSheet,
+  useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { close, location, logOutOutline } from 'ionicons/icons'
+import { logOutOutline, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useState } from 'react'
 
+import PostCard from '../components/PostCard'
+import StoryBar from '../components/StoryBar'
 import { useAuth } from '../lib/auth'
 import { useTrip } from '../lib/trip'
-import { loadUpdates, type FeedPost } from '../lib/updates'
+import {
+  addOwnerReply,
+  getOrCreateShareLink,
+  hideReply,
+  loadUpdates,
+  resolvePoll,
+  rotateShareLink,
+  type FeedPost,
+} from '../lib/updates'
 import './FeedPage.css'
 
-const formatTime = (iso: string) =>
-  new Date(iso).toLocaleString('de-CH', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-
-const firstImage = (post: FeedPost) => post.blocks.find((b) => b.imageUrl)?.imageUrl ?? null
-
 const FeedPage = () => {
-  const { signOut } = useAuth()
+  const { session, signOut } = useAuth()
   const { trip } = useTrip()
+  const [presentToast] = useIonToast()
+  const [presentSheet] = useIonActionSheet()
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [openStory, setOpenStory] = useState<FeedPost | null>(null)
 
   const refresh = useCallback(async () => {
     if (!trip) return
@@ -52,9 +59,64 @@ const FeedPage = () => {
     void refresh()
   }, [refresh])
 
+  const toast = (message: string, color: 'success' | 'danger' = 'success') =>
+    presentToast({ message, duration: 2500, position: 'top', color })
+
+  const shareUrl = async (url: string) => {
+    const text = `Folgt unserer Reise «${trip?.title}» – ohne App und ohne Konto:`
+    if (navigator.share) {
+      await navigator.share({ title: trip?.title, text, url }).catch(() => undefined)
+    } else {
+      await navigator.clipboard.writeText(url)
+      toast('Follower-Link kopiert')
+    }
+  }
+
+  const openShare = async () => {
+    if (!trip) return
+    try {
+      const url = await getOrCreateShareLink(trip.id)
+      await presentSheet({
+        header: 'Follower einladen',
+        subHeader: url,
+        buttons: [
+          { text: 'Link teilen', handler: () => void shareUrl(url) },
+          {
+            text: 'Link kopieren',
+            handler: () => void navigator.clipboard.writeText(url).then(() => toast('Follower-Link kopiert')),
+          },
+          {
+            text: 'Neuen Link erzeugen (alter wird gesperrt)',
+            role: 'destructive',
+            handler: () => void rotateShareLink(trip.id).then((u) => shareUrl(u)),
+          },
+          { text: 'Abbrechen', role: 'cancel' },
+        ],
+      })
+    } catch (e) {
+      toast((e as Error).message, 'danger')
+    }
+  }
+
+  const act = (task: () => Promise<void>) =>
+    task()
+      .then(refresh)
+      .catch((e: Error) => toast(e.message, 'danger'))
+
   const now = Date.now()
-  const stories = posts.filter((p) => p.kind === 'story' && p.story_expires_at && Date.parse(p.story_expires_at) > now)
+  const stories = posts.filter((p) => p.story_expires_at && Date.parse(p.story_expires_at) > now).reverse()
   const feed = posts.filter((p) => p.kind !== 'story')
+
+  const card = (post: FeedPost) => (
+    <PostCard
+      key={post.id}
+      post={post}
+      mode="owner"
+      onReply={(postId, body) => act(() => addOwnerReply(postId, session!.user.id, body))}
+      onResolve={(pollId, optionId, text) => act(() => resolvePoll(pollId, optionId, text))}
+      onHideReply={(id) => void act(() => hideReply(id))}
+    />
+  )
 
   return (
     <IonPage>
@@ -62,6 +124,9 @@ const FeedPage = () => {
         <IonToolbar>
           <IonTitle>{trip?.title ?? 'Feed'}</IonTitle>
           <IonButtons slot="end">
+            <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
+              <IonIcon slot="icon-only" icon={shareSocialOutline} />
+            </IonButton>
             <IonButton onClick={signOut} aria-label="Abmelden">
               <IonIcon slot="icon-only" icon={logOutOutline} />
             </IonButton>
@@ -73,22 +138,7 @@ const FeedPage = () => {
           <IonRefresherContent />
         </IonRefresher>
 
-        {stories.length > 0 && (
-          <div className="stories" aria-label="Stories">
-            {stories.map((story) => (
-              <button key={story.id} type="button" className="story" onClick={() => setOpenStory(story)}>
-                <div className="story__ring">
-                  {firstImage(story) ? (
-                    <img className="story__image" src={firstImage(story)!} alt="" />
-                  ) : (
-                    <div className="story__image" />
-                  )}
-                </div>
-                <span className="story__label">{story.title?.split(',')[0] ?? 'Story'}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <StoryBar stories={stories} renderDetail={(p) => (p.kind !== 'story' ? card(p) : null)} />
 
         {error && (
           <IonText color="danger">
@@ -103,47 +153,13 @@ const FeedPage = () => {
               <IonCardTitle>Eure Reise beginnt hier</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              Setzt im Tab «Erfassen» euren ersten Standort oder ladet ein Foto hoch. Standorte erscheinen hier im
-              Feed, einzelne Fotos oben als Story.
+              Erfasst im Tab «Erfassen» euer erstes Update. Mit dem Teilen-Symbol oben ladet ihr Familie und Freunde
+              ein – sie brauchen weder App noch Konto.
             </IonCardContent>
           </IonCard>
         )}
 
-        {feed.map((post) => (
-          <IonCard key={post.id}>
-            {firstImage(post) && <img src={firstImage(post)!} alt="" />}
-            <IonCardHeader>
-              <IonCardSubtitle>{formatTime(post.published_at)}</IonCardSubtitle>
-              <IonCardTitle className="feed__title">
-                {post.kind === 'route_update' && <IonIcon icon={location} color="primary" aria-hidden="true" />}
-                {post.title ?? post.checkin?.place_name ?? 'Update'}
-              </IonCardTitle>
-            </IonCardHeader>
-            {post.kind === 'route_update' && (
-              <IonCardContent>Neuer Standort auf der Route. Das Routenbild folgt in einer nächsten Version.</IonCardContent>
-            )}
-            {post.blocks
-              .filter((b) => b.text_content)
-              .map((b) => (
-                <IonCardContent key={b.position}>{b.text_content}</IonCardContent>
-              ))}
-          </IonCard>
-        ))}
-
-        <IonModal isOpen={openStory !== null} onDidDismiss={() => setOpenStory(null)} className="story-modal">
-          {openStory && (
-            <div className="story-view" onClick={() => setOpenStory(null)}>
-              {firstImage(openStory) && <img src={firstImage(openStory)!} alt={openStory.title ?? 'Story'} />}
-              <div className="story-view__meta">
-                <strong>{openStory.title ?? 'Story'}</strong>
-                <span>{formatTime(openStory.published_at)}</span>
-              </div>
-              <IonButton fill="clear" color="light" className="story-view__close" aria-label="Schliessen">
-                <IonIcon slot="icon-only" icon={close} />
-              </IonButton>
-            </div>
-          )}
-        </IonModal>
+        {feed.map(card)}
       </IonContent>
     </IonPage>
   )

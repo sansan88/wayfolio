@@ -1,0 +1,259 @@
+import {
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonContent,
+  IonHeader,
+  IonInput,
+  IonLabel,
+  IonModal,
+  IonNote,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  IonSegment,
+  IonSegmentButton,
+  IonSelect,
+  IonSelectOption,
+  IonSpinner,
+  IonText,
+  IonTitle,
+  IonToolbar,
+  useIonToast,
+} from '@ionic/react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+
+import PostCard from '../components/PostCard'
+import StoryBar from '../components/StoryBar'
+import { followerApi, type FollowerFeed } from '../lib/follower'
+import type { FeedPost } from '../lib/updates'
+import './FeedPage.css'
+import './LoginPage.css'
+
+const RouteMap = lazy(() => import('../components/RouteMap'))
+
+const frequencyLabel = { instant: 'bei jedem Beitrag', weekly: 'wöchentlich', monthly: 'monatlich' } as const
+
+/** Ansicht für Familie und Freunde – ohne Konto, nur über den Secret Link. */
+const FollowerPage = ({ token }: { token: string }) => {
+  const api = useMemo(() => followerApi(token), [token])
+  const [presentToast] = useIonToast()
+  const [data, setData] = useState<FollowerFeed | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [tab, setTab] = useState<'feed' | 'karte'>('feed')
+  const [askName, setAskName] = useState(false)
+  const [name, setName] = useState('')
+  const [pending, setPending] = useState<(() => Promise<unknown>) | null>(null)
+  const [email, setEmail] = useState('')
+  const [frequency, setFrequency] = useState<'instant' | 'weekly' | 'monthly'>('weekly')
+
+  const load = useCallback(async () => {
+    try {
+      setData(await api.feed())
+      setError(null)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [api])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  useEffect(() => {
+    if (data?.trip.title) document.title = `${data.trip.title} · Wayfolio`
+  }, [data?.trip.title])
+
+  const toast = (message: string, color: 'success' | 'danger' | 'medium' = 'success') =>
+    presentToast({ message, duration: 2500, position: 'top', color })
+
+  /** Führt eine Aktion aus; fragt beim ersten Mal nach dem Namen. */
+  const withName = async (action: () => Promise<unknown>) => {
+    if (!data?.follower) {
+      setPending(() => action)
+      setAskName(true)
+      return
+    }
+    try {
+      await action()
+      await load()
+    } catch (e) {
+      toast((e as Error).message, 'danger')
+    }
+  }
+
+  const join = async () => {
+    try {
+      await api.join(name.trim())
+      setAskName(false)
+      if (pending) await pending()
+      setPending(null)
+      await load()
+    } catch (e) {
+      toast((e as Error).message, 'danger')
+    }
+  }
+
+  const subscribe = () =>
+    withName(async () => {
+      await api.subscribe(email, frequency)
+      toast('Danke! Du bist für den Newsletter vorgemerkt.')
+    })
+
+  if (error && !data)
+    return (
+      <IonPage>
+        <IonContent className="ion-padding">
+          <div className="login">
+            <h1>Wayfolio</h1>
+            <IonText color="danger">
+              <p>{error}</p>
+            </IonText>
+            <p>Frag die Reisenden nach einem neuen Link.</p>
+          </div>
+        </IonContent>
+      </IonPage>
+    )
+
+  if (!data)
+    return (
+      <IonPage>
+        <IonContent className="ion-text-center">
+          <IonSpinner style={{ marginTop: '40vh' }} />
+        </IonContent>
+      </IonPage>
+    )
+
+  const now = Date.now()
+  const stories = data.posts.filter((p) => p.story_expires_at && Date.parse(p.story_expires_at) > now).reverse()
+  const feed = data.posts.filter((p) => p.kind !== 'story')
+
+  const card = (post: FeedPost) => (
+    <PostCard
+      key={post.id}
+      post={post}
+      mode="follower"
+      onReact={(postId, emoji) => void withName(() => api.react(postId, emoji))}
+      onVote={(_pollId, optionId) => void withName(() => api.vote(optionId))}
+      onReply={(postId, body, isPrivate) =>
+        withName(async () => {
+          await api.reply(postId, body, isPrivate)
+          toast(isPrivate ? 'Antwort privat an die Reisenden gesendet' : 'Antwort gesendet')
+        })
+      }
+    />
+  )
+
+  return (
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>{data.trip.title}</IonTitle>
+        </IonToolbar>
+        <IonToolbar>
+          <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as 'feed' | 'karte')}>
+            <IonSegmentButton value="feed">
+              <IonLabel>Tagebuch</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="karte">
+              <IonLabel>Route</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent scrollY={tab === 'feed'}>
+        {tab === 'karte' ? (
+          <Suspense fallback={null}>
+            <RouteMap points={data.route} />
+          </Suspense>
+        ) : (
+          <>
+            <IonRefresher slot="fixed" onIonRefresh={(e) => void load().finally(() => e.detail.complete())}>
+              <IonRefresherContent />
+            </IonRefresher>
+            <StoryBar stories={stories} renderDetail={(p) => (p.kind !== 'story' ? card(p) : null)} />
+
+            {feed.length === 0 && stories.length === 0 && (
+              <IonCard>
+                <IonCardContent>Noch keine Beiträge. Schau bald wieder vorbei!</IonCardContent>
+              </IonCard>
+            )}
+            {feed.map(card)}
+
+            <IonCard className="newsletter">
+              <IonCardHeader>
+                <IonCardTitle>Updates per E-Mail</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                {data.subscription && data.subscription.status !== 'unsubscribed' ? (
+                  <>
+                    <p>
+                      Du bekommst Updates {frequencyLabel[data.subscription.frequency]} an {data.subscription.email}
+                      {data.subscription.status === 'pending' && ' (Bestätigung ausstehend)'}.
+                    </p>
+                    <IonButton size="small" fill="clear" color="medium" onClick={() => void withName(() => api.unsubscribe())}>
+                      Abmelden
+                    </IonButton>
+                  </>
+                ) : (
+                  <>
+                    <IonInput
+                      type="email"
+                      fill="outline"
+                      label="E-Mail"
+                      labelPlacement="floating"
+                      value={email}
+                      onIonInput={(e) => setEmail(String(e.detail.value ?? ''))}
+                    />
+                    <IonSelect
+                      className="ion-margin-top"
+                      fill="outline"
+                      label="Wie oft?"
+                      labelPlacement="floating"
+                      value={frequency}
+                      onIonChange={(e) => setFrequency(e.detail.value)}
+                    >
+                      <IonSelectOption value="instant">Bei jedem Beitrag</IonSelectOption>
+                      <IonSelectOption value="weekly">Wöchentlich</IonSelectOption>
+                      <IonSelectOption value="monthly">Monatlich</IonSelectOption>
+                    </IonSelect>
+                    <IonButton className="ion-margin-top" expand="block" disabled={!email.includes('@')} onClick={() => void subscribe()}>
+                      Anmelden
+                    </IonButton>
+                    <IonNote>Jederzeit abbestellbar. Kein Konto nötig.</IonNote>
+                  </>
+                )}
+              </IonCardContent>
+            </IonCard>
+            <p className="ion-text-center">
+              <IonNote>Mit Wayfolio geteilt · privat per Link</IonNote>
+            </p>
+          </>
+        )}
+
+        <IonModal isOpen={askName} onDidDismiss={() => setAskName(false)} initialBreakpoint={0.5} breakpoints={[0, 0.5]}>
+          <IonContent className="ion-padding">
+            <h2>Wie heisst du?</h2>
+            <p>Damit die Reisenden wissen, wer reagiert. Ein Vorname genügt – kein Konto, kein Passwort.</p>
+            <IonInput
+              fill="outline"
+              label="Dein Name"
+              labelPlacement="floating"
+              maxlength={40}
+              value={name}
+              onIonInput={(e) => setName(String(e.detail.value ?? ''))}
+              onKeyDown={(e) => e.key === 'Enter' && name.trim() && void join()}
+            />
+            <IonButton className="ion-margin-top" expand="block" disabled={!name.trim()} onClick={() => void join()}>
+              Weiter
+            </IonButton>
+          </IonContent>
+        </IonModal>
+      </IonContent>
+    </IonPage>
+  )
+}
+
+export default FollowerPage

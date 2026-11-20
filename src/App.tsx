@@ -12,15 +12,19 @@ import {
 } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { addCircle, map, newspaper } from 'ionicons/icons'
+import { lazy, Suspense } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 
 import { AuthProvider, useAuth } from './lib/auth'
+import { followerTokenFromPath } from './lib/follower'
 import { TripProvider, useTrip } from './lib/trip'
 import CapturePage from './pages/CapturePage'
 import CreateTripPage from './pages/CreateTripPage'
 import FeedPage from './pages/FeedPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
+
+const FollowerPage = lazy(() => import('./pages/FollowerPage'))
 
 /** Unterpfad der App, z.B. "/wayfolio" auf GitHub Pages ("" lokal). */
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -81,11 +85,20 @@ const Root = () => {
   )
 }
 
+/** Follower-Links (/t/<token>) brauchen kein Konto und laufen ohne Anmeldung. */
+const followerToken = followerTokenFromPath(window.location.pathname)
+
 const App = () => (
   <IonApp>
-    <AuthProvider>
-      <Root />
-    </AuthProvider>
+    {followerToken ? (
+      <Suspense fallback={<Loading />}>
+        <FollowerPage token={followerToken} />
+      </Suspense>
+    ) : (
+      <AuthProvider>
+        <Root />
+      </AuthProvider>
+    )}
   </IonApp>
 )
 

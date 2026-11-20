@@ -26,7 +26,7 @@ export const getPosition = (): Promise<Position> =>
               : 'Standort konnte nicht ermittelt werden.',
           ),
         ),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
     )
   })
 

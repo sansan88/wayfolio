@@ -65,3 +65,7 @@ Supabase-Projekt: `fmafhdivuooqfixoozmi` (Region Zürich, eu-central-2). Alle Mi
 ## Status
 
 Phase 0: Grundgerüst. Das vollständige Produktkonzept liegt separat vor.
+
+## Server-Funktion
+
+`supabase/functions/follower-api` – Zugang für Follower ohne Konto (Feed, Reaktionen, Antworten, Abstimmen, Newsletter-Anmeldung). Prüft den Secret Link selbst, deshalb ohne JWT-Prüfung deployt (`verify_jwt = false`).
