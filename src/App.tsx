@@ -11,23 +11,33 @@ import {
   IonTabs,
 } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
-import { addCircle, map, newspaper } from 'ionicons/icons'
+import { addCircle, map, newspaper, settingsOutline } from 'ionicons/icons'
 import { lazy, Suspense } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 
 import { AuthProvider, useAuth } from './lib/auth'
 import { followerTokenFromPath } from './lib/follower'
+import { inviteTokenFromPath } from './lib/members'
 import { TripProvider, useTrip } from './lib/trip'
 import CapturePage from './pages/CapturePage'
 import CreateTripPage from './pages/CreateTripPage'
 import FeedPage from './pages/FeedPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
+import TripSettingsPage from './pages/TripSettingsPage'
 
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
 
 /** Unterpfad der App, z.B. "/wayfolio" auf GitHub Pages ("" lokal). */
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+const path = window.location.pathname.slice(basename.length) || '/'
+
+/** Öffentliche Pfade, die ohne Anmeldung funktionieren. */
+const followerToken = followerTokenFromPath(window.location.pathname)
+const inviteToken = inviteTokenFromPath(window.location.pathname)
+const wantsLogin = path.startsWith('/login')
 
 const Loading = () => (
   <IonPage>
@@ -43,6 +53,7 @@ const Tabs = () => (
       <Route path="/feed" element={<FeedPage />} />
       <Route path="/karte" element={<MapPage />} />
       <Route path="/erfassen" element={<CapturePage />} />
+      <Route path="/reise" element={<TripSettingsPage />} />
       <Route path="*" element={<Navigate to="/erfassen" replace />} />
     </IonRouterOutlet>
 
@@ -58,6 +69,10 @@ const Tabs = () => (
       <IonTabButton tab="karte" href="/karte">
         <IonIcon aria-hidden="true" icon={map} />
         <IonLabel>Karte</IonLabel>
+      </IonTabButton>
+      <IonTabButton tab="reise" href="/reise">
+        <IonIcon aria-hidden="true" icon={settingsOutline} />
+        <IonLabel>Reise</IonLabel>
       </IonTabButton>
     </IonTabBar>
   </IonTabs>
@@ -77,16 +92,30 @@ const SignedIn = () => {
 const Root = () => {
   const { session, loading } = useAuth()
   if (loading) return <Loading />
-  if (!session) return <LoginPage />
+  if (!session) {
+    if (inviteToken || wantsLogin) return <LoginPage invite={!!inviteToken} />
+    return (
+      <Suspense fallback={<Loading />}>
+        <LandingPage />
+      </Suspense>
+    )
+  }
+  if (inviteToken)
+    return (
+      <Suspense fallback={<Loading />}>
+        <AcceptInvitePage token={inviteToken} />
+      </Suspense>
+    )
+  if (wantsLogin) {
+    // Bereits angemeldet: /login nicht im Verlauf lassen
+    window.history.replaceState(null, '', import.meta.env.BASE_URL)
+  }
   return (
     <TripProvider>
       <SignedIn />
     </TripProvider>
   )
 }
-
-/** Follower-Links (/t/<token>) brauchen kein Konto und laufen ohne Anmeldung. */
-const followerToken = followerTokenFromPath(window.location.pathname)
 
 const App = () => (
   <IonApp>

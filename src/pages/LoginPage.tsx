@@ -13,7 +13,7 @@ import { appUrl } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import './LoginPage.css'
 
-const LoginPage = () => {
+const LoginPage = ({ invite = false }: { invite?: boolean }) => {
   const [email, setEmail] = useState('')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
@@ -25,7 +25,8 @@ const LoginPage = () => {
     setError(null)
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: appUrl() },
+      // Bei Einladungen zurück auf den Einladungslink, sonst an den Anfang der App
+      options: { emailRedirectTo: invite ? window.location.href : appUrl() },
     })
     setSending(false)
     if (err) setError(err.message)
@@ -36,8 +37,15 @@ const LoginPage = () => {
     <IonPage>
       <IonContent className="ion-padding">
         <div className="login">
-          <h1>Wayfolio</h1>
-          <p className="login__claim">Nehmt eure Liebsten mit auf die Reise.</p>
+          <a className="login__back" href={import.meta.env.BASE_URL}>
+            ← Wayfolio
+          </a>
+          <h1>{invite ? 'Du bist eingeladen' : 'Anmelden'}</h1>
+          <p className="login__claim">
+            {invite
+              ? 'Melde dich mit deiner E-Mail an, um bei der Reise mitzuschreiben.'
+              : 'Nehmt eure Liebsten mit auf die Reise.'}
+          </p>
 
           {sent ? (
             <IonText>

@@ -312,6 +312,8 @@ export interface FeedPost {
   published_at: string
   story_expires_at: string | null
   place_name: string | null
+  /** wer den Beitrag erfasst hat (nur in der Ansicht der Reisenden) */
+  author_name?: string | null
   blocks: FeedBlock[]
   poll: FeedPoll | null
   reactions: Record<string, number>
@@ -339,6 +341,7 @@ interface RawPost {
   title: string | null
   published_at: string
   story_expires_at: string | null
+  author: { display_name: string | null } | null
   checkin: { place_name: string | null } | null
   post_blocks: { position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string } | null }[]
   polls: RawPoll | RawPoll[] | null
@@ -360,6 +363,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
     .from('posts')
     .select(
       `id, kind, title, published_at, story_expires_at,
+       author:profiles(display_name),
        checkin:checkins(place_name),
        post_blocks!post_blocks_post_id_fkey(position, kind, text_content, url, media(storage_path)),
        polls(id, question, description, closes_at, status, chosen_option_id, decision_text, poll_options!poll_options_poll_id_fkey(id, position, label), votes(option_id)),
@@ -391,6 +395,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
       published_at: p.published_at,
       story_expires_at: p.story_expires_at,
       place_name: p.checkin?.place_name ?? null,
+      author_name: p.author?.display_name ?? null,
       blocks: [...p.post_blocks]
         .sort((a, b) => a.position - b.position)
         .map((b) => ({

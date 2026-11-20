@@ -37,7 +37,7 @@ export const getPosition = (): Promise<Position> =>
 export const reverseGeocode = async ({ lat, lon }: Position): Promise<Place> => {
   const fallback: Place = { name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, countryCode: null }
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=de&lat=${lat}&lon=${lon}`
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=de,en&lat=${lat}&lon=${lon}`
     const res = await fetch(url, { headers: { Accept: 'application/json' } })
     if (!res.ok) return fallback
     const data = (await res.json()) as {

@@ -19,7 +19,7 @@ import {
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { logOutOutline, shareSocialOutline } from 'ionicons/icons'
+import { shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useState } from 'react'
 
 import PostCard from '../components/PostCard'
@@ -38,7 +38,7 @@ import {
 import './FeedPage.css'
 
 const FeedPage = () => {
-  const { session, signOut } = useAuth()
+  const { session } = useAuth()
   const { trip } = useTrip()
   const [presentToast] = useIonToast()
   const [presentSheet] = useIonActionSheet()
@@ -126,9 +126,6 @@ const FeedPage = () => {
           <IonButtons slot="end">
             <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
               <IonIcon slot="icon-only" icon={shareSocialOutline} />
-            </IonButton>
-            <IonButton onClick={signOut} aria-label="Abmelden">
-              <IonIcon slot="icon-only" icon={logOutOutline} />
             </IonButton>
           </IonButtons>
         </IonToolbar>

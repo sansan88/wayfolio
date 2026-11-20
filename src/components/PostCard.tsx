@@ -169,6 +169,7 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
           )}
           <span>{formatTime(post.published_at)}</span>
           {post.place_name && post.kind !== 'route_update' && <span>· {post.place_name.split(',')[0]}</span>}
+          {mode === 'owner' && post.author_name && <span>· von {post.author_name}</span>}
         </IonCardSubtitle>
         <IonCardTitle>{post.title ?? post.place_name ?? 'Update'}</IonCardTitle>
       </IonCardHeader>

@@ -14,3 +14,10 @@
   margin-bottom: 32px;
   color: var(--ion-color-medium);
 }
+
+.login__back {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: var(--ion-color-medium);
+  text-decoration: none;
+}
