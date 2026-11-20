@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build (Vite / Ionic)
+dist/
+www/
+coverage/
+
+# Capacitor native projects (generated web assets, CocoaPods)
+ios/App/App/public/
+ios/App/Pods/
+ios/App/output/
+android/app/src/main/assets/public/
+android/.gradle/
+android/build/
+android/app/build/
+
+# Environment
+.env
+.env*.local
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Hosting
+.vercel/
+.netlify/
+
+# TypeScript
+*.tsbuildinfo
