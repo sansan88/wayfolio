@@ -14,11 +14,13 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/react'
-import { locate } from 'ionicons/icons'
+import { locate, timeOutline } from 'ionicons/icons'
 import { lazy, Suspense, useEffect, useState } from 'react'
 
 import { getPosition, reverseGeocode, searchPlaces, type Place, type Position, type SearchResult } from '../lib/location'
+import { formatWhen } from '../lib/datetime'
 import { useCardPresenter } from '../lib/modal'
+import DateTimeSheet from './DateTimeSheet'
 
 const PickerMap = lazy(() => import('./PickerMap'))
 
@@ -26,11 +28,15 @@ interface Props {
   isOpen: boolean
   initial: Position | null
   onClose: () => void
-  onPick: (position: Position, place: Place, source: 'gps' | 'manual') => void
+  /** Standort erfassen: zusätzlich Zeitpunkt wählen (rückwirkend) */
+  withTime?: boolean
+  /** vorbelegter Zeitpunkt, null = jetzt */
+  at?: Date | null
+  onPick: (position: Position, place: Place, source: 'gps' | 'manual', at: Date | null) => void
 }
 
 /** Ort per GPS oder manuell: Karte verschieben, bis der Pin stimmt, oder einen Ort suchen. */
-const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
+const LocationPicker = ({ isOpen, initial, withTime = false, at = null, onClose, onPick }: Props) => {
   const presenter = useCardPresenter(isOpen)
   const [center, setCenter] = useState<{ lat: number; lon: number }>(initial ?? { lat: 46.8, lon: 8.23 })
   const [flyTo, setFlyTo] = useState<{ lat: number; lon: number; key: number }>()
@@ -40,6 +46,8 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [chosen, setChosen] = useState<SearchResult | null>(null)
+  const [when, setWhen] = useState<Date | null>(at)
+  const [choosingTime, setChoosingTime] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -48,7 +56,9 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
       setResults([])
       setError(null)
       setChosen(null)
+      setWhen(at)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initial])
 
   // Ortssuche mit kurzer Verzögerung (Nominatim: max. 1 Anfrage pro Sekunde)
@@ -56,7 +66,8 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
     if (query.trim().length < 3) return setResults([])
     setSearching(true)
     const t = setTimeout(() => {
-      searchPlaces(query)
+      // Nähe nur bevorzugen, wenn die Karte schon bei der Reise ist (nicht beim Standard-Ausschnitt)
+      searchPlaces(query, initial ? center : undefined)
         .then(setResults)
         .finally(() => setSearching(false))
     }, 700)
@@ -68,7 +79,7 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
     setError(null)
     try {
       const pos = await getPosition()
-      onPick(pos, await reverseGeocode(pos), 'gps')
+      onPick(pos, await reverseGeocode(pos), 'gps', when)
       onClose()
     } catch (e) {
       setError((e as Error).message)
@@ -84,7 +95,7 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
     const place = chosen
       ? { name: `${chosen.name}, ${chosen.detail.split(',').at(-1)!.trim()}`, countryCode: null }
       : await reverseGeocode(pos)
-    onPick(pos, place, 'manual')
+    onPick(pos, place, 'manual', when)
     setBusy(false)
     onClose()
   }
@@ -96,16 +107,25 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
           <IonButtons slot="start">
             <IonButton onClick={onClose}>Abbrechen</IonButton>
           </IonButtons>
-          <IonTitle>Ort wählen</IonTitle>
+          <IonTitle>{withTime ? 'Standort erfassen' : 'Ort wählen'}</IonTitle>
           <IonButtons slot="end">
             <IonButton strong disabled={busy} onClick={() => void confirm()}>
-              {busy ? <IonSpinner name="dots" /> : 'Übernehmen'}
+              {busy ? <IonSpinner name="dots" /> : withTime ? 'Erfassen' : 'Übernehmen'}
             </IonButton>
           </IonButtons>
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar placeholder="Ort suchen" value={query} debounce={0} onIonInput={(e) => setQuery(String(e.detail.value ?? ''))} />
         </IonToolbar>
+        {withTime && (
+          <IonToolbar>
+            <IonItem button detail lines="none" className="picker__when" onClick={() => setChoosingTime(true)}>
+              <IonIcon slot="start" icon={timeOutline} color={when ? 'warning' : 'primary'} />
+              <IonLabel>Zeitpunkt</IonLabel>
+              <IonNote slot="end">{formatWhen(when)}</IonNote>
+            </IonItem>
+          </IonToolbar>
+        )}
       </IonHeader>
       <IonContent scrollY={false}>
         {results.length > 0 || searching ? (
@@ -154,6 +174,7 @@ const LocationPicker = ({ isOpen, initial, onClose, onPick }: Props) => {
             <IonNote className="picker-map__hint">Karte verschieben, bis der Pin stimmt</IonNote>
           </div>
         </div>
+        <DateTimeSheet isOpen={choosingTime} value={when} onClose={() => setChoosingTime(false)} onChange={setWhen} />
       </IonContent>
     </IonModal>
   )

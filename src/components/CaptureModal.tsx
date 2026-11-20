@@ -73,6 +73,7 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
   const [recording, setRecording] = useState(false)
   const [picking, setPicking] = useState(false)
   const [choosingTime, setChoosingTime] = useState(false)
+  const [checkingIn, setCheckingIn] = useState(false)
 
   const locateMe = useCallback(async () => {
     setLocError(null)
@@ -118,20 +119,9 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
 
   const handleAction = async (id: ActionId | 'post') => {
     switch (id) {
-      case 'location': {
-        // Manuell gesetzter Ort hat Vorrang; sonst frische GPS-Position
-        const fresh = source === 'manual' && position && place ? { pos: position, p: place } : await locateMe()
-        if (!fresh) {
-          toast('Kein GPS – setze den Ort oben manuell auf der Karte.', 'danger')
-          return setPicking(true)
-        }
-        await run(
-          'Standort und Routenbild …',
-          (c) => createLocationUpdate({ ...c, position: fresh.pos, place: fresh.p }),
-          `Standort gesetzt: ${fresh.p.name}`,
-        )
-        return
-      }
+      case 'location':
+        // Ort (GPS, Suche oder Pin) und Zeitpunkt in einem Schritt – auch rückwirkend
+        return setCheckingIn(true)
       case 'photo':
         return photoInput.current?.click()
       case 'video':
@@ -250,7 +240,23 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
           isOpen={picking}
           initial={position}
           onClose={() => setPicking(false)}
-          onPick={setLocation}
+          onPick={(pos, p, src) => setLocation(pos, p, src)}
+        />
+        <LocationPicker
+          isOpen={checkingIn}
+          initial={position}
+          withTime
+          at={at}
+          onClose={() => setCheckingIn(false)}
+          onPick={(pos, p, src, when) => {
+            setLocation(pos, p, src)
+            setAt(when)
+            void run(
+              'Standort und Routenbild …',
+              (c) => createLocationUpdate({ ...c, position: pos, place: p, at: when }),
+              `Standort gesetzt: ${p.name}${when ? ` · ${formatWhen(when)}` : ''}`,
+            )
+          }}
         />
         <DateTimeSheet isOpen={choosingTime} value={at} onClose={() => setChoosingTime(false)} onChange={setAt} />
         <VoiceRecorder

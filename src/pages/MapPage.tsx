@@ -41,14 +41,14 @@ const MapPage = () => {
   )
 
   /** Neuen Standort setzen (GPS oder Pin) → Route-Update mit Routenbild im Feed. */
-  const addLocation = async (pos: Position, place: Place, source: 'gps' | 'manual') => {
+  const addLocation = async (pos: Position, place: Place, source: 'gps' | 'manual', when: Date | null) => {
     if (!trip || !session) return
     setLocation(pos, place, source)
     setBusy(true)
     try {
-      await createLocationUpdate({ tripId: trip.id, userId: session.user.id, position: pos, place, at })
+      await createLocationUpdate({ tripId: trip.id, userId: session.user.id, position: pos, place, at: when })
       presentToast({
-        message: `Standort gesetzt: ${place.name}${at ? ` · ${formatWhen(at)}` : ''}`,
+        message: `Standort gesetzt: ${place.name}${when ? ` · ${formatWhen(when)}` : ''}`,
         duration: 2500,
         position: 'top',
         color: 'success',
@@ -92,8 +92,10 @@ const MapPage = () => {
         <LocationPicker
           isOpen={picking}
           initial={pickerStart}
+          withTime
+          at={at}
           onClose={() => setPicking(false)}
-          onPick={(pos, place, source) => void addLocation(pos, place, source)}
+          onPick={(pos, place, source, when) => void addLocation(pos, place, source, when)}
         />
         <IonLoading isOpen={busy} message="Standort und Routenbild …" />
       </IonContent>

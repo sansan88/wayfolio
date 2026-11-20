@@ -116,18 +116,37 @@ export interface SearchResult {
 }
 
 /** Ortssuche per OpenStreetMap Nominatim (für das manuelle Setzen des Pins). */
-export const searchPlaces = async (query: string): Promise<SearchResult[]> => {
+/** Grobe Distanz in km (für die Sortierung der Suchtreffer). */
+const roughKm = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
+  const r = Math.PI / 180
+  const x = (b.lon - a.lon) * r * Math.cos(((a.lat + b.lat) / 2) * r)
+  const y = (b.lat - a.lat) * r
+  return Math.sqrt(x * x + y * y) * 6371
+}
+
+/**
+ * Ortssuche; Treffer in der Nähe der aktuellen Karte (z.B. dem Reiseland) zuerst –
+ * sonst landet «Tekapo» schnell in den USA statt in Neuseeland.
+ */
+export const searchPlaces = async (query: string, near?: { lat: number; lon: number }): Promise<SearchResult[]> => {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=de,en&q=${encodeURIComponent(query)}`
+    const bias = near
+      ? `&viewbox=${near.lon - 8},${near.lat + 8},${near.lon + 8},${near.lat - 8}`
+      : ''
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&accept-language=de,en${bias}&q=${encodeURIComponent(query)}`
     const res = await nominatim(url)
     if (!res.ok) return []
     const data = (await res.json()) as { name?: string; display_name: string; lat: string; lon: string }[]
-    return data.map((d) => ({
+    const results = data.map((d) => ({
       name: d.name || d.display_name.split(',')[0],
       detail: d.display_name,
       lat: Number(d.lat),
       lon: Number(d.lon),
     }))
+    if (!near) return results
+    // Treffer im Umkreis von 2000 km nach vorne, Reihenfolge sonst beibehalten
+    const close = results.filter((r) => roughKm(near, r) < 2000)
+    return [...close, ...results.filter((r) => !close.includes(r))]
   } catch {
     return []
   }

@@ -111,3 +111,8 @@ ion-fab-button {
   justify-content: center;
   pointer-events: none;
 }
+
+.picker__when {
+  --background: transparent;
+  --min-height: 40px;
+}
