@@ -392,7 +392,7 @@ create policy "plan_subscriptions: eigene lesen" on public.plan_subscriptions
 
 -- Reisen
 create policy "trips: Mitglieder lesen" on public.trips
-  for select to authenticated using (public.is_trip_member(id));
+  for select to authenticated using (owner_id = (select auth.uid()) or public.is_trip_member(id));
 create policy "trips: selbst anlegen" on public.trips
   for insert to authenticated with check (owner_id = (select auth.uid()));
 create policy "trips: Mitglieder ändern" on public.trips

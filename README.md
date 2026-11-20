@@ -56,7 +56,7 @@ capacitor.config.ts    Vorbereitung iOS-App (Phase 3)
 
 ## Datenbank
 
-Das Schema liegt in `supabase/migrations/`. Reisende haben ein Konto, Follower nicht: Sie greifen nur über Edge Functions zu, die den Secret Link prüfen. Deshalb gibt es keine Policies für die Rolle `anon`.
+Supabase-Projekt: `fmafhdivuooqfixoozmi` (Region Zürich, eu-central-2). Alle Migrationen in `supabase/migrations/` sind dort eingespielt. Hilfsfunktionen für die Zugriffsregeln liegen im nicht exponierten Schema `private`. Reisende haben ein Konto, Follower nicht: Sie greifen nur über Edge Functions zu, die den Secret Link prüfen. Deshalb gibt es keine Policies für die Rolle `anon`.
 
 ## Status
 

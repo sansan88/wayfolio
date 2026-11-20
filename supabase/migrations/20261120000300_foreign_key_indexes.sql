@@ -1,0 +1,19 @@
+-- Indizes für Fremdschlüssel (Supabase-Linter 0001): schnellere Joins und Löschungen.
+create index if not exists checkins_author_idx on public.checkins (author_id);
+create index if not exists follower_subscriptions_trip_idx on public.follower_subscriptions (trip_id);
+create index if not exists media_uploaded_by_idx on public.media (uploaded_by);
+create index if not exists plan_subscriptions_trip_idx on public.plan_subscriptions (trip_id);
+create index if not exists poll_options_media_idx on public.poll_options (media_id);
+create index if not exists polls_chosen_option_idx on public.polls (chosen_option_id);
+create index if not exists polls_decision_media_idx on public.polls (decision_media_id);
+create index if not exists post_blocks_media_idx on public.post_blocks (media_id);
+create index if not exists post_blocks_ref_post_idx on public.post_blocks (ref_post_id);
+create index if not exists posts_author_idx on public.posts (author_id);
+create index if not exists posts_checkin_idx on public.posts (checkin_id);
+create index if not exists reactions_follower_idx on public.reactions (follower_id);
+create index if not exists replies_author_profile_idx on public.replies (author_profile_id);
+create index if not exists replies_follower_idx on public.replies (follower_id);
+create index if not exists replies_parent_idx on public.replies (parent_reply_id);
+create index if not exists trips_cover_media_idx on public.trips (cover_media_id);
+create index if not exists votes_follower_idx on public.votes (follower_id);
+create index if not exists votes_option_idx on public.votes (option_id);
