@@ -20,7 +20,6 @@ import {
   IonSegmentButton,
   IonSelect,
   IonSelectOption,
-  IonSpinner,
   IonText,
   IonTitle,
   IonToolbar,
@@ -35,6 +34,7 @@ import { useCardPresenter } from '../lib/modal'
 import type { FeedPost } from '../lib/updates'
 import './FeedPage.css'
 import './LoginPage.css'
+import PageSpinner from '../components/PageSpinner'
 
 const RouteMap = lazy(() => import('../components/RouteMap'))
 
@@ -125,8 +125,8 @@ const FollowerPage = ({ token }: { token: string }) => {
   if (!data)
     return (
       <IonPage>
-        <IonContent className="ion-text-center">
-          <IonSpinner style={{ marginTop: '40vh' }} />
+        <IonContent>
+          <PageSpinner />
         </IonContent>
       </IonPage>
     )

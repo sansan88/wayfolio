@@ -69,3 +69,15 @@ Phase 0: Grundgerüst. Das vollständige Produktkonzept liegt separat vor.
 ## Server-Funktion
 
 `supabase/functions/follower-api` – Zugang für Follower ohne Konto (Feed, Reaktionen, Antworten, Abstimmen, Newsletter-Anmeldung). Prüft den Secret Link selbst, deshalb ohne JWT-Prüfung deployt (`verify_jwt = false`).
+
+### iOS-App: Standort (Capacitor Geolocation)
+
+Der Standort läuft über `@capacitor/geolocation` (im Browser über `navigator.geolocation`, in der App über CoreLocation).
+Nach `npx cap add ios` in `ios/App/App/Info.plist` ergänzen:
+
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Wayfolio setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>Wayfolio setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
+```

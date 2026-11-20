@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core'
+import { Geolocation } from '@capacitor/geolocation'
+
 export interface Position {
   lat: number
   lon: number
@@ -9,26 +12,58 @@ export interface Place {
   countryCode: string | null
 }
 
-/** Aktuelle Position aus dem Browser (später Capacitor Geolocation in der iOS-App). */
-export const getPosition = (): Promise<Position> =>
-  new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) {
-      reject(new Error('Dieses Gerät kann keinen Standort ermitteln.'))
-      return
+const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+/** Verständliche Meldung je nach Fehler und Plattform. */
+const locationError = (err: unknown): Error => {
+  const code = (err as { code?: number | string })?.code
+  const message = String((err as { message?: string })?.message ?? '')
+  const denied = code === 1 || code === 'OS-PLUG-GLOC-0003' || /denied|permission/i.test(message)
+  if (denied) {
+    if (Capacitor.isNativePlatform())
+      return new Error('Standortzugriff ist nicht erlaubt. Bitte in den Einstellungen › Wayfolio › Standort «Beim Verwenden der App» wählen.')
+    if (isIos())
+      return new Error(
+        'Standortzugriff ist nicht erlaubt. iPhone: Einstellungen › Datenschutz & Sicherheit › Ortungsdienste › Safari-Websites › «Beim Verwenden der App», danach in Safari über «aA» › Website-Einstellungen › Standort «Erlauben». Oder den Ort manuell setzen.',
+      )
+    return new Error('Standortzugriff ist nicht erlaubt. Bitte im Browser für diese Seite erlauben oder den Ort manuell setzen.')
+  }
+  if (code === 3 || /timeout/i.test(message)) return new Error('Kein GPS-Signal (Zeitüberschreitung). Bitte draussen erneut versuchen oder den Ort manuell setzen.')
+  return new Error('Standort konnte nicht ermittelt werden. Bitte Ortungsdienste prüfen oder den Ort manuell setzen.')
+}
+
+const toPosition = (p: { coords: { latitude: number; longitude: number; accuracy: number } }): Position => ({
+  lat: p.coords.latitude,
+  lon: p.coords.longitude,
+  accuracy: p.coords.accuracy,
+})
+
+/**
+ * Aktuelle Position über das Capacitor-Geolocation-Plugin: nativ in der iOS-App (CoreLocation),
+ * im Browser über navigator.geolocation. Erst genau (GPS), bei Zeitüberschreitung ungenauer
+ * (WLAN/Mobilfunk, auch eine bis 5 Minuten alte Position) – drinnen hat iOS oft lange keinen GPS-Fix.
+ */
+export const getPosition = async (): Promise<Position> => {
+  if (!Capacitor.isNativePlatform()) {
+    if (!('geolocation' in navigator)) throw new Error('Dieses Gerät oder dieser Browser kann keinen Standort ermitteln.')
+    if (!window.isSecureContext) throw new Error('Standort geht nur über https.')
+  } else {
+    let status = await Geolocation.checkPermissions()
+    if (status.location === 'prompt' || status.location === 'prompt-with-rationale') status = await Geolocation.requestPermissions()
+    if (status.location === 'denied') throw locationError({ code: 1 })
+  }
+  try {
+    return toPosition(await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }))
+  } catch (err) {
+    const e = locationError(err)
+    if (e.message.startsWith('Standortzugriff')) throw e
+    try {
+      return toPosition(await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }))
+    } catch (err2) {
+      throw locationError(err2)
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-      (err) =>
-        reject(
-          new Error(
-            err.code === err.PERMISSION_DENIED
-              ? 'Standortzugriff wurde nicht erlaubt.'
-              : 'Standort konnte nicht ermittelt werden.',
-          ),
-        ),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-    )
-  })
+  }
+}
 
 /** Nominatim erlaubt ca. 1 Anfrage/Sekunde: bei 429 einmal kurz warten und erneut versuchen. */
 const nominatim = async (url: string): Promise<Response> => {

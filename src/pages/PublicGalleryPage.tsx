@@ -1,4 +1,4 @@
-import { IonContent, IonNote, IonPage, IonSpinner, IonText } from '@ionic/react'
+import { IonContent, IonNote, IonPage, IonText } from '@ionic/react'
 import { useEffect, useState } from 'react'
 
 import { LargeTitle, PageHeader } from '../components/PageHeader'
@@ -6,6 +6,7 @@ import GalleryGrid from '../components/GalleryGrid'
 import { galleryApi } from '../lib/follower'
 import type { GalleryDay } from '../lib/gallery'
 import './LoginPage.css'
+import PageSpinner from '../components/PageSpinner'
 
 /** Galerie für Familie per eigenem Link – ohne Konto, mit Download. */
 const PublicGalleryPage = ({ token }: { token: string }) => {
@@ -41,9 +42,7 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
       <IonContent fullscreen>
         <LargeTitle title={data ? data.trip.title : 'Galerie'} />
         {!data ? (
-          <div className="ion-text-center">
-            <IonSpinner style={{ marginTop: '40vh' }} />
-          </div>
+          <PageSpinner />
         ) : (
           <>
             {data.days.length === 0 && <p className="ion-padding">Noch keine Fotos.</p>}

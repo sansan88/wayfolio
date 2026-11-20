@@ -101,3 +101,13 @@ ion-title.title-large .toolbar-title {
 ion-fab-button {
   --box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
 }
+
+/* Ladeanzeige zentriert (Flex statt text-align, das in ion-content nicht greift) */
+.page-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}

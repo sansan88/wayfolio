@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@capacitor/core": "^8.6.2",
+    "@capacitor/geolocation": "^8.2.5",
     "@ionic/react": "^9.0.12",
     "@ionic/react-router": "^9.0.12",
     "@supabase/supabase-js": "^2.119.2",

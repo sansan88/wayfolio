@@ -209,6 +209,14 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
             {at && <IonNote slot="end">rückdatiert</IonNote>}
           </IonItem>
         </IonList>
+        {locError && source === 'gps' && (
+          <div className="capture__locerror">
+            {locError}{' '}
+            <button type="button" onClick={() => void locateMe()}>
+              Erneut versuchen
+            </button>
+          </div>
+        )}
 
         <div className="capture__tiles">
           <button type="button" className="tile tile--wide" onClick={() => void handleAction('post')}>

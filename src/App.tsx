@@ -5,7 +5,6 @@ import {
   IonLabel,
   IonPage,
   IonRouterOutlet,
-  IonSpinner,
   IonTabBar,
   IonTabButton,
   IonTabs,
@@ -27,6 +26,7 @@ import GalleryPage from './pages/GalleryPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
 import TripSettingsPage from './pages/TripSettingsPage'
+import PageSpinner from './components/PageSpinner'
 
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -47,8 +47,8 @@ const legalPage = path.startsWith('/impressum') ? 'impressum' : path.startsWith(
 
 const Loading = () => (
   <IonPage>
-    <IonContent className="ion-padding ion-text-center">
-      <IonSpinner style={{ marginTop: '40vh' }} />
+    <IonContent>
+      <PageSpinner />
     </IonContent>
   </IonPage>
 )

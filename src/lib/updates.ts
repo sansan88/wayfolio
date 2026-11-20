@@ -68,8 +68,9 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind): Pr
       kind,
       storage_path: path,
       taken_at: meta.takenAt?.toISOString() ?? when(ctx),
-      taken_location: meta.position ? toWkt(meta.position) : null,
-      taken_place: meta.position ? (await reverseGeocode(meta.position)).name : null,
+      // Ort aus den Foto-Metadaten, sonst der beim Erfassen gewählte Ort (GPS oder Pin)
+      taken_location: meta.position ? toWkt(meta.position) : ctx.position ? toWkt(ctx.position) : null,
+      taken_place: meta.position ? (await reverseGeocode(meta.position)).name : (ctx.place?.name ?? null),
     })
     .select('id')
     .single()
