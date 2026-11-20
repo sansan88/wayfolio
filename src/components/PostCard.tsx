@@ -39,21 +39,34 @@ interface Props {
   onHideReply?: (replyId: string) => void
   /** Menü «Bearbeiten / Löschen» (nur Reisende) */
   onMenu?: (post: FeedPost) => void
+  /** Reisetag für die Kopfzeile */
+  day?: number | null
 }
 
 /** Ein Beitrag im Feed – für Reisende und Follower. */
-export const MediaBlocks = ({ post }: { post: FeedPost }) => (
+export const MediaBlocks = ({ post, route = false }: { post: FeedPost; route?: boolean }) => (
   <>
-    {post.blocks.map((b) => {
-      if (b.kind === 'photo' && b.mediaUrl) return <img key={b.position} className="post__media" src={b.mediaUrl} alt="" />
+    {post.blocks
+      .filter((b) => !!b.route === route)
+      .map((b) => {
+      if (b.kind === 'photo' && b.mediaUrl)
+        return <img key={b.position} className={route ? 'post__media post__route' : 'post__media'} src={b.mediaUrl} alt={route ? 'Routenkarte' : ''} />
       if (b.kind === 'video' && b.mediaUrl)
         return <video key={b.position} className="post__media" src={b.mediaUrl} controls playsInline preload="metadata" />
       if (b.kind === 'audio' && b.mediaUrl)
         return <audio key={b.position} className="post__audio" src={b.mediaUrl} controls preload="metadata" />
       return null
-    })}
+      })}
   </>
 )
+
+/** Reisetag ab Start der Reise (1 = erster Tag). */
+export const dayNumber = (iso: string, start: string | null | undefined) => {
+  if (!start) return null
+  const d = (x: string) => new Date(new Date(x).toLocaleDateString('sv-SE') + 'T00:00').getTime()
+  const n = Math.round((d(iso) - d(start)) / 86400000) + 1
+  return n >= 1 ? n : null
+}
 
 const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode' | 'onVote' | 'onResolve'>) => {
   const poll = post.poll!
@@ -140,7 +153,7 @@ const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode'
   )
 }
 
-const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply, onMenu }: Props) => {
+const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply, onMenu, day }: Props) => {
   const [reply, setReply] = useState('')
   const [privateReply, setPrivateReply] = useState(false)
   const [sending, setSending] = useState(false)
@@ -162,6 +175,7 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
   return (
     <IonCard className={`post post--${post.kind}`}>
       {post.kind !== 'poll' && <MediaBlocks post={post} />}
+      {post.kind === 'route_update' && <MediaBlocks post={post} route />}
       <IonCardHeader className="post__header">
         {onMenu && (
           <button type="button" className="post__menu" onClick={() => onMenu(post)} aria-label="Beitrag bearbeiten oder löschen">
@@ -174,8 +188,13 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
               <IonIcon icon={label.icon} aria-hidden="true" /> {label.label}
             </span>
           )}
+          {day && <span className="post__day">Tag {day}</span>}
           <span>{formatTime(post.published_at)}</span>
-          {post.place_name && post.kind !== 'route_update' && <span>· {post.place_name.split(',')[0]}</span>}
+          {post.place_name && post.kind !== 'route_update' && (
+            <span className="post__place">
+              <IonIcon icon={location} aria-hidden="true" /> {post.place_name.split(',')[0]}
+            </span>
+          )}
           {mode === 'owner' && post.author_name && <span>· von {post.author_name}</span>}
         </IonCardSubtitle>
         <IonCardTitle>{post.title ?? post.place_name ?? 'Update'}</IonCardTitle>
@@ -194,6 +213,7 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
         </IonCardContent>
       ))}
       {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}
+      {post.kind !== 'route_update' && <MediaBlocks post={post} route />}
 
       <div className="post__reactions">
         {EMOJIS.map((e) => {

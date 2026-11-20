@@ -29,7 +29,9 @@ const locationError = (err: unknown): Error => {
     return new Error('Standortzugriff ist nicht erlaubt. Bitte im Browser für diese Seite erlauben oder den Ort manuell setzen.')
   }
   if (code === 3 || /timeout/i.test(message)) return new Error('Kein GPS-Signal (Zeitüberschreitung). Bitte draussen erneut versuchen oder den Ort manuell setzen.')
-  return new Error('Standort konnte nicht ermittelt werden. Bitte Ortungsdienste prüfen oder den Ort manuell setzen.')
+  return new Error(
+    `Standort konnte nicht ermittelt werden${code ? ` (Code ${code})` : ''}. Bitte Ortungsdienste und «Genauer Standort» prüfen oder den Ort manuell setzen.`,
+  )
 }
 
 const toPosition = (p: { coords: { latitude: number; longitude: number; accuracy: number } }): Position => ({
@@ -39,11 +41,21 @@ const toPosition = (p: { coords: { latitude: number; longitude: number; accuracy
 })
 
 /**
- * Aktuelle Position über das Capacitor-Geolocation-Plugin: nativ in der iOS-App (CoreLocation),
- * im Browser über navigator.geolocation. Erst genau (GPS), bei Zeitüberschreitung ungenauer
- * (WLAN/Mobilfunk, auch eine bis 5 Minuten alte Position) – drinnen hat iOS oft lange keinen GPS-Fix.
+ * Aktuelle Position über das Capacitor-Geolocation-Plugin (nativ CoreLocation, im Web navigator.geolocation).
+ * iOS liefert bei Einzelabfragen oft vorübergehend «Position unbekannt» (Code 2) – deshalb beobachten wir
+ * die Position kurz (watchPosition), nehmen den ersten genauen Fix bzw. nach 8 s den besten bisherigen
+ * und brechen erst nach 25 s ohne jeden Fix ab. Gleichzeitige Abfragen teilen sich eine Messung.
  */
-export const getPosition = async (): Promise<Position> => {
+let pending: Promise<Position> | null = null
+
+export const getPosition = (): Promise<Position> => {
+  pending ??= locate().finally(() => {
+    pending = null
+  })
+  return pending
+}
+
+const locate = async (): Promise<Position> => {
   if (!Capacitor.isNativePlatform()) {
     if (!('geolocation' in navigator)) throw new Error('Dieses Gerät oder dieser Browser kann keinen Standort ermitteln.')
     if (!window.isSecureContext) throw new Error('Standort geht nur über https.')
@@ -52,17 +64,44 @@ export const getPosition = async (): Promise<Position> => {
     if (status.location === 'prompt' || status.location === 'prompt-with-rationale') status = await Geolocation.requestPermissions()
     if (status.location === 'denied') throw locationError({ code: 1 })
   }
-  try {
-    return toPosition(await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }))
-  } catch (err) {
-    const e = locationError(err)
-    if (e.message.startsWith('Standortzugriff')) throw e
-    try {
-      return toPosition(await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }))
-    } catch (err2) {
-      throw locationError(err2)
+
+  return new Promise<Position>((resolve, reject) => {
+    let best: Position | null = null
+    let lastError: unknown = null
+    let watchId: string | null = null
+    let done = false
+
+    const finish = (result: () => void) => {
+      if (done) return
+      done = true
+      clearTimeout(soft)
+      clearTimeout(hard)
+      if (watchId) void Geolocation.clearWatch({ id: watchId })
+      result()
     }
-  }
+    const soft = setTimeout(() => best && finish(() => resolve(best!)), 8000)
+    const hard = setTimeout(
+      () => finish(() => (best ? resolve(best) : reject(locationError(lastError ?? { code: 3 })))),
+      25000,
+    )
+
+    Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 25000, maximumAge: 60000 }, (pos, err) => {
+      if (err || !pos) {
+        lastError = err
+        const e = locationError(err)
+        if (e.message.startsWith('Standortzugriff')) finish(() => reject(e))
+        return // Code 2/3: weiter warten, iOS liefert oft kurz danach einen Fix
+      }
+      const p = toPosition(pos)
+      if (!best || p.accuracy < best.accuracy) best = p
+      if (p.accuracy <= 150) finish(() => resolve(p))
+    })
+      .then((id) => {
+        watchId = id
+        if (done) void Geolocation.clearWatch({ id })
+      })
+      .catch((err) => finish(() => reject(locationError(err))))
+  })
 }
 
 /** Nominatim erlaubt ca. 1 Anfrage/Sekunde: bei 429 einmal kurz warten und erneut versuchen. */

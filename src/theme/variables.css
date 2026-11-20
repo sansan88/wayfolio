@@ -116,3 +116,24 @@ ion-fab-button {
   --background: transparent;
   --min-height: 40px;
 }
+
+/* Foto-Marker auf der Karte (Fussabdrücke) */
+.map-photo {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background-color: var(--ion-color-primary);
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.compose__value {
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

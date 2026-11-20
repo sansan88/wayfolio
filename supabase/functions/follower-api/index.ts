@@ -95,8 +95,8 @@ const feed = async (link: Link, device: unknown) => {
       .from('posts')
       .select(
         `id, kind, title, published_at, story_expires_at, replies_enabled,
-         checkin:checkins(place_name),
-         post_blocks!post_blocks_post_id_fkey(position, kind, text_content, url, media(storage_path)),
+         checkin:checkins(id, place_name),
+         post_blocks!post_blocks_post_id_fkey(position, kind, text_content, url, media(storage_path, variants)),
          polls(id, question, description, closes_at, status, chosen_option_id, decision_text, poll_options!poll_options_poll_id_fkey(id, position, label), votes(option_id, follower_id)),
          reactions(emoji, follower_id),
          replies(id, body, visibility, hidden_at, created_at, follower_id, author_profile_id, follower:followers(display_name))`,
@@ -158,6 +158,8 @@ const feed = async (link: Link, device: unknown) => {
       story_expires_at: p.story_expires_at,
       // Ortsname erst nach Ablauf der Verzögerung
       place_name: Date.parse(p.published_at) <= cutoff ? (p.checkin?.place_name ?? null) : null,
+      // Verknüpfung zum Routenpunkt (Karte) ebenfalls erst nach der Verzögerung
+      checkin_id: Date.parse(p.published_at) <= cutoff ? (p.checkin?.id ?? null) : null,
       replies_enabled: p.replies_enabled,
       blocks: [...p.post_blocks]
         .sort((a, b) => a.position - b.position)
@@ -167,6 +169,7 @@ const feed = async (link: Link, device: unknown) => {
           text: b.text_content,
           url: b.url,
           mediaUrl: b.media ? (urls.get(b.media.storage_path) ?? null) : null,
+          route: !!b.media?.variants?.route,
         })),
       poll,
       reactions,
@@ -215,13 +218,14 @@ const gallery = async (link: Link) => {
     supabase.from('trips').select('title').eq('id', link.trip_id).single(),
     supabase
       .from('media')
-      .select('id, kind, storage_path, taken_at, taken_place, created_at')
+      .select('id, kind, storage_path, taken_at, taken_place, created_at, variants')
       .eq('trip_id', link.trip_id)
       .in('kind', ['photo', 'video'])
       .order('taken_at', { ascending: false }),
     supabase.rpc('trip_checkins', { p_trip_id: link.trip_id }),
   ])
-  const rows = media ?? []
+  // Routenbilder gehören nicht in die Fotogalerie
+  const rows = (media ?? []).filter((m) => !(m.variants as { route?: boolean } | null)?.route)
   const paths = rows.map((m) => m.storage_path)
   const [view, download] = paths.length
     ? await Promise.all([

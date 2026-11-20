@@ -15,7 +15,7 @@ import {
   useIonToast,
 } from '@ionic/react'
 import { barChart, bookOutline, camera, create, locate, locationOutline, mic, timeOutline, videocam } from 'ionicons/icons'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ComposeModal, { type ComposeKind, type ComposeResult } from './ComposeModal'
 import DateTimeSheet from './DateTimeSheet'
@@ -74,6 +74,7 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
   const [picking, setPicking] = useState(false)
   const [choosingTime, setChoosingTime] = useState(false)
   const [checkingIn, setCheckingIn] = useState(false)
+  const composeInitial = useMemo(() => ({ at, place, position }), [at, place, position])
 
   const locateMe = useCallback(async () => {
     setLocError(null)
@@ -99,7 +100,7 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
     presentToast({ message, duration: 2500, position: 'top', color })
 
   const ctx = (): Context | null =>
-    trip && session ? { tripId: trip.id, userId: session.user.id, position, place, at } : null
+    trip && session ? { tripId: trip.id, userId: session.user.id, position, place, at, source } : null
 
   const run = async (label: string, task: (c: Context) => Promise<void>, done: string) => {
     const c = ctx()
@@ -150,14 +151,21 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
     )
   }
 
+  // Ort und Zeit aus dem Dialog übernehmen (dort gewählter Ort hat Vorrang vor Foto-GPS)
+  const fromCompose = (c: Context, r: ComposeResult): Context => ({
+    ...c,
+    at: r.at,
+    ...(r.location ? { position: r.location.position, place: r.location.place, source: 'manual' as const, lockPlace: true } : {}),
+  })
+
   const onCompose = async (kind: ComposeKind, r: ComposeResult) => {
     setCompose(null)
     if (kind === 'post')
-      await run('Beitrag wird veröffentlicht …', (c) => createFeedPost(c, r.title, r.text, r.files, r.link), 'Beitrag veröffentlicht')
+      await run('Beitrag wird veröffentlicht …', (c) => createFeedPost(fromCompose(c, r), r.title, r.text, r.files, r.link), 'Beitrag veröffentlicht')
     if (kind === 'background')
-      await run('Hintergrund-Story wird veröffentlicht …', (c) => createBackground(c, r.title, r.text, r.files), 'Hintergrund-Story veröffentlicht')
+      await run('Hintergrund-Story wird veröffentlicht …', (c) => createBackground(fromCompose(c, r), r.title, r.text, r.files), 'Hintergrund-Story veröffentlicht')
     if (kind === 'poll')
-      await run('Abstimmung wird gestartet …', (c) => createPoll(c, r.title, r.text, r.options, r.closesInHours), 'Abstimmung gestartet')
+      await run('Abstimmung wird gestartet …', (c) => createPoll(fromCompose(c, r), r.title, r.text, r.options, r.closesInHours), 'Abstimmung gestartet')
   }
 
   return (
@@ -233,6 +241,7 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
 
         <ComposeModal
           kind={compose}
+          initial={composeInitial}
           onCancel={() => setCompose(null)}
           onSubmit={(k, r) => void onCompose(k, r)}
         />

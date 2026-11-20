@@ -27,7 +27,7 @@ import {
 } from '@ionic/react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
-import PostCard from '../components/PostCard'
+import PostCard, { dayNumber } from '../components/PostCard'
 import StoryBar from '../components/StoryBar'
 import { followerApi, type FollowerFeed } from '../lib/follower'
 import { useCardPresenter } from '../lib/modal'
@@ -35,6 +35,8 @@ import type { FeedPost } from '../lib/updates'
 import './FeedPage.css'
 import './LoginPage.css'
 import PageSpinner from '../components/PageSpinner'
+import LocationSheet from '../components/LocationSheet'
+import type { RoutePoint } from '../lib/route'
 
 const RouteMap = lazy(() => import('../components/RouteMap'))
 
@@ -49,6 +51,7 @@ const FollowerPage = ({ token }: { token: string }) => {
   const [tab, setTab] = useState<'feed' | 'karte'>('feed')
   const [askName, setAskName] = useState(false)
   const namePresenter = useCardPresenter(askName)
+  const [selected, setSelected] = useState<RoutePoint | null>(null)
   const [name, setName] = useState('')
   const [pending, setPending] = useState<(() => Promise<unknown>) | null>(null)
   const [email, setEmail] = useState('')
@@ -139,6 +142,7 @@ const FollowerPage = ({ token }: { token: string }) => {
     <PostCard
       key={post.id}
       post={post}
+      day={dayNumber(post.published_at, data?.trip.starts_on ?? data?.posts.at(-1)?.published_at)}
       mode="follower"
       onReact={(postId, emoji) => void withName(() => api.react(postId, emoji))}
       onVote={(_pollId, optionId) => void withName(() => api.vote(optionId))}
@@ -150,6 +154,13 @@ const FollowerPage = ({ token }: { token: string }) => {
       }
     />
   )
+
+  // pro Ort das neueste Foto als Marker (ohne Routenbilder)
+  const photos: Record<string, string> = {}
+  for (const p of data.posts) {
+    const url = p.blocks.find((b) => b.kind === 'photo' && b.mediaUrl && !b.route)?.mediaUrl
+    if (p.checkin_id && url && !photos[p.checkin_id]) photos[p.checkin_id] = url
+  }
 
   const segment = (
     <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as 'feed' | 'karte')}>
@@ -181,7 +192,7 @@ const FollowerPage = ({ token }: { token: string }) => {
         )}
         {tab === 'karte' ? (
           <Suspense fallback={null}>
-            <RouteMap points={data.route} />
+            <RouteMap points={data.route} photos={photos} onSelect={setSelected} focus={selected} />
           </Suspense>
         ) : (
           <>
@@ -285,6 +296,15 @@ const FollowerPage = ({ token }: { token: string }) => {
             </IonNote>
           </IonContent>
         </IonModal>
+        <LocationSheet
+          point={selected}
+          points={data.route}
+          posts={data.posts}
+          start={data.trip.starts_on}
+          mode="follower"
+          onClose={() => setSelected(null)}
+          onNavigate={setSelected}
+        />
       </IonContent>
     </IonPage>
   )

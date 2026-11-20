@@ -34,8 +34,20 @@ export const readPhotoMeta = async (file: Blob): Promise<PhotoMeta> => {
     if (!data) return { takenAt: null, position: null }
     const takenAt =
       parseExifDate(data.DateTimeOriginal, data.OffsetTimeOriginal ?? data.OffsetTime) ?? parseExifDate(data.CreateDate, data.OffsetTime)
-    const lat = Number(data.latitude)
-    const lon = Number(data.longitude)
+    // Dezimalgrad direkt, sonst aus Grad/Minuten/Sekunden + Himmelsrichtung, sonst exifr.gps()
+    const dms = (v: unknown, ref: unknown, neg: string) => {
+      if (!Array.isArray(v) || v.length < 3) return NaN
+      const [d, m, sec] = v.map(Number)
+      const deg = d + m / 60 + sec / 3600
+      return ref === neg ? -deg : deg
+    }
+    let lat = Number(data.latitude ?? dms(data.GPSLatitude, data.GPSLatitudeRef, 'S'))
+    let lon = Number(data.longitude ?? dms(data.GPSLongitude, data.GPSLongitudeRef, 'W'))
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      const gps = await exifr.gps(file).catch(() => undefined)
+      lat = Number(gps?.latitude)
+      lon = Number(gps?.longitude)
+    }
     const position: Position | null =
       Number.isFinite(lat) && Number.isFinite(lon) && !(lat === 0 && lon === 0) ? { lat, lon, accuracy: 0 } : null
     return { takenAt, position }

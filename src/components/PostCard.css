@@ -210,3 +210,25 @@
 .post__header .post__meta {
   padding-right: 32px;
 }
+
+/* Routenbild am Ende eines Beitrags (wie ein Kartenausschnitt) */
+.post__route:not(:first-child) {
+  width: calc(100% - 32px);
+  margin: 0 16px 12px;
+  border-radius: 12px;
+  max-height: 220px;
+}
+
+.post__day {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+  font-weight: 600;
+}
+
+.post__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}

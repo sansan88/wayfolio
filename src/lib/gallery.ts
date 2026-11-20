@@ -48,12 +48,13 @@ export const groupByDay = (items: GalleryItem[], points: { place_name: string | 
 export const loadGallery = async (tripId: string): Promise<GalleryDay[]> => {
   const { data, error } = await supabase
     .from('media')
-    .select('id, kind, storage_path, taken_at, taken_place, created_at')
+    .select('id, kind, storage_path, taken_at, taken_place, created_at, variants')
     .eq('trip_id', tripId)
     .in('kind', ['photo', 'video'])
     .order('taken_at', { ascending: false })
   if (error) throw new Error(error.message)
-  const rows = data ?? []
+  // automatisch erzeugte Routenbilder gehören nicht in die Fotogalerie
+  const rows = (data ?? []).filter((r) => !(r.variants as { route?: boolean } | null)?.route)
   const paths = rows.map((r) => r.storage_path)
   const [view, download, route] = await Promise.all([
     paths.length ? supabase.storage.from('media').createSignedUrls(paths, 3600) : Promise.resolve({ data: [] }),

@@ -24,9 +24,10 @@ import { useCallback, useMemo, useState } from 'react'
 import CaptureModal from '../components/CaptureModal'
 import ComposeModal from '../components/ComposeModal'
 import { LargeTitle, PageHeader } from '../components/PageHeader'
-import PostCard from '../components/PostCard'
+import PostCard, { dayNumber } from '../components/PostCard'
 import StoryBar from '../components/StoryBar'
 import { useAuth } from '../lib/auth'
+import { loadRoute, type RoutePoint } from '../lib/route'
 import { useTrip } from '../lib/trip'
 import {
   addOwnerReply,
@@ -49,24 +50,30 @@ const FeedPage = () => {
   const [presentAlert] = useIonAlert()
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [points, setPoints] = useState<RoutePoint[]>([])
   const [editing, setEditing] = useState<FeedPost | null>(null)
   const [capturing, setCapturing] = useState(false)
-  const editInitial = useMemo(
-    () =>
-      editing
-        ? {
-            title: editing.title ?? '',
-            text: editing.blocks.find((b) => b.kind === 'text')?.text ?? '',
-            at: new Date(editing.published_at),
-          }
-        : undefined,
-    [editing],
-  )
+  const editInitial = useMemo(() => {
+    if (!editing) return undefined
+    const point = points.find((p) => p.id === editing.checkin_id)
+    return {
+      title: editing.title ?? '',
+      text: editing.blocks.find((b) => b.kind === 'text')?.text ?? '',
+      link: editing.blocks.find((b) => b.kind === 'link')?.url ?? '',
+      at: new Date(editing.published_at),
+      place: editing.place_name ? { name: editing.place_name, countryCode: null } : null,
+      position: point ? { lat: point.lat, lon: point.lon, accuracy: 0 } : null,
+      media: editing.blocks
+        .filter((b) => b.id && b.mediaUrl && !b.route && ['photo', 'video', 'audio'].includes(b.kind))
+        .map((b) => ({ blockId: b.id!, kind: b.kind, url: b.mediaUrl! })),
+    }
+  }, [editing, points])
 
   const refresh = useCallback(async () => {
     if (!trip) return
     try {
       setPosts(await loadUpdates(trip.id))
+      loadRoute(trip.id).then(setPoints).catch(() => undefined)
       setError(null)
     } catch (e) {
       setError((e as Error).message)
@@ -148,10 +155,13 @@ const FeedPage = () => {
   const stories = posts.filter((p) => p.story_expires_at && Date.parse(p.story_expires_at) > now).reverse()
   const feed = posts.filter((p) => p.kind !== 'story')
 
+  // Reisetag ab Reisebeginn, sonst ab dem ältesten Update
+  const tripStart = trip?.starts_on ?? posts.at(-1)?.published_at ?? null
   const card = (post: FeedPost) => (
     <PostCard
       key={post.id}
       post={post}
+      day={dayNumber(post.published_at, tripStart)}
       mode="owner"
       onReply={(postId, body) => act(() => addOwnerReply(postId, session!.user.id, body))}
       onResolve={(pollId, optionId, text) => act(() => resolvePoll(pollId, optionId, text))}
@@ -210,7 +220,17 @@ const FeedPage = () => {
           onSubmit={(_k, r) => {
             const post = editing!
             setEditing(null)
-            void act(() => updatePost(post, r.title, r.text, r.at)).then(() => toast('Beitrag aktualisiert'))
+            void act(() =>
+              updatePost(post, trip!.id, session!.user.id, {
+                title: r.title,
+                text: r.text,
+                link: r.link,
+                at: r.at,
+                location: r.location,
+                files: r.files,
+                removedBlockIds: r.removedBlockIds,
+              }),
+            ).then(() => toast('Beitrag aktualisiert'))
           }}
         />
         <IonFab slot="fixed" vertical="bottom" horizontal="end">

@@ -3,6 +3,7 @@ import { locate } from 'ionicons/icons'
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 
 import LocationPicker from '../components/LocationPicker'
+import LocationSheet from '../components/LocationSheet'
 import { PageHeader } from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
 import { useCapture } from '../lib/capture'
@@ -10,7 +11,7 @@ import { formatWhen } from '../lib/datetime'
 import type { Place, Position } from '../lib/location'
 import { loadRoute, type RoutePoint } from '../lib/route'
 import { useTrip } from '../lib/trip'
-import { createLocationUpdate } from '../lib/updates'
+import { createLocationUpdate, loadUpdates, type FeedPost } from '../lib/updates'
 
 const RouteMap = lazy(() => import('../components/RouteMap'))
 
@@ -23,13 +24,28 @@ const MapPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [posts, setPosts] = useState<FeedPost[]>([])
+  const [selected, setSelected] = useState<RoutePoint | null>(null)
 
   const refresh = useCallback(() => {
     if (!trip) return
     loadRoute(trip.id)
       .then(setPoints)
       .catch((e: Error) => setError(e.message))
+    loadUpdates(trip.id)
+      .then(setPosts)
+      .catch(() => setPosts([]))
   }, [trip])
+
+  // pro Ort das neueste Foto als Marker (ohne Routenbilder)
+  const photos = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const p of posts) {
+      const url = p.blocks.find((b) => b.kind === 'photo' && b.mediaUrl && !b.route)?.mediaUrl
+      if (p.checkin_id && url && !out[p.checkin_id]) out[p.checkin_id] = url
+    }
+    return out
+  }, [posts])
 
   useIonViewWillEnter(refresh, [refresh])
 
@@ -72,7 +88,7 @@ const MapPage = () => {
         )}
         {points && (
           <Suspense fallback={null}>
-            <RouteMap points={points} />
+            <RouteMap points={points} photos={photos} onSelect={setSelected} focus={selected} />
           </Suspense>
         )}
         {points?.length === 0 && (
@@ -96,6 +112,15 @@ const MapPage = () => {
           at={at}
           onClose={() => setPicking(false)}
           onPick={(pos, place, source, when) => void addLocation(pos, place, source, when)}
+        />
+        <LocationSheet
+          point={selected}
+          points={points ?? []}
+          posts={posts}
+          start={trip?.starts_on}
+          mode="owner"
+          onClose={() => setSelected(null)}
+          onNavigate={setSelected}
         />
         <IonLoading isOpen={busy} message="Standort und Routenbild …" />
       </IonContent>
