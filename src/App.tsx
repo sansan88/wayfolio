@@ -29,6 +29,7 @@ import TripSettingsPage from './pages/TripSettingsPage'
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
+const LegalPage = lazy(() => import('./pages/LegalPage'))
 
 /** Unterpfad der App, z.B. "/wayfolio" auf GitHub Pages ("" lokal). */
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -38,6 +39,7 @@ const path = window.location.pathname.slice(basename.length) || '/'
 const followerToken = followerTokenFromPath(window.location.pathname)
 const inviteToken = inviteTokenFromPath(window.location.pathname)
 const wantsLogin = path.startsWith('/login')
+const legalPage = path.startsWith('/impressum') ? 'impressum' : path.startsWith('/datenschutz') ? 'datenschutz' : null
 
 const Loading = () => (
   <IonPage>
@@ -119,7 +121,11 @@ const Root = () => {
 
 const App = () => (
   <IonApp>
-    {followerToken ? (
+    {legalPage ? (
+      <Suspense fallback={<Loading />}>
+        <LegalPage page={legalPage} />
+      </Suspense>
+    ) : followerToken ? (
       <Suspense fallback={<Loading />}>
         <FollowerPage token={followerToken} />
       </Suspense>

@@ -1,0 +1,50 @@
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 24px 48px;
+  line-height: 1.6;
+}
+
+.legal h1 {
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+}
+
+.legal h2 {
+  margin: 32px 0 8px;
+  font-size: 1.2rem;
+}
+
+.legal h3 {
+  margin: 20px 0 4px;
+  font-size: 1rem;
+}
+
+.legal p,
+.legal li {
+  color: var(--lp-muted);
+}
+
+.legal ul {
+  padding-left: 20px;
+}
+
+.legal a,
+.legal-links a {
+  color: var(--lp-accent);
+}
+
+.legal-stand {
+  margin-top: 0;
+  font-size: 0.9rem;
+}
+
+.legal-home {
+  color: inherit;
+  text-decoration: none;
+}
+
+.legal-links {
+  display: inline-flex;
+  gap: 16px;
+}

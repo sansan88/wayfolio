@@ -11,6 +11,7 @@ import {
   phonePortraitOutline,
 } from 'ionicons/icons'
 
+import { LegalFooter } from './LegalPage'
 import './LandingPage.css'
 
 const base = import.meta.env.BASE_URL
@@ -41,7 +42,7 @@ const faqs = [
   { q: 'Brauchen meine Follower eine App?', a: 'Nein. Sie öffnen euren Link im Browser – auf Handy, Tablet oder Computer. Beim ersten Reagieren geben sie nur einen Namen an.' },
   { q: 'Wer kann unsere Reise sehen?', a: 'Nur wer euren Secret Link hat. Er ist nicht auffindbar, und ihr könnt ihn jederzeit durch einen neuen ersetzen.' },
   { q: 'Funktioniert das ohne Netz?', a: 'Wayfolio läuft als Web-App auf dem Home-Bildschirm. Eine iOS-App mit Hintergrund-Funktionen ist in Planung.' },
-  { q: 'Wo liegen unsere Daten?', a: 'Datenbank und Fotos liegen in Zürich. Fotos werden vor dem Hochladen verkleinert, GPS-Daten aus den Bildern entfernt.' },
+  { q: 'Wo liegen unsere Daten?', a: 'Datenbank und Fotos liegen in einem Rechenzentrum in Zürich. Fotos werden vor dem Hochladen verkleinert, GPS-Daten aus den Bildern entfernt.' },
 ]
 
 /** Handy-Ansicht als Illustration: Story-Kreise und Abstimmung nach der Auflösung. */
@@ -213,10 +214,7 @@ const LandingPage = () => (
           </button>
         </section>
 
-        <footer className="lp-footer">
-          <span>© {new Date().getFullYear()} Wayfolio</span>
-          <span>Daten in der Schweiz · Karten © OpenStreetMap</span>
-        </footer>
+        <LegalFooter />
       </div>
     </IonContent>
   </IonPage>

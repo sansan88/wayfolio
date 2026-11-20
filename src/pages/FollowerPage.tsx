@@ -228,7 +228,11 @@ const FollowerPage = ({ token }: { token: string }) => {
               </IonCardContent>
             </IonCard>
             <p className="ion-text-center">
-              <IonNote>Mit Wayfolio geteilt · privat per Link</IonNote>
+              <IonNote>
+                Mit Wayfolio geteilt · privat per Link ·{' '}
+                <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutz</a> ·{' '}
+                <a href={`${import.meta.env.BASE_URL}impressum`}>Impressum</a>
+              </IonNote>
             </p>
           </>
         )}

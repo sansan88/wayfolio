@@ -72,7 +72,10 @@ const LoginPage = ({ invite = false }: { invite?: boolean }) => {
               <IonButton type="submit" expand="block" disabled={sending || !email} className="ion-margin-top">
                 {sending ? <IonSpinner name="dots" /> : 'Anmeldelink senden'}
               </IonButton>
-              <IonNote>Kein Passwort nötig – du bekommst einen Link per E-Mail.</IonNote>
+              <IonNote>
+                Kein Passwort nötig – du bekommst einen Link per E-Mail. Mit der Anmeldung gilt die{' '}
+                <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutzerklärung</a>.
+              </IonNote>
               {error && (
                 <IonText color="danger">
                   <p>{error}</p>
