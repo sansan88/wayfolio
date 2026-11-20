@@ -1,6 +1,20 @@
 .login {
-  max-width: 420px;
-  margin: 15vh auto 0;
+  max-width: 440px;
+  margin: 12vh auto 0;
+  padding: 0 20px;
+}
+
+/* Inset-Liste ohne doppelten Seitenabstand */
+.login__list {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.login__date {
+  border: 0;
+  background: transparent;
+  color: var(--ion-color-primary);
+  font: inherit;
 }
 
 .login h1 {

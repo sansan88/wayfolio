@@ -9,6 +9,8 @@ export interface GalleryItem {
   url: string
   download_url: string
   taken_at: string
+  /** Ort aus den Foto-Metadaten */
+  place?: string | null
   storage_path?: string
 }
 
@@ -28,11 +30,15 @@ export const groupByDay = (items: GalleryItem[], points: { place_name: string | 
     .map(([day, list]) => ({
       day,
       items: list,
+      // Orte des Tages: zuerst aus den Fotos (EXIF), dann aus den Standorten der Route
       places: [
         ...new Set(
-          points
-            .filter((p) => key(p.recorded_at) === day && p.place_name)
-            .map((p) => p.place_name!.split(',')[0]),
+          [
+            ...list.map((i) => i.place),
+            ...points.filter((p) => key(p.recorded_at) === day).map((p) => p.place_name),
+          ]
+            .filter((n): n is string => !!n)
+            .map((n) => n.split(',')[0].trim()),
         ),
       ],
     }))
@@ -42,7 +48,7 @@ export const groupByDay = (items: GalleryItem[], points: { place_name: string | 
 export const loadGallery = async (tripId: string): Promise<GalleryDay[]> => {
   const { data, error } = await supabase
     .from('media')
-    .select('id, kind, storage_path, taken_at, created_at')
+    .select('id, kind, storage_path, taken_at, taken_place, created_at')
     .eq('trip_id', tripId)
     .in('kind', ['photo', 'video'])
     .order('taken_at', { ascending: false })
@@ -63,6 +69,7 @@ export const loadGallery = async (tripId: string): Promise<GalleryDay[]> => {
       url: urlOf(view.data, r.storage_path),
       download_url: urlOf(download.data, r.storage_path),
       taken_at: r.taken_at ?? r.created_at,
+      place: r.taken_place,
     }))
     .filter((i) => i.url)
   return groupByDay(items, route)

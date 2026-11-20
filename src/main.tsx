@@ -15,7 +15,8 @@ import '@ionic/react/css/palettes/dark.system.css'
 
 import './theme/variables.css'
 
-setupIonicReact()
+// iOS-Stil auf allen Plattformen (Zielgruppe: iPhone; PWA und spätere iOS-App sehen gleich aus)
+setupIonicReact({ mode: 'ios' })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -3,6 +3,7 @@ import { chevronBack, chevronForward, close, downloadOutline, playCircle, trashO
 import { useState } from 'react'
 
 import { formatDay, type GalleryDay, type GalleryItem } from '../lib/gallery'
+import { useCardPresenter } from '../lib/modal'
 import './GalleryGrid.css'
 
 interface Props {
@@ -15,6 +16,7 @@ const GalleryGrid = ({ days, onDelete }: Props) => {
   const all = days.flatMap((d) => d.items)
   const [index, setIndex] = useState<number | null>(null)
   const open = index !== null ? all[index] : null
+  const presenter = useCardPresenter(open !== null)
 
   return (
     <>
@@ -39,7 +41,7 @@ const GalleryGrid = ({ days, onDelete }: Props) => {
         </section>
       ))}
 
-      <IonModal isOpen={open !== null} onDidDismiss={() => setIndex(null)} className="story-modal">
+      <IonModal isOpen={open !== null} presentingElement={presenter} onDidDismiss={() => setIndex(null)} className="gallery-modal">
         {open && (
           <div className="gallery-view">
             {open.kind === 'video' ? (
@@ -47,6 +49,10 @@ const GalleryGrid = ({ days, onDelete }: Props) => {
             ) : (
               <img src={open.url} alt="" />
             )}
+            <div className="gallery-view__caption">
+              {new Date(open.taken_at).toLocaleString('de-CH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              {open.place && <span> · {open.place}</span>}
+            </div>
             <div className="gallery-view__bar">
               <IonButton fill="clear" color="light" aria-label="Schliessen" onClick={() => setIndex(null)}>
                 <IonIcon slot="icon-only" icon={close} />

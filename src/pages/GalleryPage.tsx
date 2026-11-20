@@ -1,18 +1,14 @@
 import {
   IonButton,
-  IonButtons,
   IonCard,
   IonCardContent,
   IonContent,
-  IonHeader,
   IonIcon,
   IonLoading,
   IonPage,
   IonRefresher,
   IonRefresherContent,
   IonText,
-  IonTitle,
-  IonToolbar,
   useIonActionSheet,
   useIonAlert,
   useIonToast,
@@ -22,6 +18,7 @@ import { addOutline, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useRef, useState } from 'react'
 
 import GalleryGrid from '../components/GalleryGrid'
+import { LargeTitle, PageHeader } from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
 import {
   deleteMedia,
@@ -123,20 +120,21 @@ const GalleryPage = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Galerie{count ? ` · ${count}` : ''}</IonTitle>
-          <IonButtons slot="end">
+      <PageHeader
+        title={count ? `Galerie · ${count}` : 'Galerie'}
+        end={
+          <>
             <IonButton onClick={() => fileInput.current?.click()} aria-label="Fotos hinzufügen">
               <IonIcon slot="icon-only" icon={addOutline} />
             </IonButton>
             <IonButton onClick={() => void share()} aria-label="Galerie teilen">
               <IonIcon slot="icon-only" icon={shareSocialOutline} />
             </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent>
+          </>
+        }
+      />
+      <IonContent fullscreen>
+        <LargeTitle title="Galerie" />
         <IonRefresher slot="fixed" onIonRefresh={(e) => void refresh().finally(() => e.detail.complete())}>
           <IonRefresherContent />
         </IonRefresher>

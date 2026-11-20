@@ -2,6 +2,8 @@ import { IonButton, IonContent, IonHeader, IonIcon, IonModal, IonText, IonTitle,
 import { mic, stop } from 'ionicons/icons'
 import { useEffect, useRef, useState } from 'react'
 
+import { useCardPresenter } from '../lib/modal'
+
 interface Props {
   isOpen: boolean
   onCancel: () => void
@@ -12,6 +14,7 @@ const MAX_SECONDS = 180
 
 /** Sprachnachricht aufnehmen (MediaRecorder; Safari liefert mp4/aac, Chrome webm/opus). */
 const VoiceRecorder = ({ isOpen, onCancel, onDone }: Props) => {
+  const presenter = useCardPresenter(isOpen)
   const recorder = useRef<MediaRecorder | null>(null)
   const chunks = useRef<Blob[]>([])
   const [recording, setRecording] = useState(false)
@@ -63,13 +66,13 @@ const VoiceRecorder = ({ isOpen, onCancel, onDone }: Props) => {
   const ss = String(seconds % 60).padStart(2, '0')
 
   return (
-    <IonModal isOpen={isOpen} onDidDismiss={cancel} initialBreakpoint={0.5} breakpoints={[0, 0.5]}>
+    <IonModal isOpen={isOpen} presentingElement={presenter} onDidDismiss={cancel}>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Sprachnachricht</IonTitle>
-          <IonButtons slot="end">
+          <IonButtons slot="start">
             <IonButton onClick={cancel}>Abbrechen</IonButton>
           </IonButtons>
+          <IonTitle>Sprachnachricht</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding ion-text-center">

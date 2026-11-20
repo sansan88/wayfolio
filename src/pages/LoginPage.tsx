@@ -2,6 +2,8 @@ import {
   IonButton,
   IonContent,
   IonInput,
+  IonItem,
+  IonList,
   IonNote,
   IonPage,
   IonSpinner,
@@ -35,7 +37,7 @@ const LoginPage = ({ invite = false }: { invite?: boolean }) => {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
+      <IonContent color="light">
         <div className="login">
           <a className="login__back" href={import.meta.env.BASE_URL}>
             ← Wayfolio
@@ -59,16 +61,20 @@ const LoginPage = ({ invite = false }: { invite?: boolean }) => {
             </IonText>
           ) : (
             <form onSubmit={submit}>
-              <IonInput
-                type="email"
-                label="E-Mail"
-                labelPlacement="floating"
-                fill="outline"
-                autocomplete="email"
-                required
-                value={email}
-                onIonInput={(e) => setEmail(String(e.detail.value ?? ''))}
-              />
+              <IonList inset className="login__list">
+                <IonItem>
+                  <IonInput
+                    type="email"
+                    aria-label="E-Mail"
+                    placeholder="E-Mail-Adresse"
+                    autocomplete="email"
+                    inputmode="email"
+                    required
+                    value={email}
+                    onIonInput={(e) => setEmail(String(e.detail.value ?? ''))}
+                  />
+                </IonItem>
+              </IonList>
               <IonButton type="submit" expand="block" disabled={sending || !email} className="ion-margin-top">
                 {sending ? <IonSpinner name="dots" /> : 'Anmeldelink senden'}
               </IonButton>

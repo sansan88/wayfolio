@@ -1,4 +1,4 @@
-import { IonButton, IonContent, IonInput, IonPage, IonSpinner, IonText } from '@ionic/react'
+import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonText } from '@ionic/react'
 import { useState, type FormEvent } from 'react'
 
 import { useAuth } from '../lib/auth'
@@ -27,29 +27,32 @@ const CreateTripPage = () => {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
+      <IonContent color="light">
         <div className="login">
           <h1>Eure erste Reise</h1>
           <p className="login__claim">Gib ihr einen Namen – den sehen später auch eure Follower.</p>
           <form onSubmit={submit}>
-            <IonInput
-              label="Name der Reise"
-              labelPlacement="floating"
-              fill="outline"
-              placeholder="z.B. Vietnam mit dem Camper"
-              required
-              value={title}
-              onIonInput={(e) => setTitle(String(e.detail.value ?? ''))}
-            />
-            <IonInput
-              className="ion-margin-top"
-              type="date"
-              label="Start"
-              labelPlacement="floating"
-              fill="outline"
-              value={startsOn}
-              onIonInput={(e) => setStartsOn(String(e.detail.value ?? ''))}
-            />
+            <IonList inset className="login__list">
+              <IonItem>
+                <IonInput
+                  aria-label="Name der Reise"
+                  placeholder="Name, z.B. Vietnam mit dem Camper"
+                  required
+                  value={title}
+                  onIonInput={(e) => setTitle(String(e.detail.value ?? ''))}
+                />
+              </IonItem>
+              <IonItem>
+                <IonLabel>Start</IonLabel>
+                <input
+                  slot="end"
+                  type="date"
+                  className="login__date"
+                  value={startsOn}
+                  onChange={(e) => setStartsOn(e.target.value)}
+                />
+              </IonItem>
+            </IonList>
             <IonButton type="submit" expand="block" className="ion-margin-top" disabled={saving || !title.trim()}>
               {saving ? <IonSpinner name="dots" /> : 'Reise anlegen'}
             </IonButton>

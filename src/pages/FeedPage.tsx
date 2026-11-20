@@ -1,28 +1,29 @@
 import {
   IonButton,
-  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
   IonContent,
-  IonHeader,
+  IonFab,
+  IonFabButton,
   IonIcon,
   IonPage,
   IonRefresher,
   IonRefresherContent,
   IonText,
-  IonTitle,
-  IonToolbar,
   useIonActionSheet,
   useIonAlert,
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { shareSocialOutline } from 'ionicons/icons'
-import { useCallback, useState } from 'react'
+import { add, shareSocialOutline } from 'ionicons/icons'
+import { useCallback, useMemo, useState } from 'react'
 
+import CaptureModal from '../components/CaptureModal'
+import ComposeModal from '../components/ComposeModal'
+import { LargeTitle, PageHeader } from '../components/PageHeader'
 import PostCard from '../components/PostCard'
 import StoryBar from '../components/StoryBar'
 import { useAuth } from '../lib/auth'
@@ -48,6 +49,19 @@ const FeedPage = () => {
   const [presentAlert] = useIonAlert()
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<FeedPost | null>(null)
+  const [capturing, setCapturing] = useState(false)
+  const editInitial = useMemo(
+    () =>
+      editing
+        ? {
+            title: editing.title ?? '',
+            text: editing.blocks.find((b) => b.kind === 'text')?.text ?? '',
+            at: new Date(editing.published_at),
+          }
+        : undefined,
+    [editing],
+  )
 
   const refresh = useCallback(async () => {
     if (!trip) return
@@ -117,27 +131,8 @@ const FeedPage = () => {
       ],
     })
 
-  const editPost = (post: FeedPost) =>
-    presentAlert({
-      header: 'Beitrag bearbeiten',
-      inputs: [
-        { name: 'title', type: 'text', placeholder: 'Titel', value: post.title ?? '' },
-        {
-          name: 'text',
-          type: 'textarea',
-          placeholder: 'Text',
-          value: post.blocks.find((b) => b.kind === 'text')?.text ?? '',
-          attributes: { rows: 6 },
-        },
-      ],
-      buttons: [
-        { text: 'Abbrechen', role: 'cancel' },
-        {
-          text: 'Speichern',
-          handler: (v: { title: string; text: string }) => void act(() => updatePost(post, v.title, v.text)),
-        },
-      ],
-    })
+  /** Bearbeiten als iOS-Card-Modal (Titel, Text, Datum & Uhrzeit) */
+  const editPost = (post: FeedPost) => setEditing(post)
 
   const openMenu = (post: FeedPost) =>
     presentSheet({
@@ -167,17 +162,16 @@ const FeedPage = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>{trip?.title ?? 'Feed'}</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
-              <IonIcon slot="icon-only" icon={shareSocialOutline} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent>
+      <PageHeader
+        title={trip?.title ?? 'Feed'}
+        end={
+          <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
+            <IonIcon slot="icon-only" icon={shareSocialOutline} />
+          </IonButton>
+        }
+      />
+      <IonContent fullscreen color="light">
+        <LargeTitle title={trip?.title ?? 'Feed'} />
         <IonRefresher slot="fixed" onIonRefresh={(e) => void refresh().finally(() => e.detail.complete())}>
           <IonRefresherContent />
         </IonRefresher>
@@ -201,13 +195,30 @@ const FeedPage = () => {
               <IonCardTitle>Eure Reise beginnt hier</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              Erfasst im Tab «Erfassen» euer erstes Update. Mit dem Teilen-Symbol oben ladet ihr Familie und Freunde
+              Tippt auf «+» unten rechts und erfasst euer erstes Update. Mit dem Teilen-Symbol oben ladet ihr Familie und Freunde
               ein – sie brauchen weder App noch Konto.
             </IonCardContent>
           </IonCard>
         )}
 
         {feed.map(card)}
+
+        <ComposeModal
+          kind={editing ? 'edit' : null}
+          initial={editInitial}
+          onCancel={() => setEditing(null)}
+          onSubmit={(_k, r) => {
+            const post = editing!
+            setEditing(null)
+            void act(() => updatePost(post, r.title, r.text, r.at)).then(() => toast('Beitrag aktualisiert'))
+          }}
+        />
+        <IonFab slot="fixed" vertical="bottom" horizontal="end">
+          <IonFabButton aria-label="Erfassen" onClick={() => setCapturing(true)}>
+            <IonIcon icon={add} />
+          </IonFabButton>
+        </IonFab>
+        <CaptureModal isOpen={capturing} onClose={() => setCapturing(false)} onPosted={() => void refresh()} />
       </IonContent>
     </IonPage>
   )

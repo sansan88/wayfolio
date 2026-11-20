@@ -1,5 +1,6 @@
 import {
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -7,7 +8,9 @@ import {
   IonContent,
   IonHeader,
   IonInput,
+  IonItem,
   IonLabel,
+  IonList,
   IonModal,
   IonNote,
   IonPage,
@@ -28,6 +31,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import PostCard from '../components/PostCard'
 import StoryBar from '../components/StoryBar'
 import { followerApi, type FollowerFeed } from '../lib/follower'
+import { useCardPresenter } from '../lib/modal'
 import type { FeedPost } from '../lib/updates'
 import './FeedPage.css'
 import './LoginPage.css'
@@ -44,6 +48,7 @@ const FollowerPage = ({ token }: { token: string }) => {
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<'feed' | 'karte'>('feed')
   const [askName, setAskName] = useState(false)
+  const namePresenter = useCardPresenter(askName)
   const [name, setName] = useState('')
   const [pending, setPending] = useState<(() => Promise<unknown>) | null>(null)
   const [email, setEmail] = useState('')
@@ -146,24 +151,34 @@ const FollowerPage = ({ token }: { token: string }) => {
     />
   )
 
+  const segment = (
+    <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as 'feed' | 'karte')}>
+      <IonSegmentButton value="feed">
+        <IonLabel>Tagebuch</IonLabel>
+      </IonSegmentButton>
+      <IonSegmentButton value="karte">
+        <IonLabel>Route</IonLabel>
+      </IonSegmentButton>
+    </IonSegment>
+  )
+
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
           <IonTitle>{data.trip.title}</IonTitle>
         </IonToolbar>
-        <IonToolbar>
-          <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as 'feed' | 'karte')}>
-            <IonSegmentButton value="feed">
-              <IonLabel>Tagebuch</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="karte">
-              <IonLabel>Route</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonToolbar>
+        {tab === 'karte' && <IonToolbar>{segment}</IonToolbar>}
       </IonHeader>
-      <IonContent scrollY={tab === 'feed'}>
+      <IonContent scrollY={tab === 'feed'} fullscreen={tab === 'feed'} color="light">
+        {tab === 'feed' && (
+          <IonHeader collapse="condense">
+            <IonToolbar>
+              <IonTitle size="large">{data.trip.title}</IonTitle>
+            </IonToolbar>
+            <IonToolbar>{segment}</IonToolbar>
+          </IonHeader>
+        )}
         {tab === 'karte' ? (
           <Suspense fallback={null}>
             <RouteMap points={data.route} />
@@ -237,22 +252,37 @@ const FollowerPage = ({ token }: { token: string }) => {
           </>
         )}
 
-        <IonModal isOpen={askName} onDidDismiss={() => setAskName(false)} initialBreakpoint={0.5} breakpoints={[0, 0.5]}>
-          <IonContent className="ion-padding">
-            <h2>Wie heisst du?</h2>
-            <p>Damit die Reisenden wissen, wer reagiert. Ein Vorname genügt – kein Konto, kein Passwort.</p>
-            <IonInput
-              fill="outline"
-              label="Dein Name"
-              labelPlacement="floating"
-              maxlength={40}
-              value={name}
-              onIonInput={(e) => setName(String(e.detail.value ?? ''))}
-              onKeyDown={(e) => e.key === 'Enter' && name.trim() && void join()}
-            />
-            <IonButton className="ion-margin-top" expand="block" disabled={!name.trim()} onClick={() => void join()}>
-              Weiter
-            </IonButton>
+        <IonModal isOpen={askName} presentingElement={namePresenter} onDidDismiss={() => setAskName(false)}>
+          <IonHeader>
+            <IonToolbar>
+              <IonButtons slot="start">
+                <IonButton onClick={() => setAskName(false)}>Abbrechen</IonButton>
+              </IonButtons>
+              <IonTitle>Wie heisst du?</IonTitle>
+              <IonButtons slot="end">
+                <IonButton strong disabled={!name.trim()} onClick={() => void join()}>
+                  Weiter
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent color="light">
+            <IonList inset>
+              <IonItem>
+                <IonInput
+                  label="Dein Name"
+                  placeholder="Vorname"
+                  maxlength={40}
+                  value={name}
+                  className="ion-text-end"
+                  onIonInput={(e) => setName(String(e.detail.value ?? ''))}
+                  onKeyDown={(e) => e.key === 'Enter' && name.trim() && void join()}
+                />
+              </IonItem>
+            </IonList>
+            <IonNote className="list-footnote">
+              Damit die Reisenden wissen, wer reagiert. Ein Vorname genügt – kein Konto, kein Passwort.
+            </IonNote>
           </IonContent>
         </IonModal>
       </IonContent>

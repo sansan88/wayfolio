@@ -23,7 +23,8 @@ interface TripState {
   error: string | null
   selectTrip: (id: string) => void
   createTrip: (title: string, startsOn: string | null) => Promise<void>
-  updateTrip: (details: TripDetails) => Promise<void>
+  /** Details einer beliebigen eigenen oder geteilten Reise ändern */
+  updateTrip: (id: string, details: TripDetails) => Promise<void>
   reload: () => Promise<void>
 }
 
@@ -85,11 +86,10 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
     selectTrip((data as Trip).id)
   }
 
-  const updateTrip = async (details: TripDetails) => {
-    if (!trip) return
-    const { data, error: err } = await supabase.from('trips').update(details).eq('id', trip.id).select(COLUMNS).single()
+  const updateTrip = async (id: string, details: TripDetails) => {
+    const { data, error: err } = await supabase.from('trips').update(details).eq('id', id).select(COLUMNS).single()
     if (err) throw new Error(err.message)
-    setTrips((list) => list.map((t) => (t.id === trip.id ? (data as Trip) : t)))
+    setTrips((list) => list.map((t) => (t.id === id ? (data as Trip) : t)))
   }
 
   return (

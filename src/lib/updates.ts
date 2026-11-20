@@ -1,5 +1,6 @@
 import { appUrl } from './auth'
-import { toWkt, type Place, type Position } from './location'
+import { readPhotoMeta } from './exif'
+import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
 
 const STORY_HOURS = 24
@@ -14,7 +15,11 @@ export interface Context {
   userId: string
   position: Position | null
   place: Place | null
+  /** Zeitpunkt des Updates (rückdatiert); null/undefined = jetzt */
+  at?: Date | null
 }
+
+const when = (ctx: Context) => (ctx.at ?? new Date()).toISOString()
 
 const fail = (message: string): never => {
   throw new Error(message)
@@ -24,7 +29,8 @@ const storyExpiry = () => new Date(Date.now() + STORY_HOURS * 3600 * 1000).toISO
 
 /**
  * Verkleinert ein Foto im Browser auf max. 2048 px und speichert es als JPEG.
- * Das Neu-Kodieren entfernt dabei auch die EXIF-Daten (inkl. GPS) – gewollt aus Datenschutzgründen.
+ * Das Neu-Kodieren entfernt die EXIF-Daten aus der Datei; Aufnahmezeit und Ort werden vorher
+ * mit readPhotoMeta gelesen und nur in der Datenbank (für Reisende/Galerie) gespeichert.
  */
 export const resizeImage = async (file: Blob): Promise<Blob> => {
   const bitmap = await createImageBitmap(file)
@@ -46,6 +52,8 @@ const extensionFor = (type: string, fallback: string) => {
 
 /** Lädt eine Datei in den privaten Bucket «media» und legt den Medien-Eintrag an. */
 export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind): Promise<string> => {
+  // Aufnahmedatum und -ort aus den Metadaten übernehmen, bevor das Verkleinern sie entfernt
+  const meta = kind === 'photo' ? await readPhotoMeta(data) : { takenAt: null, position: null }
   const blob = kind === 'photo' ? await resizeImage(data) : data
   const contentType = kind === 'photo' ? 'image/jpeg' : blob.type || (kind === 'audio' ? 'audio/webm' : 'video/mp4')
   const ext = kind === 'photo' ? 'jpg' : extensionFor(contentType, kind === 'audio' ? 'webm' : 'mp4')
@@ -54,7 +62,15 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind): Pr
   if (upload.error) fail(`Upload fehlgeschlagen: ${upload.error.message}`)
   const { data: media, error } = await supabase
     .from('media')
-    .insert({ trip_id: ctx.tripId, uploaded_by: ctx.userId, kind, storage_path: path, taken_at: new Date().toISOString() })
+    .insert({
+      trip_id: ctx.tripId,
+      uploaded_by: ctx.userId,
+      kind,
+      storage_path: path,
+      taken_at: meta.takenAt?.toISOString() ?? when(ctx),
+      taken_location: meta.position ? toWkt(meta.position) : null,
+      taken_place: meta.position ? (await reverseGeocode(meta.position)).name : null,
+    })
     .select('id')
     .single()
   if (error) fail(`Datei konnte nicht gespeichert werden: ${error.message}`)
@@ -71,6 +87,7 @@ const insertCheckin = async (ctx: Context): Promise<string | null> => {
       location: toWkt(ctx.position),
       place_name: ctx.place?.name ?? null,
       country_code: ctx.place?.countryCode ?? null,
+      recorded_at: when(ctx),
     })
     .select('id')
     .single()
@@ -106,7 +123,8 @@ const publish = async (ctx: Context, post: NewPost): Promise<string> => {
       kind: post.kind,
       title: post.title ?? ctx.place?.name ?? null,
       checkin_id: checkinId,
-      published_at: new Date().toISOString(),
+      published_at: when(ctx),
+      // Story-Kreis immer 24 h ab Veröffentlichung, auch wenn rückdatiert
       story_expires_at: post.inStories ? storyExpiry() : null,
     })
     .select('id')
@@ -156,11 +174,14 @@ export const createLocationUpdate = async (ctx: Context) => {
   const blocks: NewBlock[] = []
   try {
     const { loadRoute, renderRouteImage, distanceKm } = await import('./map')
-    const route = await loadRoute(ctx.tripId)
+    // Route bis zu diesem (evtl. rückdatierten) Punkt
+    const all = await loadRoute(ctx.tripId)
+    const idx = all.findIndex((p) => p.id === checkinId)
+    const route = idx >= 0 ? all.slice(0, idx + 1) : all
     const prev = route.at(-2)
     const leg = prev ? Math.round(distanceKm(prev, route.at(-1)!)) : 0
     const total = Math.round(route.slice(1).reduce((sum, p, i) => sum + distanceKm(route[i], p), 0))
-    const day = route.length ? Math.floor((Date.now() - Date.parse(route[0].recorded_at)) / 86400000) + 1 : 1
+    const day = route.length ? Math.floor((Date.parse(route.at(-1)!.recorded_at) - Date.parse(route[0].recorded_at)) / 86400000) + 1 : 1
     const name = ctx.place?.name.split(',')[0] ?? 'Neuer Ort'
     const caption = prev?.place_name
       ? `Tag ${day} · ${prev.place_name.split(',')[0]} → ${name}`
@@ -241,10 +262,18 @@ export const hideReply = async (replyId: string) => {
   if (error) fail(error.message)
 }
 
-/** Titel und Text eines Beitrags ändern (erster Text-Baustein; fehlt er, wird er angehängt). */
-export const updatePost = async (post: FeedPost, title: string, text: string) => {
-  const { error } = await supabase.from('posts').update({ title: title.trim() || null }).eq('id', post.id)
+/** Titel, Text und Zeitpunkt eines Beitrags ändern (erster Text-Baustein; fehlt er, wird er angehängt). */
+export const updatePost = async (post: FeedPost, title: string, text: string, at?: Date) => {
+  const { error } = await supabase
+    .from('posts')
+    .update({ title: title.trim() || null, ...(at ? { published_at: at.toISOString() } : {}) })
+    .eq('id', post.id)
   if (error) fail(error.message)
+  // Zeitpunkt auch am Ort nachführen, damit die Route in der richtigen Reihenfolge bleibt
+  if (at && post.checkin_id) {
+    const { error: e } = await supabase.from('checkins').update({ recorded_at: at.toISOString() }).eq('id', post.checkin_id)
+    if (e) fail(e.message)
+  }
   const textBlock = post.blocks.find((b) => b.kind === 'text' && b.id)
   if (textBlock) {
     const res = text.trim()
@@ -336,6 +365,7 @@ export interface FeedPost {
   published_at: string
   story_expires_at: string | null
   place_name: string | null
+  checkin_id?: string | null
   /** wer den Beitrag erfasst hat (nur in der Ansicht der Reisenden) */
   author_name?: string | null
   blocks: FeedBlock[]
@@ -366,7 +396,7 @@ interface RawPost {
   published_at: string
   story_expires_at: string | null
   author: { display_name: string | null } | null
-  checkin: { place_name: string | null } | null
+  checkin: { id: string; place_name: string | null } | null
   post_blocks: { id: string; position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string } | null }[]
   polls: RawPoll | RawPoll[] | null
   reactions: { emoji: string }[]
@@ -388,7 +418,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
     .select(
       `id, kind, title, published_at, story_expires_at,
        author:profiles(display_name),
-       checkin:checkins(place_name),
+       checkin:checkins(id, place_name),
        post_blocks!post_blocks_post_id_fkey(id, position, kind, text_content, url, media(storage_path)),
        polls(id, question, description, closes_at, status, chosen_option_id, decision_text, poll_options!poll_options_poll_id_fkey(id, position, label), votes(option_id)),
        reactions(emoji),
@@ -419,6 +449,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
       published_at: p.published_at,
       story_expires_at: p.story_expires_at,
       place_name: p.checkin?.place_name ?? null,
+      checkin_id: p.checkin?.id ?? null,
       author_name: p.author?.display_name ?? null,
       blocks: [...p.post_blocks]
         .sort((a, b) => a.position - b.position)

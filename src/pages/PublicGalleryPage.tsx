@@ -1,6 +1,7 @@
-import { IonContent, IonHeader, IonNote, IonPage, IonSpinner, IonText, IonTitle, IonToolbar } from '@ionic/react'
+import { IonContent, IonNote, IonPage, IonSpinner, IonText } from '@ionic/react'
 import { useEffect, useState } from 'react'
 
+import { LargeTitle, PageHeader } from '../components/PageHeader'
 import GalleryGrid from '../components/GalleryGrid'
 import { galleryApi } from '../lib/follower'
 import type { GalleryDay } from '../lib/gallery'
@@ -36,12 +37,9 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>{data ? `Fotos: ${data.trip.title}` : 'Galerie'}</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent>
+      <PageHeader title={data ? data.trip.title : 'Galerie'} />
+      <IonContent fullscreen>
+        <LargeTitle title={data ? data.trip.title : 'Galerie'} />
         {!data ? (
           <div className="ion-text-center">
             <IonSpinner style={{ marginTop: '40vh' }} />

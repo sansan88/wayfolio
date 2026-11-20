@@ -11,16 +11,16 @@ import {
   IonTabs,
 } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
-import { addCircle, images, map, newspaper, settingsOutline } from 'ionicons/icons'
+import { images, map, newspaper, settingsOutline } from 'ionicons/icons'
 import { lazy, Suspense } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 
 import { AuthProvider, useAuth } from './lib/auth'
+import { CaptureProvider } from './lib/capture'
 import { followerTokenFromPath } from './lib/follower'
 import { galleryTokenFromPath } from './lib/gallery'
 import { inviteTokenFromPath } from './lib/members'
 import { TripProvider, useTrip } from './lib/trip'
-import CapturePage from './pages/CapturePage'
 import CreateTripPage from './pages/CreateTripPage'
 import FeedPage from './pages/FeedPage'
 import GalleryPage from './pages/GalleryPage'
@@ -58,20 +58,15 @@ const Tabs = () => (
     <IonRouterOutlet>
       <Route path="/feed" element={<FeedPage />} />
       <Route path="/karte" element={<MapPage />} />
-      <Route path="/erfassen" element={<CapturePage />} />
       <Route path="/galerie" element={<GalleryPage />} />
       <Route path="/reise" element={<TripSettingsPage />} />
-      <Route path="*" element={<Navigate to="/erfassen" replace />} />
+      <Route path="*" element={<Navigate to="/feed" replace />} />
     </IonRouterOutlet>
 
     <IonTabBar slot="bottom">
       <IonTabButton tab="feed" href="/feed">
         <IonIcon aria-hidden="true" icon={newspaper} />
         <IonLabel>Feed</IonLabel>
-      </IonTabButton>
-      <IonTabButton tab="erfassen" href="/erfassen">
-        <IonIcon aria-hidden="true" icon={addCircle} />
-        <IonLabel>Erfassen</IonLabel>
       </IonTabButton>
       <IonTabButton tab="karte" href="/karte">
         <IonIcon aria-hidden="true" icon={map} />
@@ -83,7 +78,7 @@ const Tabs = () => (
       </IonTabButton>
       <IonTabButton tab="reise" href="/reise">
         <IonIcon aria-hidden="true" icon={settingsOutline} />
-        <IonLabel>Reise</IonLabel>
+        <IonLabel>Reisen</IonLabel>
       </IonTabButton>
     </IonTabBar>
   </IonTabs>
@@ -94,9 +89,11 @@ const SignedIn = () => {
   if (loading) return <Loading />
   if (!trip) return <CreateTripPage />
   return (
-    <IonReactRouter basename={basename}>
-      <Tabs />
-    </IonReactRouter>
+    <CaptureProvider>
+      <IonReactRouter basename={basename}>
+        <Tabs />
+      </IonReactRouter>
+    </CaptureProvider>
   )
 }
 

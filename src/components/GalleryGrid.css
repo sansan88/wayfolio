@@ -100,3 +100,23 @@
 .gallery-view__nav--next {
   right: 8px;
 }
+
+.gallery-modal {
+  --background: #000;
+}
+
+.gallery-modal .gallery-view__bar {
+  top: 0;
+}
+
+.gallery-view__caption {
+  position: absolute;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+  left: 0;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  text-align: center;
+  opacity: 0.85;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}

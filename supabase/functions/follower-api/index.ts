@@ -215,7 +215,7 @@ const gallery = async (link: Link) => {
     supabase.from('trips').select('title').eq('id', link.trip_id).single(),
     supabase
       .from('media')
-      .select('id, kind, storage_path, taken_at, created_at')
+      .select('id, kind, storage_path, taken_at, taken_place, created_at')
       .eq('trip_id', link.trip_id)
       .in('kind', ['photo', 'video'])
       .order('taken_at', { ascending: false }),
@@ -240,6 +240,8 @@ const gallery = async (link: Link) => {
         url: urlOf(view.data, m.storage_path),
         download_url: urlOf(download.data, m.storage_path),
         taken_at: m.taken_at ?? m.created_at,
+        // Fotoort gilt wie ein Standort: erst nach der Verzögerung sichtbar
+        place: Date.parse(m.taken_at ?? m.created_at) <= cutoff ? m.taken_place : null,
       }))
       .filter((i) => i.url),
     points: ((route ?? []) as { place_name: string | null; recorded_at: string }[])
