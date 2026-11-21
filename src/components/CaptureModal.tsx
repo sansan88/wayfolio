@@ -23,6 +23,7 @@ import LocationPicker from './LocationPicker'
 import VoiceRecorder from './VoiceRecorder'
 import { useAuth } from '../lib/auth'
 import { useCapture } from '../lib/capture'
+import { useGeoPermission } from '../lib/geoPermission'
 import { formatWhen } from '../lib/datetime'
 import { useCardPresenter } from '../lib/modal'
 import { getPosition, reverseGeocode } from '../lib/location'
@@ -68,6 +69,7 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
 
   const { position, place, source, at, setLocation, setAt } = useCapture()
   const [locError, setLocError] = useState<string | null>(null)
+  const geo = useGeoPermission()
   const [busy, setBusy] = useState<string | null>(null)
   const [compose, setCompose] = useState<ComposeKind | null>(null)
   const [recording, setRecording] = useState(false)
@@ -91,10 +93,11 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
   }, [])
 
   // Beim Öffnen GPS holen – ein manuell gesetzter Ort bleibt bestehen
+  // nur automatisch, wenn die Freigabe schon erteilt ist – sonst fragt der Browser ungefragt nach
   useEffect(() => {
-    if (isOpen && source === 'gps') void locateMe()
+    if (isOpen && source === 'gps' && geo.state === 'granted') void locateMe()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [isOpen, geo.state])
 
   const toast = (message: string, color: 'success' | 'danger' | 'medium' = 'success') =>
     presentToast({ message, duration: 2500, position: 'top', color })
@@ -207,7 +210,22 @@ const CaptureModal = ({ isOpen, onClose, onPosted }: Props) => {
             {at && <IonNote slot="end">rückdatiert</IonNote>}
           </IonItem>
         </IonList>
-        {locError && source === 'gps' && (
+        {geo.state !== 'granted' && !position && (
+          <div className="capture__locerror capture__locerror--info">
+            {geo.state === 'denied' ? 'Standortzugriff ist gesperrt – Ort manuell setzen oder in den Einstellungen erlauben.' : 'Für den aktuellen Ort den Standort freigeben.'}{' '}
+            {geo.state !== 'denied' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if ((await geo.request()) === 'granted') void locateMe()
+                }}
+              >
+                Standort freigeben
+              </button>
+            )}
+          </div>
+        )}
+        {locError && source === 'gps' && geo.state === 'granted' && (
           <div className="capture__locerror">
             {locError}{' '}
             <button type="button" onClick={() => void locateMe()}>

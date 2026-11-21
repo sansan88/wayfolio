@@ -22,6 +22,7 @@ import { add, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useMemo, useState } from 'react'
 
 import CaptureModal from '../components/CaptureModal'
+import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import ComposeModal from '../components/ComposeModal'
 import { LargeTitle, PageHeader } from '../components/PageHeader'
 import PostCard, { dayNumber } from '../components/PostCard'
@@ -182,6 +183,7 @@ const FeedPage = () => {
       />
       <IonContent fullscreen color="light">
         <LargeTitle title={trip?.title ?? 'Feed'} />
+        <GeoPermissionBanner />
         <IonRefresher slot="fixed" onIonRefresh={(e) => void refresh().finally(() => e.detail.complete())}>
           <IonRefresherContent />
         </IonRefresher>

@@ -121,3 +121,7 @@
   font: inherit;
   font-weight: 600;
 }
+
+.capture__locerror--info {
+  color: var(--ion-color-medium);
+}

@@ -13,12 +13,13 @@ import {
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { addCircle, logOutOutline } from 'ionicons/icons'
+import { addCircle, locationOutline, logOutOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { LargeTitle, PageHeader } from '../components/PageHeader'
 import TripEditorModal from '../components/TripEditorModal'
 import { useAuth } from '../lib/auth'
+import { geoDeniedHelp, useGeoPermission } from '../lib/geoPermission'
 import { loadOwnName, saveOwnName } from '../lib/members'
 import { useTrip, type Trip } from '../lib/trip'
 
@@ -37,6 +38,7 @@ const TripSettingsPage = () => {
   const [presentAlert] = useIonAlert()
   const [editing, setEditing] = useState<Trip | null>(null)
   const [myName, setMyName] = useState('')
+  const geo = useGeoPermission()
 
   const toast = (message: string, color: 'success' | 'danger' = 'success') =>
     presentToast({ message, duration: 2500, position: 'top', color })
@@ -119,6 +121,31 @@ const TripSettingsPage = () => {
           </IonItem>
         </IonList>
         <IonNote className="list-footnote">Dein Name steht an deinen Beiträgen.</IonNote>
+
+        <IonList inset>
+          <IonListHeader>
+            <IonLabel>Berechtigungen</IonLabel>
+          </IonListHeader>
+          <IonItem
+            button
+            detail={geo.state !== 'granted'}
+            onClick={async () => {
+              if (geo.state === 'granted') return toast('Standort ist freigegeben')
+              if (geo.state === 'denied')
+                return presentAlert({ header: 'Standortzugriff gesperrt', message: geoDeniedHelp(), buttons: ['OK'] })
+              const s = await geo.request()
+              if (s === 'granted') toast('Standort freigegeben – der Browser merkt sich das')
+              else if (s === 'denied') presentAlert({ header: 'Standortzugriff gesperrt', message: geoDeniedHelp(), buttons: ['OK'] })
+            }}
+          >
+            <IonIcon slot="start" icon={locationOutline} color="primary" />
+            <IonLabel>Standort</IonLabel>
+            <IonNote slot="end" color={geo.state === 'granted' ? 'success' : geo.state === 'denied' ? 'danger' : 'medium'}>
+              {geo.state === 'granted' ? 'Erlaubt' : geo.state === 'denied' ? 'Gesperrt' : 'Freigeben'}
+            </IonNote>
+          </IonItem>
+        </IonList>
+        <IonNote className="list-footnote">Für Standort-Updates und Fotos ohne Ortsdaten.</IonNote>
 
         <IonList inset>
           <IonItem button detail={false} onClick={signOut}>
