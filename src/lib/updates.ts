@@ -1,6 +1,7 @@
 import { appUrl } from './auth'
 import { readPhotoMeta } from './exif'
-import { distanceKm, ROUTE_IMAGE_VERSION } from './geo'
+import { cachedLoad } from './offline'
+import { distanceKm, isDistanceLine, ROUTE_IMAGE_VERSION } from './geo'
 import { loadRoute, type RoutePoint } from './route'
 import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
@@ -269,10 +270,8 @@ const routeBlocks = async (ctx: Context, checkinId: string): Promise<NewBlock[]>
     const route = idx >= 0 ? all.slice(0, idx + 1) : all
     const prev = route.at(-2)
     const leg = prev ? Math.round(distanceKm(prev, route.at(-1)!)) : 0
-    const total = Math.round(route.slice(1).reduce((sum, p, i) => sum + distanceKm(route[i], p), 0))
     const image = await renderRouteImage(route, routeCaption(route, ctx.place?.name))
     const blocks: NewBlock[] = [{ kind: 'photo', mediaId: await uploadMedia(ctx, image, 'photo', { route: true }) }]
-    if (prev) blocks.push({ kind: 'text', text: `${leg} km seit ${prev.place_name?.split(',')[0] ?? 'dem letzten Ort'} · ${total} km gesamt` })
     if (leg) await supabase.from('checkins').update({ leg_distance_m: leg * 1000 }).eq('id', checkinId)
     return blocks
   } catch (e) {
@@ -613,7 +612,9 @@ interface RawPost {
 }
 
 /** Lädt alle veröffentlichten Updates einer Reise für Reisende (inkl. Abstimmungsergebnis und Antworten). */
-export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
+export const loadUpdates = (tripId: string): Promise<FeedPost[]> => cachedLoad(`posts:${tripId}`, () => fetchUpdates(tripId))
+
+const fetchUpdates = async (tripId: string): Promise<FeedPost[]> => {
   const { data, error } = await supabase
     .from('posts')
     .select(
@@ -655,6 +656,7 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
       checkin_id: p.checkin?.id ?? null,
       author_name: p.author?.display_name ?? null,
       blocks: [...p.post_blocks]
+        .filter((b) => !(b.kind === 'text' && isDistanceLine(b.text_content)))
         .sort((a, b) => a.position - b.position)
         .map((b) => ({
           id: b.id,

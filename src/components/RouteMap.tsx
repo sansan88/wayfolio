@@ -20,6 +20,8 @@ const RouteMap = ({ points, photos = {}, onSelect, focus, height = '100%' }: Pro
   const ref = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MlMap | null>(null)
   const select = useRef(onSelect)
+  const focusRef = useRef(focus)
+  focusRef.current = focus
   select.current = onSelect
 
   useEffect(() => {
@@ -37,8 +39,10 @@ const RouteMap = ({ points, photos = {}, onSelect, focus, height = '100%' }: Pro
     map.on('load', () => {
       if (!points.length) return
       addRoute(map, points)
-      // Start nah am aktuellen Ort (letzte Etappe); herauszoomen zeigt die ganze Route
-      focusCurrent(map, points)
+      // Start beim gewünschten Ort (z.B. aus dem Feed) oder nah am aktuellen Ort (letzte Etappe)
+      const f = focusRef.current
+      if (f) map.easeTo({ center: [f.lon, f.lat], zoom: 11, offset: [0, -map.getContainer().clientHeight * 0.22], duration: 0 })
+      else focusCurrent(map, points)
 
       // Orte mit Fotos als runde Vorschaubilder
       points.forEach((p) => {

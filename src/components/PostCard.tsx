@@ -4,20 +4,18 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonIcon,
-  IonInput,
   IonNote,
   IonProgressBar,
   IonRadio,
   IonRadioGroup,
   IonTextarea,
 } from '@ionic/react'
-import { barChart, bookOutline, checkmarkCircle, documentTextOutline, ellipsisHorizontal, eyeOffOutline, imagesOutline, link, location, lockClosedOutline } from 'ionicons/icons'
+import { barChart, bookOutline, checkmarkCircle, documentTextOutline, ellipsisHorizontal, imagesOutline, link, location } from 'ionicons/icons'
 import { useState } from 'react'
 
-import { EMOJIS, type FeedPost } from '../lib/updates'
+import type { FeedPost } from '../lib/updates'
 import './PostCard.css'
 
 export const formatTime = (iso: string) =>
@@ -43,6 +41,8 @@ interface Props {
   onMenu?: (post: FeedPost) => void
   /** Reisetag für die Kopfzeile */
   day?: number | null
+  /** Tipp auf den Ort: zur Karte an diesen Punkt */
+  onPlace?: (post: FeedPost) => void
 }
 
 /** Ein Beitrag im Feed – für Reisende und Follower. */
@@ -185,152 +185,73 @@ const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode'
   )
 }
 
-const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply, onMenu, day }: Props) => {
-  const [reply, setReply] = useState('')
-  const [privateReply, setPrivateReply] = useState(false)
-  const [sending, setSending] = useState(false)
+const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props) => {
   const label = kindLabel[post.kind]
   const texts = post.blocks.filter((b) => b.kind === 'text' && b.text)
   const links = post.blocks.filter((b) => b.kind === 'link' && b.url)
-  const photos = post.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route)
+  // Bilder oben: Fotos, danach das Routenbild (bei Orten ohne Fotos ist es das einzige Bild)
+  const media = post.kind === 'poll' ? [] : [
+    ...post.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route),
+    ...post.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && b.route),
+  ]
+  const others = post.blocks.some((b) => (b.kind === 'video' || b.kind === 'audio') && b.mediaUrl)
+  const placeParts = post.place_name?.split(',').map((x) => x.trim()) ?? []
+  // Check-in: Ort als Titel, Land darunter; Beitrag: eigener Titel, Ort darunter
   const isCheckin = post.kind === 'route_update'
+  const title = isCheckin ? (placeParts[0] ?? post.title ?? 'Check-in') : (post.title ?? placeParts[0] ?? 'Beitrag')
+  // Check-in: Titel ist der Ort, darunter das Land (antippbar); Beitrag: Ort unter dem Titel
+  const place = post.place_name ? (isCheckin ? placeParts.slice(1).join(', ') || placeParts[0] : placeParts[0]) : null
 
-  const send = async () => {
-    if (!reply.trim() || !onReply) return
-    setSending(true)
-    try {
-      await onReply(post.id, reply, privateReply)
-      setReply('')
-    } finally {
-      setSending(false)
-    }
-  }
 
   return (
     <IonCard className={`post post--${post.kind}`}>
-      {/* Kopfzeile wie bei Instagram: Ort bzw. Art, darunter Tag · Zeit */}
-      <div className="post__top">
-        <span className={`post__avatar${isCheckin ? ' post__avatar--place' : ''}`} aria-hidden="true">
-          <IonIcon icon={isCheckin ? location : (label?.icon ?? documentTextOutline)} />
-        </span>
-        <div className="post__who">
-          <strong>{isCheckin ? (post.place_name?.split(',')[0] ?? post.title ?? 'Check-in') : (label?.label ?? 'Beitrag')}</strong>
-          <span>
-            {[
-              day ? `Tag ${day}` : null,
-              formatTime(post.published_at),
-              !isCheckin && post.place_name ? post.place_name.split(',')[0] : null,
-              isCheckin ? post.place_name?.split(',').slice(1).join(',').trim() || null : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        </div>
+      {/* Ionic-Card-Standard: Medien oben, dann Kopf (Titel + Untertitel), dann Inhalt */}
+      {media.length > 0 && <PhotoCarousel photos={media} />}
+
+      <IonCardHeader className="post__header">
         {onMenu && (
           <button type="button" className="post__menu" onClick={() => onMenu(post)} aria-label="Beitrag bearbeiten oder löschen">
             <IonIcon icon={ellipsisHorizontal} />
           </button>
         )}
-      </div>
-
-      {isCheckin ? (
-        <>
-          {photos.length > 0 ? <PhotoCarousel photos={photos} /> : <MediaBlocks post={post} route />}
-          {texts.length > 0 && (
-            <IonCardContent className="post__caption">
-              {post.author_name && <strong>{post.author_name} </strong>}
-              {texts.map((b) => b.text).join('\n\n')}
-            </IonCardContent>
-          )}
-        </>
-      ) : (
-        <>
-          {post.title && (
-            <IonCardHeader className="post__header">
-              <IonCardTitle>{post.title}</IonCardTitle>
-              {mode === 'owner' && post.author_name && <IonCardSubtitle className="post__meta">von {post.author_name}</IonCardSubtitle>}
-            </IonCardHeader>
-          )}
-          {texts.map((b) => (
-            <IonCardContent key={b.position} className="post__text">
-              {b.text}
-            </IonCardContent>
+        <IonCardTitle>{title}</IonCardTitle>
+        {place &&
+          (onPlace && post.checkin_id ? (
+            <button type="button" className="post__place post__place--link" onClick={() => onPlace(post)} aria-label={`${place} auf der Karte zeigen`}>
+              <IonIcon icon={location} aria-hidden="true" /> {place}
+            </button>
+          ) : (
+            <span className="post__place">
+              <IonIcon icon={location} aria-hidden="true" /> {place}
+            </span>
           ))}
-          {photos.length > 0 && post.kind !== 'poll' && <PhotoCarousel photos={photos} />}
+        <div className="post__meta">
+          <IonIcon icon={label?.icon ?? documentTextOutline} aria-hidden="true" />
+          <span>
+          {[label?.label ?? 'Beitrag', day ? `Tag ${day}` : null, formatTime(post.published_at), mode === 'owner' ? post.author_name : null]
+            .filter(Boolean)
+            .join(' · ')}
+          </span>
+        </div>
+      </IonCardHeader>
+
+      {(texts.length > 0 || links.length > 0 || others) && (
+        <IonCardContent className="post__body">
+          {texts.map((b) => (
+            <p key={b.position} className="post__text">
+              {b.text}
+            </p>
+          ))}
           {post.kind !== 'poll' && <MediaBlocks post={post} other />}
           {links.map((b) => (
-            <IonCardContent key={b.position}>
-              <a href={b.url!} target="_blank" rel="noopener noreferrer" className="post__link">
-                <IonIcon icon={link} aria-hidden="true" /> {b.url}
-              </a>
-            </IonCardContent>
+            <a key={b.position} href={b.url!} target="_blank" rel="noopener noreferrer" className="post__link">
+              <IonIcon icon={link} aria-hidden="true" /> {b.url}
+            </a>
           ))}
-          {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}
-          <MediaBlocks post={post} route />
-        </>
+        </IonCardContent>
       )}
+      {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}
 
-      <div className="post__reactions">
-        {EMOJIS.map((e) => {
-          const count = post.reactions[e] ?? 0
-          const mine = post.my_reactions?.includes(e)
-          if (mode === 'owner' && !count) return null
-          return (
-            <button
-              key={e}
-              type="button"
-              className={`reaction${mine ? ' reaction--mine' : ''}`}
-              disabled={mode !== 'follower'}
-              onClick={() => onReact?.(post.id, e)}
-              aria-label={`Reaktion ${e}`}
-            >
-              {e}
-              {count > 0 && <span>{count}</span>}
-            </button>
-          )
-        })}
-      </div>
-
-      {(post.replies.length > 0 || onReply) && (
-        <div className="post__replies">
-          {post.replies.map((r) => (
-            <div key={r.id} className={`reply${r.from_traveler ? ' reply--traveler' : ''}`}>
-              <strong>{r.author}</strong> {r.body}
-              {r.is_private && <IonIcon icon={lockClosedOutline} aria-label="nur für euch" className="reply__lock" />}
-              {mode === 'owner' && !r.from_traveler && onHideReply && (
-                <button type="button" className="reply__hide" onClick={() => onHideReply(r.id)} aria-label="Ausblenden">
-                  <IonIcon icon={eyeOffOutline} />
-                </button>
-              )}
-            </div>
-          ))}
-          {onReply && (
-            <div className="reply__form">
-              <IonInput
-                placeholder={mode === 'owner' ? 'Antworten …' : 'Antwort schreiben …'}
-                maxlength={500}
-                value={reply}
-                onIonInput={(e) => setReply(String(e.detail.value ?? ''))}
-                onKeyDown={(e) => e.key === 'Enter' && void send()}
-              />
-              {mode === 'follower' && (
-                <button
-                  type="button"
-                  className={`reply__private${privateReply ? ' reply__private--on' : ''}`}
-                  onClick={() => setPrivateReply(!privateReply)}
-                  aria-pressed={privateReply}
-                  title="Nur für die Reisenden sichtbar"
-                >
-                  <IonIcon icon={lockClosedOutline} />
-                </button>
-              )}
-              <IonButton size="small" fill="clear" disabled={!reply.trim() || sending} onClick={() => void send()}>
-                Senden
-              </IonButton>
-            </div>
-          )}
-        </div>
-      )}
     </IonCard>
   )
 }

@@ -21,6 +21,7 @@ import {
   useIonActionSheet,
   useIonAlert,
   useIonToast,
+  useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react'
 import { add, shareSocialOutline } from 'ionicons/icons'
@@ -28,11 +29,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import CheckinModal from '../components/CheckinModal'
 import ComposeModal from '../components/ComposeModal'
+import FeedSkeleton from '../components/FeedSkeleton'
 import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import PostCard, { dayNumber } from '../components/PostCard'
 import TimelineDots from '../components/TimelineDots'
 import { useAuth } from '../lib/auth'
 import { useCapture } from '../lib/capture'
+import { peekCache } from '../lib/offline'
+import { sharePost } from '../lib/share'
 import { useTimeline } from '../lib/useTimeline'
 import { loadRoute, type RoutePoint } from '../lib/route'
 import { useTrip } from '../lib/trip'
@@ -57,7 +61,10 @@ const FeedPage = () => {
   const [presentToast] = useIonToast()
   const [presentSheet] = useIonActionSheet()
   const [presentAlert] = useIonAlert()
-  const [posts, setPosts] = useState<FeedPost[]>([])
+  const router = useIonRouter()
+  // zuletzt gespeicherte Beiträge sofort zeigen, bis das Netz antwortet
+  const [posts, setPosts] = useState<FeedPost[]>(() => (trip ? (peekCache<FeedPost[]>(`posts:${trip.id}`) ?? []) : []))
+  const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [points, setPoints] = useState<RoutePoint[]>([])
   const [editing, setEditing] = useState<FeedPost | null>(null)
@@ -96,12 +103,24 @@ const FeedPage = () => {
       setError(null)
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setLoaded(true)
     }
   }, [trip])
 
   useIonViewWillEnter(() => {
     void refresh()
   }, [refresh])
+
+  // andere Reise gewählt: deren gespeicherte Beiträge zeigen und neu laden
+  const shownTrip = useRef(trip?.id)
+  useEffect(() => {
+    if (!trip || shownTrip.current === trip.id) return
+    shownTrip.current = trip.id
+    setPosts(peekCache<FeedPost[]>(`posts:${trip.id}`) ?? [])
+    setLoaded(false)
+    void refresh()
+  }, [trip, refresh])
 
   const toast = (message: string, color: 'success' | 'danger' = 'success') =>
     presentToast({ message, duration: 2500, position: 'top', color })
@@ -164,6 +183,15 @@ const FeedPage = () => {
     presentSheet({
       header: post.title ?? 'Beitrag',
       buttons: [
+        {
+          text: 'Teilen (WhatsApp …)',
+          handler: () =>
+            void sharePost(post, trip!.id)
+              .then((r) => {
+                if (r === 'copied') void toast('Text mit Link kopiert – in WhatsApp einfügen')
+              })
+              .catch((e: Error) => toast(e.message, 'danger')),
+        },
         ...(post.kind !== 'poll' ? [{ text: 'Bearbeiten', handler: () => void editPost(post) }] : []),
         { text: 'Löschen', role: 'destructive', handler: () => void confirmDelete(post) },
         { text: 'Abbrechen', role: 'cancel' },
@@ -183,10 +211,25 @@ const FeedPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.id])
 
+  // fehlende Tage bis heute (bzw. Reiseende): Tipp setzt den Zeitpunkt auf diesen Tag und öffnet «Neues Update»
+  const missingDays = useMemo(() => {
+    const end = trip?.ends_on ? new Date(`${trip.ends_on}T23:59`) : null
+    return {
+      until: end && end < new Date() ? end : new Date(),
+      onAdd: (day: Date) => {
+        const noon = new Date(day)
+        noon.setHours(12, 0, 0, 0)
+        capture.setAt(noon > new Date() ? null : noon)
+        void openCreate(`Update für ${day.toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long' })}`)
+      },
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.ends_on, posts.length])
+
   /** «+»: die zwei Arten von Updates */
-  const openCreate = () =>
+  const openCreate = (header = 'Neues Update') =>
     presentSheet({
-      header: 'Neues Update',
+      header,
       buttons: [
         { text: 'Check-in – ich bin hier (mit Fotos)', handler: () => setCheckingIn(true) },
         { text: 'Beitrag – Text mit Fotos', handler: () => setWriting(true) },
@@ -206,6 +249,7 @@ const FeedPage = () => {
       onResolve={(pollId, optionId, text) => act(() => resolvePoll(pollId, optionId, text))}
       onHideReply={(id) => void act(() => hideReply(id))}
       onMenu={openMenu}
+      onPlace={(p) => router.push(`/karte?ort=${p.checkin_id}`, 'forward', 'replace')}
     />
     </div>
   )
@@ -221,9 +265,15 @@ const FeedPage = () => {
             </IonButton>
           </IonButtons>
         </IonToolbar>
-        {posts.length > 0 && (
+        {(posts.length > 0 || trip?.starts_on) && (
           <IonToolbar className="timeline-toolbar">
-            <TimelineDots posts={posts} activeId={timeline.activeId} start={tripStart} onSelect={(p) => void timeline.jumpTo(p.id)} />
+            <TimelineDots
+              posts={posts}
+              activeId={timeline.activeId}
+              start={tripStart}
+              onSelect={(p) => void timeline.jumpTo(p.id)}
+              missingDays={loaded ? missingDays : undefined}
+            />
           </IonToolbar>
         )}
       </IonHeader>
@@ -244,7 +294,9 @@ const FeedPage = () => {
           </IonText>
         )}
 
-        {posts.length === 0 && !error && (
+        {posts.length === 0 && !loaded && !error && <FeedSkeleton />}
+
+        {posts.length === 0 && loaded && !error && (
           <IonCard>
             <IonCardHeader>
               <IonCardSubtitle>Noch keine Updates</IonCardSubtitle>
@@ -280,7 +332,13 @@ const FeedPage = () => {
           }}
         />
         <IonFab slot="fixed" vertical="bottom" horizontal="end">
-          <IonFabButton aria-label="Erfassen" onClick={() => void openCreate()}>
+          <IonFabButton
+            aria-label="Erfassen"
+            onClick={() => {
+              capture.setAt(null)
+              void openCreate()
+            }}
+          >
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>

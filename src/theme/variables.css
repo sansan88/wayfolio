@@ -168,3 +168,22 @@ ion-fab-button {
   gap: 4px;
   margin-left: -8px;
 }
+
+/* Offline-Hinweis über der Tab-Leiste */
+.offline-pill {
+  position: fixed;
+  z-index: 30000;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 64px);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(30, 30, 30, 0.88);
+  color: #fff;
+  font-size: 0.8rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}

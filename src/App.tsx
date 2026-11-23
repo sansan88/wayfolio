@@ -27,6 +27,8 @@ import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
 import TripSettingsPage from './pages/TripSettingsPage'
 import PageSpinner from './components/PageSpinner'
+import AppStatus from './components/AppStatus'
+import { isStandalone } from './lib/pwa'
 
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -125,8 +127,30 @@ const Root = () => {
   )
 }
 
+/**
+ * Follower ohne Konto, die Wayfolio auf den Home-Bildschirm gelegt haben: die installierte App startet
+ * auf der Startseite – dann direkt zu ihrem Reise-Link weiterleiten.
+ */
+const FOLLOWER_LINK_KEY = 'wayfolio-follower-link'
+if (followerToken) {
+  try {
+    localStorage.setItem(FOLLOWER_LINK_KEY, window.location.pathname)
+  } catch {
+    /* egal */
+  }
+} else if (!legalPage && !galleryToken && isStandalone()) {
+  try {
+    const saved = localStorage.getItem(FOLLOWER_LINK_KEY)
+    const signedIn = Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    if (saved && !signedIn) window.location.replace(saved)
+  } catch {
+    /* egal */
+  }
+}
+
 const App = () => (
   <IonApp>
+    <AppStatus />
     {legalPage ? (
       <Suspense fallback={<Loading />}>
         <LegalPage page={legalPage} />

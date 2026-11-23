@@ -1,6 +1,8 @@
 import { groupByDay, type GalleryDay, type GalleryItem } from './gallery'
 import type { RoutePoint } from './route'
 import type { FeedPost } from './updates'
+import { isDistanceLine } from './geo'
+import { cachedLoad } from './offline'
 
 const API = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/follower-api`
 const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string
@@ -40,7 +42,12 @@ const call = async <T>(token: string, action: string, payload: Record<string, un
 }
 
 export const followerApi = (token: string) => ({
-  feed: () => call<FollowerFeed>(token, 'feed'),
+  feed: async () => {
+    const data = await cachedLoad(`follower:${token.slice(0, 12)}`, () => call<FollowerFeed>(token, 'feed'))
+    // alte Distanzzeilen ausblenden
+    data.posts.forEach((p) => (p.blocks = p.blocks.filter((b) => !(b.kind === 'text' && isDistanceLine(b.text)))))
+    return data
+  },
   join: (name: string) => call(token, 'join', { name }),
   react: (postId: string, emoji: string) => call(token, 'react', { post_id: postId, emoji }),
   reply: (postId: string, body: string, isPrivate: boolean) => call(token, 'reply', { post_id: postId, body, private: isPrivate }),

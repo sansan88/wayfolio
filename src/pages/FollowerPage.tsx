@@ -25,9 +25,10 @@ import {
   IonToolbar,
   useIonToast,
 } from '@ionic/react'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import PostCard, { dayNumber } from '../components/PostCard'
+import InstallHint from '../components/InstallHint'
 import TimelineDots from '../components/TimelineDots'
 import { useTimeline } from '../lib/useTimeline'
 import '../pages/FeedPage.css'
@@ -55,6 +56,15 @@ const FollowerPage = ({ token }: { token: string }) => {
   const namePresenter = useCardPresenter(askName)
   const [selected, setSelected] = useState<RoutePoint | null>(null)
   const timeline = useTimeline((data?.posts ?? []).map((p) => p.id))
+  // geteilter Link (…#p-<id>): einmal zum Beitrag springen
+  const jumped = useRef(false)
+  useEffect(() => {
+    const id = window.location.hash.match(/^#p-([0-9a-f-]{36})$/)?.[1]
+    if (!data || !id || jumped.current) return
+    jumped.current = true
+    setTimeout(() => void timeline.jumpTo(id), 400)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
   const [name, setName] = useState('')
   const [pending, setPending] = useState<(() => Promise<unknown>) | null>(null)
   const [email, setEmail] = useState('')
@@ -142,6 +152,12 @@ const FollowerPage = ({ token }: { token: string }) => {
     <div key={post.id} data-post-id={post.id}>
     <PostCard
       post={post}
+      onPlace={(p) => {
+        const point = data.route.find((r) => r.id === p.checkin_id)
+        if (!point) return
+        setTab('karte')
+        setSelected(point)
+      }}
       day={dayNumber(post.published_at, data?.trip.starts_on ?? data?.posts.at(-1)?.published_at)}
       mode="follower"
       onReact={(postId, emoji) => void withName(() => api.react(postId, emoji))}
@@ -198,6 +214,7 @@ const FollowerPage = ({ token }: { token: string }) => {
             <IonRefresher slot="fixed" onIonRefresh={(e) => void load().finally(() => e.detail.complete())}>
               <IonRefresherContent />
             </IonRefresher>
+            <InstallHint who="follower" />
             {data.posts.length === 0 && (
               <IonCard>
                 <IonCardContent>Noch keine Beiträge. Schau bald wieder vorbei!</IonCardContent>

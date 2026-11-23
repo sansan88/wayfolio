@@ -1,7 +1,6 @@
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonModal, IonNote, IonTitle, IonToolbar } from '@ionic/react'
 import { chevronBack, chevronForward } from 'ionicons/icons'
 
-import { distanceKm } from '../lib/geo'
 import type { RoutePoint } from '../lib/route'
 import type { FeedPost } from '../lib/updates'
 import PostCard, { dayNumber } from './PostCard'
@@ -26,7 +25,6 @@ const LocationSheet = ({ point, points, posts, start, mode, onClose, onNavigate 
   const here = point ? posts.filter((p) => p.checkin_id === point.id).sort((a, b) => a.published_at.localeCompare(b.published_at)) : []
   const photos = here.flatMap((p) => p.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route).map((b) => b.thumbUrl ?? b.mediaUrl!))
   const day = point ? dayNumber(point.recorded_at, start ?? points[0]?.recorded_at) : null
-  const leg = point && prev ? Math.round(distanceKm(prev, point)) : null
   const name = point?.place_name?.split(',')[0] ?? 'Standort'
   const country = point?.place_name?.split(',').slice(1).join(',').trim()
 
@@ -71,11 +69,7 @@ const LocationSheet = ({ point, points, posts, start, mode, onClose, onNavigate 
                 })}
               </span>
               {country && <span>{country}</span>}
-              {leg !== null && (
-                <span>
-                  {leg} km seit {prev?.place_name?.split(',')[0] ?? 'dem letzten Ort'}
-                </span>
-              )}
+
               <span>
                 Ort {index + 1} von {points.length}
               </span>

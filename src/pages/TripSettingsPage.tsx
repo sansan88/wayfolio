@@ -13,13 +13,14 @@ import {
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { addCircle, locationOutline, logOutOutline } from 'ionicons/icons'
+import { addCircle, locationOutline, logOutOutline, phonePortraitOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { LargeTitle, PageHeader } from '../components/PageHeader'
 import TripEditorModal from '../components/TripEditorModal'
 import { useAuth } from '../lib/auth'
 import { geoDeniedHelp, useGeoPermission } from '../lib/geoPermission'
+import { installHelp, useInstall } from '../lib/pwa'
 import { loadOwnName, saveOwnName } from '../lib/members'
 import { useTrip, type Trip } from '../lib/trip'
 
@@ -39,6 +40,7 @@ const TripSettingsPage = () => {
   const [editing, setEditing] = useState<Trip | null>(null)
   const [myName, setMyName] = useState('')
   const geo = useGeoPermission()
+  const app = useInstall()
 
   const toast = (message: string, color: 'success' | 'danger' = 'success') =>
     presentToast({ message, duration: 2500, position: 'top', color })
@@ -146,6 +148,25 @@ const TripSettingsPage = () => {
           </IonItem>
         </IonList>
         <IonNote className="list-footnote">Für Standort-Updates und Fotos ohne Ortsdaten.</IonNote>
+
+        <IonList inset>
+          <IonItem
+            button
+            detail={app.mode !== 'installed'}
+            onClick={async () => {
+              if (app.mode === 'installed') return toast('Wayfolio ist installiert')
+              if (app.mode === 'prompt') return void (await app.install())
+              presentAlert({ header: 'Auf den Home-Bildschirm', message: installHelp(), buttons: ['OK'] })
+            }}
+          >
+            <IonIcon slot="start" icon={phonePortraitOutline} color="primary" />
+            <IonLabel>Als App installieren</IonLabel>
+            <IonNote slot="end" color={app.mode === 'installed' ? 'success' : 'medium'}>
+              {app.mode === 'installed' ? 'Installiert' : 'Anleitung'}
+            </IonNote>
+          </IonItem>
+        </IonList>
+        <IonNote className="list-footnote">Startet vom Home-Bildschirm und zeigt die zuletzt geladenen Beiträge auch offline.</IonNote>
 
         <IonList inset>
           <IonItem button detail={false} onClick={signOut}>

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 import { useAuth } from './auth'
 import { supabase } from './supabase'
+import { cachedLoad } from './offline'
 
 export interface Trip {
   id: string
@@ -57,9 +58,17 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
 
   const reload = useCallback(async () => {
     if (!userId) return
-    const { data, error: err } = await supabase.from('trips').select(COLUMNS).order('created_at', { ascending: false })
-    setTrips((data ?? []) as Trip[])
-    setError(err?.message ?? null)
+    try {
+      const list = await cachedLoad(`trips:${userId}`, async () => {
+        const { data, error: err } = await supabase.from('trips').select(COLUMNS).order('created_at', { ascending: false })
+        if (err) throw new Error(err.message)
+        return (data ?? []) as Trip[]
+      })
+      setTrips(list)
+      setError(null)
+    } catch (e) {
+      setError((e as Error).message)
+    }
     setLoading(false)
   }, [userId])
 

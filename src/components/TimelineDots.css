@@ -4,12 +4,6 @@
   padding: 6px 12px 4px;
   overflow-x: auto;
   scrollbar-width: none;
-  /* Verbindungslinie zwischen den Punkten */
-  background-image: linear-gradient(rgba(var(--ion-color-medium-rgb), 0.35), rgba(var(--ion-color-medium-rgb), 0.35));
-  background-repeat: no-repeat;
-  background-position: 0 30px;
-  background-size: 100% 2px;
-  background-attachment: local;
 }
 
 .timeline::-webkit-scrollbar {
@@ -17,6 +11,7 @@
 }
 
 .timeline__dot {
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
@@ -32,6 +27,8 @@
 }
 
 .timeline__circle {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 46px;
@@ -74,4 +71,28 @@
 .timeline__dot--active .timeline__label {
   color: var(--ion-color-primary);
   font-weight: 600;
+}
+
+/* Verbindung nur zwischen den Punkten: kein Strich links vom ersten (neuesten) und rechts vom letzten */
+.timeline__dot:not(:last-child)::after {
+  position: absolute;
+  top: 24px;
+  /* von Kreisrand zu Kreisrand (Kreis 50 px, Abstand 4 px) */
+  left: calc(50% + 25px);
+  width: calc(100% + 4px - 50px);
+  height: 2px;
+  background: rgba(var(--ion-color-medium-rgb), 0.35);
+  content: '';
+}
+
+/* fehlender Tag: gestrichelter Kreis mit Plus */
+.timeline__dot--gap .timeline__circle {
+  border: 2px dashed rgba(var(--ion-color-medium-rgb), 0.7);
+  background: var(--ion-background-color, #fff);
+  box-shadow: none;
+}
+
+.timeline__dot--gap .timeline__circle ion-icon {
+  color: var(--ion-color-medium);
+  font-size: 22px;
 }

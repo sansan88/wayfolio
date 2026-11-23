@@ -2,6 +2,7 @@ import { appUrl } from './auth'
 import { loadRoute } from './route'
 import { supabase } from './supabase'
 import { uploadMedia, type MediaKind } from './updates'
+import { cachedLoad } from './offline'
 
 export interface GalleryItem {
   id: string
@@ -48,7 +49,9 @@ export const groupByDay = (items: GalleryItem[], points: { place_name: string | 
 }
 
 /** Alle Fotos und Videos einer Reise für Reisende. */
-export const loadGallery = async (tripId: string): Promise<GalleryDay[]> => {
+export const loadGallery = (tripId: string): Promise<GalleryDay[]> => cachedLoad(`gallery:${tripId}`, () => fetchGallery(tripId))
+
+const fetchGallery = async (tripId: string): Promise<GalleryDay[]> => {
   const { data, error } = await supabase
     .from('media')
     .select('id, kind, storage_path, taken_at, taken_place, created_at, variants')

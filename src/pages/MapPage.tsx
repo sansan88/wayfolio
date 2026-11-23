@@ -1,6 +1,7 @@
 import { IonContent, IonFab, IonFabButton, IonIcon, IonPage, IonText, useIonViewWillEnter } from '@ionic/react'
 import { locate } from 'ionicons/icons'
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import CheckinModal from '../components/CheckinModal'
 import LocationSheet from '../components/LocationSheet'
@@ -41,6 +42,18 @@ const MapPage = () => {
   }, [posts])
 
   useIonViewWillEnter(refresh, [refresh])
+
+  // aus dem Feed: /karte?ort=<checkin_id> – zu diesem Punkt springen und Details zeigen
+  const location = useLocation()
+  const navigate = useNavigate()
+  const wanted = new URLSearchParams(location.search).get('ort')
+  useEffect(() => {
+    if (!wanted || !points) return
+    const p = points.find((x) => x.id === wanted)
+    if (p) setSelected(p)
+    navigate(location.pathname, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wanted, points])
 
 
 
