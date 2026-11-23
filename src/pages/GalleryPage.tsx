@@ -9,7 +9,6 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonText,
-  useIonActionSheet,
   useIonAlert,
   useIonToast,
   useIonViewWillEnter,
@@ -22,21 +21,19 @@ import { LargeTitle, PageHeader } from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
 import {
   deleteMedia,
-  getOrCreateGalleryLink,
   loadGallery,
-  rotateGalleryLink,
   uploadToGallery,
   type GalleryDay,
   type GalleryItem,
 } from '../lib/gallery'
 import { useTrip } from '../lib/trip'
+import { useTripShare } from '../lib/useTripShare'
 
 /** Private Fotogalerie der Reise: alle Fotos und Videos nach Tagen. */
 const GalleryPage = () => {
   const { session } = useAuth()
   const { trip } = useTrip()
   const [presentToast] = useIonToast()
-  const [presentSheet] = useIonActionSheet()
   const [presentAlert] = useIonAlert()
   const fileInput = useRef<HTMLInputElement>(null)
   const [days, setDays] = useState<GalleryDay[] | null>(null)
@@ -91,30 +88,9 @@ const GalleryPage = () => {
       ],
     })
 
-  const share = async () => {
-    if (!trip) return
-    const send = async (url: string) => {
-      if (navigator.share) await navigator.share({ title: `Fotos: ${trip.title}`, url }).catch(() => undefined)
-      else {
-        await navigator.clipboard.writeText(url)
-        toast('Galerie-Link kopiert')
-      }
-    }
-    try {
-      const url = await getOrCreateGalleryLink(trip.id)
-      await presentSheet({
-        header: 'Galerie teilen',
-        subHeader: 'Getrennt vom Follower-Link – z.B. nur für die engste Familie. Mit Download.',
-        buttons: [
-          { text: 'Link teilen', handler: () => void send(url) },
-          { text: 'Neuen Link erzeugen (alter wird gesperrt)', role: 'destructive', handler: () => void rotateGalleryLink(trip.id).then(send) },
-          { text: 'Abbrechen', role: 'cancel' },
-        ],
-      })
-    } catch (e) {
-      toast((e as Error).message, 'danger')
-    }
-  }
+  // gleicher Reise-Link wie überall; öffnet bei Followern direkt die Fotos
+  const shareTrip = useTripShare()
+  const share = () => shareTrip('fotos')
 
   const count = days?.reduce((n, d) => n + d.items.length, 0) ?? 0
 
@@ -127,7 +103,7 @@ const GalleryPage = () => {
             <IonButton onClick={() => fileInput.current?.click()} aria-label="Fotos hinzufügen">
               <IonIcon slot="icon-only" icon={addOutline} />
             </IonButton>
-            <IonButton onClick={() => void share()} aria-label="Galerie teilen">
+            <IonButton onClick={() => void share()} aria-label="Reise teilen">
               <IonIcon slot="icon-only" icon={shareSocialOutline} />
             </IonButton>
           </>

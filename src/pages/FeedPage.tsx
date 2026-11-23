@@ -38,18 +38,17 @@ import { useCapture } from '../lib/capture'
 import { peekCache } from '../lib/offline'
 import { sharePost } from '../lib/share'
 import { useTimeline } from '../lib/useTimeline'
+import { useTripShare } from '../lib/useTripShare'
 import { loadRoute, type RoutePoint } from '../lib/route'
 import { useTrip } from '../lib/trip'
 import {
   addOwnerReply,
   createFeedPost,
   deletePost,
-  getOrCreateShareLink,
   hideReply,
   loadUpdates,
   regenerateRouteImages,
   resolvePoll,
-  rotateShareLink,
   updatePost,
   type FeedPost,
 } from '../lib/updates'
@@ -125,41 +124,8 @@ const FeedPage = () => {
   const toast = (message: string, color: 'success' | 'danger' = 'success') =>
     presentToast({ message, duration: 2500, position: 'top', color })
 
-  const shareUrl = async (url: string) => {
-    const text = `Folgt unserer Reise «${trip?.title}» – ohne App und ohne Konto:`
-    if (navigator.share) {
-      await navigator.share({ title: trip?.title, text, url }).catch(() => undefined)
-    } else {
-      await navigator.clipboard.writeText(url)
-      toast('Follower-Link kopiert')
-    }
-  }
 
-  const openShare = async () => {
-    if (!trip) return
-    try {
-      const url = await getOrCreateShareLink(trip.id)
-      await presentSheet({
-        header: 'Follower einladen',
-        subHeader: url,
-        buttons: [
-          { text: 'Link teilen', handler: () => void shareUrl(url) },
-          {
-            text: 'Link kopieren',
-            handler: () => void navigator.clipboard.writeText(url).then(() => toast('Follower-Link kopiert')),
-          },
-          {
-            text: 'Neuen Link erzeugen (alter wird gesperrt)',
-            role: 'destructive',
-            handler: () => void rotateShareLink(trip.id).then((u) => shareUrl(u)),
-          },
-          { text: 'Abbrechen', role: 'cancel' },
-        ],
-      })
-    } catch (e) {
-      toast((e as Error).message, 'danger')
-    }
-  }
+  const openShare = useTripShare()
 
   const act = (task: () => Promise<void>) =>
     task()
@@ -260,7 +226,7 @@ const FeedPage = () => {
         <IonToolbar>
           <IonTitle>{trip?.title ?? 'Feed'}</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
+            <IonButton onClick={() => void openShare()} aria-label="Reise teilen">
               <IonIcon slot="icon-only" icon={shareSocialOutline} />
             </IonButton>
           </IonButtons>

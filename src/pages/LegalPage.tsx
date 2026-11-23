@@ -92,12 +92,11 @@ const Datenschutz = () => (
 
     <h2>4. Sichtbarkeit</h2>
     <p>
-      Reisen sind nicht öffentlich auffindbar. Inhalte sieht nur, wer den geheimen Follower-Link einer Reise hat. Für
-      die Fotogalerie gibt es einen separaten Galerie-Link, über den Fotos und Videos angesehen und heruntergeladen
-      werden können. Die Reisenden können beide Links jederzeit sperren und ersetzen und Standorte für Follower
-      zeitverzögert anzeigen lassen. Antworten, die Follower als «privat» markieren, sehen
-      nur die Reisenden. Fotos werden vor dem Hochladen verkleinert; dabei werden die eingebetteten Metadaten
-      einschliesslich GPS-Position entfernt.
+      Reisen sind nicht öffentlich auffindbar. Inhalte sieht nur, wer den geheimen Reise-Link hat – ein Link für
+      Tagebuch, Karte und Fotos (ansehen und herunterladen). Die Reisenden können den Link jederzeit sperren und
+      ersetzen und Standorte für Follower zeitverzögert anzeigen lassen. Fotos werden vor dem Hochladen verkleinert;
+      dabei werden die eingebetteten Metadaten aus der Datei entfernt. Aufnahmezeit und Aufnahmeort werden vorher
+      gelesen und nur zur Einordnung in Galerie und Karte gespeichert.
     </p>
 
     <h2>5. Dienstleister und Speicherort</h2>

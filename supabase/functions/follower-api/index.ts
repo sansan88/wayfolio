@@ -269,7 +269,9 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    if (body.action === 'gallery') return json(await gallery(await getLink(body.token, 'gallery')))
+    // Fotos gehören zum Reise-Link; alte separate Galerie-Links funktionieren weiter
+    if (body.action === 'gallery')
+      return json(await gallery(await getLink(body.token).catch(() => getLink(body.token, 'gallery'))))
     const link = await getLink(body.token)
 
     switch (body.action) {
