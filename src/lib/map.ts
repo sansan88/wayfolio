@@ -14,7 +14,7 @@ export const ATTRIBUTION = '© OpenStreetMap · OpenFreeMap'
 export type { RoutePoint } from './route'
 export { loadRoute } from './route'
 
-const ACCENT = '#1f6feb'
+const ACCENT = '#11a683'
 
 /** Route als Linie, frühere Orte als Punkte, letzter Ort hervorgehoben. */
 export const addRoute = (map: MlMap, points: RoutePoint[]) => {

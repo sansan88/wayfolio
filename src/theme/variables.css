@@ -1,11 +1,23 @@
-/* Wayfolio-Farben. Ionic-Theming: https://ionicframework.com/docs/theming/basics */
+/* Little-Footnotes-Farben: Mintgrün. Ionic-Theming: https://ionicframework.com/docs/theming/basics */
 :root {
-  --ion-color-primary: #1f6feb;
-  --ion-color-primary-rgb: 31, 111, 235;
+  --ion-color-primary: #11a683;
+  --ion-color-primary-rgb: 17, 166, 131;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #1b62cf;
-  --ion-color-primary-tint: #357dee;
+  --ion-color-primary-shade: #0f9273;
+  --ion-color-primary-tint: #29af8f;
+}
+
+/* Dunkelmodus: helleres Mint mit dunkler Schrift, damit es auf Schwarz leuchtet und lesbar bleibt */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #5ee0b5;
+    --ion-color-primary-rgb: 94, 224, 181;
+    --ion-color-primary-contrast: #04281d;
+    --ion-color-primary-contrast-rgb: 4, 40, 29;
+    --ion-color-primary-shade: #53c59f;
+    --ion-color-primary-tint: #6ee3bc;
+  }
 }
 
 /* --- iOS-Feinschliff --------------------------------------------------- */

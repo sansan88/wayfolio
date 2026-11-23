@@ -10,13 +10,40 @@
       content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#1f6feb" />
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Footnotes" />
     <meta name="description" content="Little Footnotes – Reisetagebuch mit Check-ins, Fotos und Karte. Familie und Freunde folgen per Link, ohne App." />
     <title>Little Footnotes</title>
+    <script>
+      // Selbstheilung nach einem Update/Domainwechsel: lädt eine veraltete Seite (gecacht beim CDN)
+      // Dateien, die es nicht mehr gibt, einmal frisch und am Cache vorbei neu laden.
+      window.addEventListener(
+        'error',
+        function (e) {
+          var t = e.target
+          if (!t || (t.tagName !== 'SCRIPT' && t.tagName !== 'LINK')) return
+          try {
+            if (sessionStorage.getItem('lf-reloaded')) return
+            sessionStorage.setItem('lf-reloaded', '1')
+          } catch (_) {
+            return
+          }
+          var u = new URL(location.href)
+          u.searchParams.set('v', Date.now().toString(36))
+          location.replace(u.toString())
+        },
+        true,
+      )
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          try { sessionStorage.removeItem('lf-reloaded') } catch (_) {}
+        }, 10000)
+      })
+    </script>
   </head>
   <body>
     <div id="root"></div>

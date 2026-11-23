@@ -1,7 +1,8 @@
 .lp {
   --lp-ink: #11161f;
   --lp-muted: #5b6575;
-  --lp-accent: #1f6feb;
+  --lp-accent: #11a683;
+  --lp-on-accent: #ffffff;
   --lp-tint: #f3f6fb;
   --lp-line: #e3e8f0;
   color: var(--lp-ink);
@@ -15,6 +16,8 @@
     --lp-muted: #9aa5b5;
     --lp-tint: #141a24;
     --lp-line: #263042;
+    --lp-accent: #5ee0b5;
+    --lp-on-accent: #04281d;
     background: #0d1117;
   }
 }
@@ -59,7 +62,7 @@
 .lp-btn--primary {
   border-color: var(--lp-accent);
   background: var(--lp-accent);
-  color: #fff;
+  color: var(--lp-on-accent);
 }
 
 .lp-btn:disabled {

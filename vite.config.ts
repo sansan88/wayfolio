@@ -26,7 +26,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#f2f2f7',
-        theme_color: '#1f6feb',
+        theme_color: '#11a683',
         categories: ['travel', 'lifestyle'],
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

@@ -59,10 +59,10 @@ const PhoneMock = () => (
     <div className="lp-card lp-card--route">
       <div className="lp-route">
         <svg viewBox="0 0 200 110" preserveAspectRatio="none">
-          <path d="M18 20 C 60 30, 80 55, 110 62 S 165 88, 182 92" fill="none" stroke="#1f6feb" strokeWidth="3.5" strokeLinecap="round" />
-          <circle cx="18" cy="20" r="5" fill="#fff" stroke="#1f6feb" strokeWidth="3" />
-          <circle cx="110" cy="62" r="5" fill="#fff" stroke="#1f6feb" strokeWidth="3" />
-          <circle cx="182" cy="92" r="8" fill="#1f6feb" />
+          <path d="M18 20 C 60 30, 80 55, 110 62 S 165 88, 182 92" fill="none" stroke="#11a683" strokeWidth="3.5" strokeLinecap="round" />
+          <circle cx="18" cy="20" r="5" fill="#fff" stroke="#11a683" strokeWidth="3" />
+          <circle cx="110" cy="62" r="5" fill="#fff" stroke="#11a683" strokeWidth="3" />
+          <circle cx="182" cy="92" r="8" fill="#11a683" />
         </svg>
         <span className="lp-route__caption">Tag 12 · Hué → Hoi An</span>
       </div>
