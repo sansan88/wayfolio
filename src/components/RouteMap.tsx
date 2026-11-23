@@ -1,7 +1,7 @@
 import { Map as MlMap, Marker, NavigationControl, type MapLayerMouseEvent } from 'maplibre-gl'
 import { useEffect, useRef } from 'react'
 
-import { addRoute, MAP_STYLE, routeBounds } from '../lib/map'
+import { addRoute, focusCurrent, MAP_STYLE } from '../lib/map'
 import type { RoutePoint } from '../lib/route'
 
 interface Props {
@@ -37,8 +37,8 @@ const RouteMap = ({ points, photos = {}, onSelect, focus, height = '100%' }: Pro
     map.on('load', () => {
       if (!points.length) return
       addRoute(map, points)
-      const bounds = routeBounds(points)
-      if (bounds && points.length > 1) map.fitBounds(bounds, { padding: 60, maxZoom: 12, animate: false })
+      // Start nah am aktuellen Ort (letzte Etappe); herauszoomen zeigt die ganze Route
+      focusCurrent(map, points)
 
       // Orte mit Fotos als runde Vorschaubilder
       points.forEach((p) => {

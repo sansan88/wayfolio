@@ -24,7 +24,7 @@ import {
   useIonViewWillEnter,
 } from '@ionic/react'
 import { add, shareSocialOutline } from 'ionicons/icons'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import CheckinModal from '../components/CheckinModal'
 import ComposeModal from '../components/ComposeModal'
@@ -43,6 +43,7 @@ import {
   getOrCreateShareLink,
   hideReply,
   loadUpdates,
+  regenerateRouteImages,
   resolvePoll,
   rotateShareLink,
   updatePost,
@@ -69,6 +70,8 @@ const FeedPage = () => {
     [capture.at, capture.place, capture.position],
   )
   const timeline = useTimeline(posts.map((p) => p.id))
+  const [regen, setRegen] = useState<{ done: number; total: number } | null>(null)
+  const regenStarted = useRef<string | null>(null)
   const editInitial = useMemo(() => {
     if (!editing) return undefined
     const point = points.find((p) => p.id === editing.checkin_id)
@@ -167,6 +170,19 @@ const FeedPage = () => {
       ],
     })
 
+  // ältere Routenbilder einmalig im Hintergrund neu zeichnen (näher am jeweiligen Ort)
+  useEffect(() => {
+    if (!trip || regenStarted.current === trip.id) return
+    regenStarted.current = trip.id
+    regenerateRouteImages(trip.id, (done, total) => setRegen({ done, total }))
+      .then((n) => {
+        if (n > 0) void refresh()
+      })
+      .catch((e: Error) => console.warn('Routenbilder nicht aktualisiert', e))
+      .finally(() => setRegen(null))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id])
+
   /** «+»: die zwei Arten von Updates */
   const openCreate = () =>
     presentSheet({
@@ -216,6 +232,11 @@ const FeedPage = () => {
           <IonRefresherContent />
         </IonRefresher>
         <GeoPermissionBanner />
+        {regen && (
+          <p className="regen-note" role="status">
+            Kartenausschnitte werden aktualisiert … {regen.done}/{regen.total}
+          </p>
+        )}
 
         {error && (
           <IonText color="danger">

@@ -1,7 +1,7 @@
 import { appUrl } from './auth'
 import { readPhotoMeta } from './exif'
-import { distanceKm } from './geo'
-import { loadRoute } from './route'
+import { distanceKm, ROUTE_IMAGE_VERSION } from './geo'
+import { loadRoute, type RoutePoint } from './route'
 import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
 
@@ -86,7 +86,7 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind, opt
       kind,
       storage_path: path,
       // Routenbilder markieren: nicht in der Galerie und nicht als Foto auf der Karte
-      variants: opts.route ? { route: true } : thumbPath ? { thumb: thumbPath } : {},
+      variants: opts.route ? { route: true, v: ROUTE_IMAGE_VERSION } : thumbPath ? { thumb: thumbPath } : {},
       taken_at: meta.takenAt?.toISOString() ?? when(ctx),
       // Ort aus den Foto-Metadaten, sonst der beim Erfassen gewählte Ort (GPS oder Pin)
       taken_location: meta.position ? toWkt(meta.position) : ctx.position ? toWkt(ctx.position) : null,
@@ -214,6 +214,52 @@ const checkinFor = async (ctx: Context, forceNew = false): Promise<{ id: string;
   return id ? { id, isNew: true } : null
 }
 
+/** Bildzeile: «Tag 3 · Queenstown → Wānaka» */
+const routeCaption = (route: RoutePoint[], placeName?: string | null) => {
+  const prev = route.at(-2)
+  const day = route.length ? Math.floor((Date.parse(route.at(-1)!.recorded_at) - Date.parse(route[0].recorded_at)) / 86400000) + 1 : 1
+  const name = (placeName ?? route.at(-1)?.place_name ?? 'Neuer Ort').split(',')[0]
+  return prev?.place_name ? `Tag ${day} · ${prev.place_name.split(',')[0]} → ${name}` : `Tag ${day} · ${name}`
+}
+
+/**
+ * Bestehende Routenbilder neu zeichnen (z.B. nach geändertem Kartenausschnitt). Ersetzt die Datei,
+ * die Verknüpfung in den Beiträgen bleibt. Nur Bilder mit älterer Version werden angefasst.
+ */
+export const regenerateRouteImages = async (tripId: string, onProgress?: (done: number, total: number) => void) => {
+  const { data: media, error } = await supabase
+    .from('media')
+    .select('id, storage_path, variants, post_blocks(post:posts!post_blocks_post_id_fkey(checkin_id))')
+    .eq('trip_id', tripId)
+    .eq('variants->>route', 'true')
+  if (error) fail(error.message)
+  const outdated = (media ?? []).filter((m) => ((m.variants as { v?: number } | null)?.v ?? 1) < ROUTE_IMAGE_VERSION)
+  if (!outdated.length) return 0
+  const { renderRouteImage } = await import('./map')
+  const all = await loadRoute(tripId)
+  let done = 0
+  for (const m of outdated) {
+    const blocks = (m.post_blocks ?? []) as unknown as { post: { checkin_id: string | null } | null }[]
+    const checkinId = blocks.map((b) => b.post?.checkin_id).find(Boolean)
+    const idx = all.findIndex((p) => p.id === checkinId)
+    if (idx >= 0) {
+      const route = all.slice(0, idx + 1)
+      const image = await renderRouteImage(route, routeCaption(route))
+      const path = `${tripId}/${crypto.randomUUID()}.jpg`
+      const up = await supabase.storage.from('media').upload(path, image, { contentType: 'image/jpeg' })
+      if (!up.error) {
+        const { error: e } = await supabase
+          .from('media')
+          .update({ storage_path: path, variants: { route: true, v: ROUTE_IMAGE_VERSION } })
+          .eq('id', m.id)
+        if (!e) await supabase.storage.from('media').remove([m.storage_path])
+      }
+    }
+    onProgress?.(++done, outdated.length)
+  }
+  return done
+}
+
 /** Routenbild bis zu diesem (evtl. rückdatierten) Punkt plus Distanzzeile. */
 const routeBlocks = async (ctx: Context, checkinId: string): Promise<NewBlock[]> => {
   try {
@@ -224,10 +270,7 @@ const routeBlocks = async (ctx: Context, checkinId: string): Promise<NewBlock[]>
     const prev = route.at(-2)
     const leg = prev ? Math.round(distanceKm(prev, route.at(-1)!)) : 0
     const total = Math.round(route.slice(1).reduce((sum, p, i) => sum + distanceKm(route[i], p), 0))
-    const day = route.length ? Math.floor((Date.parse(route.at(-1)!.recorded_at) - Date.parse(route[0].recorded_at)) / 86400000) + 1 : 1
-    const name = ctx.place?.name.split(',')[0] ?? 'Neuer Ort'
-    const caption = prev?.place_name ? `Tag ${day} · ${prev.place_name.split(',')[0]} → ${name}` : `Tag ${day} · ${name}`
-    const image = await renderRouteImage(route, caption)
+    const image = await renderRouteImage(route, routeCaption(route, ctx.place?.name))
     const blocks: NewBlock[] = [{ kind: 'photo', mediaId: await uploadMedia(ctx, image, 'photo', { route: true }) }]
     if (prev) blocks.push({ kind: 'text', text: `${leg} km seit ${prev.place_name?.split(',')[0] ?? 'dem letzten Ort'} · ${total} km gesamt` })
     if (leg) await supabase.from('checkins').update({ leg_distance_m: leg * 1000 }).eq('id', checkinId)

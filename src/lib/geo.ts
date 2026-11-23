@@ -7,3 +7,6 @@ export const distanceKm = (a: { lat: number; lon: number }, b: { lat: number; lo
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2
   return 2 * r * Math.asin(Math.sqrt(h))
 }
+
+/** Version der Routenbilder – ist variants.v kleiner, wird das Bild neu erzeugt (2 = Ausschnitt nah am aktuellen Ort). */
+export const ROUTE_IMAGE_VERSION = 2

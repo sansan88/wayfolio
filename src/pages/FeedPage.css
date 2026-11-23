@@ -134,3 +134,10 @@
   --padding-bottom: 0;
   --min-height: 0;
 }
+
+.regen-note {
+  margin: 8px 16px 0;
+  color: var(--ion-color-medium);
+  font-size: 0.8rem;
+  text-align: center;
+}

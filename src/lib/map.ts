@@ -1,4 +1,4 @@
-import { LngLatBounds, Map as MlMap, setWorkerUrl, type LngLatBoundsLike } from 'maplibre-gl'
+import { LngLatBounds, type PaddingOptions, Map as MlMap, setWorkerUrl, type LngLatBoundsLike } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 // MapLibre 6 lädt seinen Worker relativ zur eigenen Datei – im Vite-Build muss er mitgebündelt werden.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
@@ -55,6 +55,26 @@ export const addRoute = (map: MlMap, points: RoutePoint[]) => {
   })
 }
 
+/**
+ * Ausschnitt nah am aktuellen Ort: letzte Etappe (vorheriger + aktueller Punkt), Zoom 8–11.
+ * Ist die Etappe sehr lang, bleibt der aktuelle Ort im Zentrum und die Linie führt aus dem Bild.
+ */
+export const focusCurrent = (map: MlMap, points: RoutePoint[], padding: number | PaddingOptions = 110) => {
+  const last = points.at(-1)
+  if (!last) return
+  const prev = points.at(-2)
+  if (!prev) {
+    map.jumpTo({ center: [last.lon, last.lat], zoom: 10 })
+    return
+  }
+  const b = new LngLatBounds()
+  b.extend([prev.lon, prev.lat])
+  b.extend([last.lon, last.lat])
+  const camera = map.cameraForBounds(b, { padding, maxZoom: 11 })
+  if (!camera || (camera.zoom ?? 0) < 8) map.jumpTo({ center: [last.lon, last.lat], zoom: 8 })
+  else map.jumpTo(camera)
+}
+
 export const routeBounds = (points: RoutePoint[]): LngLatBoundsLike | null => {
   if (!points.length) return null
   const b = new LngLatBounds()
@@ -91,8 +111,8 @@ export const renderRouteImage = async (points: RoutePoint[], caption: string): P
   try {
     await new Promise<void>((resolve) => map.once('load', () => resolve()))
     addRoute(map, points)
-    const bounds = routeBounds(points)
-    if (bounds && points.length > 1) map.fitBounds(bounds, { padding: 60, maxZoom: 12, animate: false })
+    // unten Platz für die Bildzeile lassen
+    focusCurrent(map, points, { top: 50, left: 50, right: 50, bottom: 110 })
     await waitForIdle(map)
 
     const out = document.createElement('canvas')
