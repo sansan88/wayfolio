@@ -3,7 +3,7 @@ import { IonContent, IonPage } from '@ionic/react'
 import './LandingPage.css'
 import './LegalPage.css'
 
-const CONTACT = 'sandro.scalco@liitu.ch'
+const CONTACT = 'team@littlefootnotes.app'
 const STAND = '20. November 2026'
 const home = import.meta.env.BASE_URL
 
@@ -115,6 +115,10 @@ const Datenschutz = () => (
       </li>
       <li>
         <strong>OpenFreeMap</strong>: Auslieferung der Kartenkacheln; dabei wird die IP-Adresse übermittelt.
+      </li>
+      <li>
+        <strong>Infomaniak</strong> (Infomaniak Network SA, Schweiz): Domain littlefootnotes.app, E-Mail-Postfach und
+        Versand der Anmelde-E-Mails.
       </li>
     </ul>
     <p>
