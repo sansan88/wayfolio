@@ -1,13 +1,20 @@
 import type { FeedPost } from './updates'
 import { getOrCreateShareLink } from './updates'
 
-/** Text für WhatsApp & Co.: Titel, Ort, Anfang des Textes und der Link direkt zum Beitrag. */
+/**
+ * Text für WhatsApp & Co.: Einleitung, Ort bzw. Titel, Anfang des Textes und der Link direkt zum Beitrag.
+ * Check-ins beginnen mit «Wir sind heute hier.», Beiträge mit «Wir haben ein Update für euch».
+ */
 const shareText = (post: FeedPost, url: string) => {
-  const place = post.place_name?.split(',')[0]
-  const title = post.kind === 'route_update' ? `📍 ${place ?? post.title ?? 'Neuer Ort'}` : `✍️ ${post.title ?? 'Neuer Beitrag'}`
+  const isCheckin = post.kind === 'route_update'
+  const place = post.place_name?.split(',').map((x) => x.trim())
+  const intro = isCheckin ? 'Wir sind heute hier.' : 'Wir haben ein Update für euch'
+  const headline = isCheckin
+    ? `📍 ${place?.join(', ') ?? post.title ?? ''}`.trim()
+    : [post.title ? `✍️ ${post.title}` : '', place?.[0] ? `📍 ${place[0]}` : ''].filter(Boolean).join('\n')
   const body = post.blocks.find((b) => b.kind === 'text' && b.text)?.text?.trim()
   const teaser = body ? (body.length > 180 ? `${body.slice(0, 177).trimEnd()} …` : body) : ''
-  return [title, post.kind !== 'route_update' && place ? `📍 ${place}` : '', teaser, url].filter(Boolean).join('\n\n')
+  return [intro, headline, teaser, url].filter(Boolean).join('\n\n')
 }
 
 /** Erstes Foto als Datei (WhatsApp zeigt es dann mit dem Text als Bildunterschrift). */

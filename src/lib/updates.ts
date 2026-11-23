@@ -440,6 +440,11 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
     .eq('id', post.id)
   if (error) fail(error.message)
 
+  // alte, nicht mehr angezeigte Distanzzeilen entfernen
+  const { data: legacy } = await supabase.from('post_blocks').select('id, text_content').eq('post_id', post.id).eq('kind', 'text')
+  const distanceIds = (legacy ?? []).filter((b) => isDistanceLine(b.text_content as string | null)).map((b) => b.id as string)
+  if (distanceIds.length) await supabase.from('post_blocks').delete().in('id', distanceIds)
+
   // Text
   const textBlock = post.blocks.find((b) => b.kind === 'text' && b.id)
   if (textBlock) {
@@ -468,7 +473,9 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
   if (!linkBlock && c.link.trim()) added.push({ kind: 'link', url: c.link.trim() })
   added.push(...extra)
   if (added.length) {
-    let position = Math.max(-1, ...post.blocks.map((b) => b.position)) + 1
+    // Position aus der Datenbank: ausgeblendete Bausteine (z.B. alte Distanzzeilen) zählen mit
+    const { data: existing } = await supabase.from('post_blocks').select('position').eq('post_id', post.id)
+    let position = Math.max(-1, ...(existing ?? []).map((b) => b.position as number), ...post.blocks.map((b) => b.position)) + 1
     const { error: e } = await supabase.from('post_blocks').insert(
       added.map((b) => ({
         post_id: post.id,
