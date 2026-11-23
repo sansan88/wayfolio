@@ -16,7 +16,7 @@ import { Navigate, Route } from 'react-router-dom'
 
 import { AuthProvider, useAuth } from './lib/auth'
 import { CaptureProvider } from './lib/capture'
-import { followerTokenFromPath } from './lib/follower'
+import { followerTokenFromPath, postTokenFromPath } from './lib/follower'
 import { galleryTokenFromPath } from './lib/gallery'
 import { inviteTokenFromPath } from './lib/members'
 import { TripProvider, useTrip } from './lib/trip'
@@ -31,6 +31,7 @@ import AppStatus from './components/AppStatus'
 import { isStandalone } from './lib/pwa'
 
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
+const SharedPostPage = lazy(() => import('./pages/SharedPostPage'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
 const LegalPage = lazy(() => import('./pages/LegalPage'))
@@ -42,6 +43,7 @@ const path = window.location.pathname.slice(basename.length) || '/'
 
 /** Öffentliche Pfade, die ohne Anmeldung funktionieren. */
 const followerToken = followerTokenFromPath(window.location.pathname)
+const postToken = postTokenFromPath(window.location.pathname)
 const inviteToken = inviteTokenFromPath(window.location.pathname)
 const galleryToken = galleryTokenFromPath(window.location.pathname)
 const wantsLogin = path.startsWith('/login')
@@ -138,7 +140,7 @@ if (followerToken) {
   } catch {
     /* egal */
   }
-} else if (!legalPage && !galleryToken && isStandalone()) {
+} else if (!legalPage && !galleryToken && !postToken && isStandalone()) {
   try {
     const saved = localStorage.getItem(FOLLOWER_LINK_KEY)
     const signedIn = Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
@@ -158,6 +160,10 @@ const App = () => (
     ) : galleryToken ? (
       <Suspense fallback={<Loading />}>
         <PublicGalleryPage token={galleryToken} />
+      </Suspense>
+    ) : postToken ? (
+      <Suspense fallback={<Loading />}>
+        <SharedPostPage token={postToken} />
       </Suspense>
     ) : followerToken ? (
       <Suspense fallback={<Loading />}>

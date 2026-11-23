@@ -24,7 +24,7 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
 
   if (error)
     return (
-      <IonPage>
+      <IonPage className="no-save">
         <IonContent className="ion-padding">
           <div className="login">
             <h1>Little Footnotes</h1>
@@ -37,7 +37,7 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
     )
 
   return (
-    <IonPage>
+    <IonPage className="no-save">
       <PageHeader title={data ? data.trip.title : 'Galerie'} />
       <IonContent fullscreen>
         <LargeTitle title={data ? data.trip.title : 'Galerie'} />

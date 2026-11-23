@@ -63,6 +63,20 @@ export const followerTokenFromPath = (pathname: string) => {
   return m?.[1] ?? null
 }
 
+/** Token aus /p/<token> – Secret Link für einen einzelnen Beitrag */
+export const postTokenFromPath = (pathname: string) => {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+  const m = pathname.slice(base.length).match(/^\/p\/([a-f0-9]{32,})\/?$/)
+  return m?.[1] ?? null
+}
+
+/** Einzelner Beitrag per Beitrags-Link (ohne Rest der Reise). */
+export const sharedPostApi = async (token: string) => {
+  const data = await cachedLoad(`post:${token.slice(0, 12)}`, () => call<{ trip: { title: string }; post: FeedPost }>(token, 'post'))
+  data.post.blocks = data.post.blocks.filter((b) => !(b.kind === 'text' && isDistanceLine(b.text)))
+  return data
+}
+
 /** Öffentliche Galerie per Galerie-Link. */
 export const galleryApi = async (token: string): Promise<{ trip: { title: string }; days: GalleryDay[] }> => {
   const data = await call<{

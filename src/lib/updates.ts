@@ -502,6 +502,40 @@ export const deletePost = async (postId: string) => {
 
 export const followerUrl = (token: string) => `${appUrl()}t/${token}`
 
+/** Secret Link für genau einen Beitrag (zeigt nicht die ganze Reise). */
+export const postUrl = (token: string) => `${appUrl()}p/${token}`
+
+export const getOrCreatePostLink = async (post: FeedPost, tripId: string): Promise<string> => {
+  const { data: existing } = await supabase
+    .from('share_links')
+    .select('token')
+    .eq('post_id', post.id)
+    .eq('role', 'post')
+    .is('revoked_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (existing) return postUrl(existing.token)
+  const { data, error } = await supabase
+    .from('share_links')
+    .insert({ trip_id: tripId, role: 'post', post_id: post.id })
+    .select('token')
+    .single()
+  if (error) fail(error.message)
+  return postUrl(data!.token)
+}
+
+/** Alle Links dieses Beitrags sperren (wer ihn hat, sieht nichts mehr). */
+export const revokePostLinks = async (postId: string) => {
+  const { error } = await supabase
+    .from('share_links')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('post_id', postId)
+    .eq('role', 'post')
+    .is('revoked_at', null)
+  if (error) fail(error.message)
+}
+
 /** Liefert den Follower-Link der Reise und legt ihn beim ersten Mal an. */
 export const getOrCreateShareLink = async (tripId: string): Promise<string> => {
   const { data: existing } = await supabase

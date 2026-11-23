@@ -48,6 +48,7 @@ import {
   hideReply,
   loadUpdates,
   regenerateRouteImages,
+  revokePostLinks,
   resolvePoll,
   updatePost,
   type FeedPost,
@@ -145,20 +146,30 @@ const FeedPage = () => {
   /** Bearbeiten als iOS-Card-Modal (Titel, Text, Datum & Uhrzeit) */
   const editPost = (post: FeedPost) => setEditing(post)
 
+  /** Beitrag teilen: nur diesen Beitrag (eigener Link) oder mit Link zur ganzen Reise */
+  const shareAs = (post: FeedPost, scope: 'post' | 'trip') =>
+    void sharePost(post, trip!.id, scope)
+      .then((r) => {
+        if (r === 'copied') void toast('Text mit Link kopiert – in WhatsApp einfügen')
+      })
+      .catch((e: Error) => toast(e.message, 'danger'))
+
   const openMenu = (post: FeedPost) =>
     presentSheet({
-      header: post.title ?? 'Beitrag',
+      header: post.title ?? post.place_name?.split(',')[0] ?? 'Beitrag',
+      subHeader: '«Nur diesen Beitrag» zeigt der Gruppe genau diesen Beitrag – nicht die ganze Reise.',
       buttons: [
+        // Teilen: nur dieser Beitrag (eigener Secret Link) oder mit Link zur ganzen Reise
+        { text: 'Nur diesen Beitrag teilen', handler: () => shareAs(post, 'post') },
+        { text: 'Mit Reise-Link teilen', handler: () => shareAs(post, 'trip') },
+        ...(post.kind !== 'poll' ? [{ text: 'Bearbeiten', handler: () => void editPost(post) }] : []),
         {
-          text: 'Teilen (WhatsApp …)',
+          text: 'Beitrags-Links sperren',
           handler: () =>
-            void sharePost(post, trip!.id)
-              .then((r) => {
-                if (r === 'copied') void toast('Text mit Link kopiert – in WhatsApp einfügen')
-              })
+            void revokePostLinks(post.id)
+              .then(() => toast('Links für diesen Beitrag gesperrt'))
               .catch((e: Error) => toast(e.message, 'danger')),
         },
-        ...(post.kind !== 'poll' ? [{ text: 'Bearbeiten', handler: () => void editPost(post) }] : []),
         { text: 'Löschen', role: 'destructive', handler: () => void confirmDelete(post) },
         { text: 'Abbrechen', role: 'cancel' },
       ],

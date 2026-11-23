@@ -199,3 +199,14 @@ ion-fab-button {
   pointer-events: none;
   white-space: nowrap;
 }
+
+/* Community-Ansichten: kein «Bild sichern» per langem Tippen, kein Ziehen/Kontextmenü.
+   (Wer es darauf anlegt, kommt über die Entwicklerwerkzeuge trotzdem an die Bilder.) */
+.no-save img,
+.no-save video,
+.no-save .map-photo {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}

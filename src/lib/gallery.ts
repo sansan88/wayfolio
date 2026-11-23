@@ -8,7 +8,8 @@ export interface GalleryItem {
   id: string
   kind: 'photo' | 'video'
   url: string
-  download_url: string
+  /** nur für Reisende */
+  download_url?: string
   taken_at: string
   /** kleines Vorschaubild fürs Raster */
   thumb_url?: string

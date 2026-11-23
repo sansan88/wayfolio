@@ -54,7 +54,7 @@ export const MediaBlocks = ({ post, route = false, other = false }: { post: Feed
         if (b.kind === 'photo' && b.mediaUrl)
           return <img key={b.position} className={route ? 'post__media post__route' : 'post__media'} src={b.mediaUrl} alt={route ? 'Routenkarte' : ''} loading="lazy" />
         if (b.kind === 'video' && b.mediaUrl)
-          return <video key={b.position} className="post__media" src={b.mediaUrl} controls playsInline preload="metadata" />
+          return <video key={b.position} className="post__media" src={b.mediaUrl} controls controlsList="nodownload" disablePictureInPicture playsInline preload="metadata" />
         if (b.kind === 'audio' && b.mediaUrl)
           return <audio key={b.position} className="post__audio" src={b.mediaUrl} controls preload="metadata" />
         return null

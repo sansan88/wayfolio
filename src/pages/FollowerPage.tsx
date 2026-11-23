@@ -138,7 +138,7 @@ const FollowerPage = ({ token }: { token: string }) => {
 
   if (error && !data)
     return (
-      <IonPage>
+      <IonPage className="no-save">
         <IonContent className="ion-padding">
           <div className="login">
             <h1>Little Footnotes</h1>
@@ -153,7 +153,7 @@ const FollowerPage = ({ token }: { token: string }) => {
 
   if (!data)
     return (
-      <IonPage>
+      <IonPage className="no-save">
         <IonContent>
           <PageSpinner />
         </IonContent>
@@ -208,7 +208,7 @@ const FollowerPage = ({ token }: { token: string }) => {
   )
 
   return (
-    <IonPage>
+    <IonPage className="no-save">
       <IonHeader>
         <IonToolbar>
           <IonTitle>{data.trip.title}</IonTitle>

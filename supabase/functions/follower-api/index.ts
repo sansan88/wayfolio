@@ -34,13 +34,14 @@ const sha256 = async (text: string) => {
 interface Link {
   id: string
   trip_id: string
+  post_id?: string | null
 }
 
-const getLink = async (token: unknown, role: 'follower' | 'gallery' = 'follower'): Promise<Link> => {
+const getLink = async (token: unknown, role: 'follower' | 'gallery' | 'post' = 'follower'): Promise<Link> => {
   if (typeof token !== 'string' || token.length < 32) throw new HttpError(404, 'Link ungültig')
   const { data } = await supabase
     .from('share_links')
-    .select('id, trip_id, expires_at, revoked_at')
+    .select('id, trip_id, post_id, expires_at, revoked_at')
     .eq('token', token)
     .eq('role', role)
     .maybeSingle()
@@ -86,7 +87,8 @@ const locationCutoff = async (tripId: string) => {
   return Date.now() - (data?.location_delay_minutes ?? 0) * 60_000
 }
 
-const feed = async (link: Link, device: unknown) => {
+/** Ganze Reise – oder mit onlyPost genau einen Beitrag (Beitrags-Link, ohne Route und Rest der Reise). */
+const feed = async (link: Link, device: unknown, onlyPost?: string) => {
   const follower = await findFollower(link, device)
   const cutoff = await locationCutoff(link.trip_id)
   const [{ data: trip }, { data: posts, error }, { data: route }] = await Promise.all([
@@ -104,9 +106,10 @@ const feed = async (link: Link, device: unknown) => {
       .eq('trip_id', link.trip_id)
       .eq('visibility', 'followers')
       .not('published_at', 'is', null)
+      .match(onlyPost ? { id: onlyPost } : {})
       .order('published_at', { ascending: false })
       .limit(100),
-    supabase.rpc('trip_checkins', { p_trip_id: link.trip_id }),
+    onlyPost ? Promise.resolve({ data: [] }) : supabase.rpc('trip_checkins', { p_trip_id: link.trip_id }),
   ])
   if (error) throw new HttpError(500, error.message)
 
@@ -234,13 +237,13 @@ const gallery = async (link: Link) => {
   const paths = rows.map((m) => m.storage_path)
   const thumbOf = (m: { variants: unknown }) => (m.variants as { thumb?: string } | null)?.thumb
   const thumbs = rows.map(thumbOf).filter(Boolean) as string[]
-  const [view, download, thumbView] = paths.length
+  // nur Ansicht, keine Download-Links für die Community
+  const [view, thumbView] = paths.length
     ? await Promise.all([
         supabase.storage.from('media').createSignedUrls(paths, 3600),
-        supabase.storage.from('media').createSignedUrls(paths, 3600, { download: true }),
         thumbs.length ? supabase.storage.from('media').createSignedUrls(thumbs, 3600) : Promise.resolve({ data: [] }),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }]
+    : [{ data: [] }, { data: [] }]
   const urlOf = (list: { path: string | null; signedUrl: string | null }[] | null, p: string) =>
     list?.find((s) => s.path === p)?.signedUrl ?? ''
   return {
@@ -250,7 +253,6 @@ const gallery = async (link: Link) => {
         id: m.id,
         kind: m.kind,
         url: urlOf(view.data, m.storage_path),
-        download_url: urlOf(download.data, m.storage_path),
         thumb_url: thumbOf(m) ? urlOf(thumbView.data, thumbOf(m)!) : undefined,
         taken_at: m.taken_at ?? m.created_at,
         // Fotoort gilt wie ein Standort: erst nach der Verzögerung sichtbar
@@ -269,6 +271,13 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
+    // Beitrags-Link: genau ein Beitrag, keine Route, keine Fotos der Reise
+    if (body.action === 'post') {
+      const link = await getLink(body.token, 'post')
+      const data = await feed(link, body.device, link.post_id!)
+      if (!data.posts.length) throw new HttpError(404, 'Dieser Beitrag ist nicht mehr verfügbar.')
+      return json({ trip: { title: data.trip?.title ?? '' }, post: data.posts[0] })
+    }
     // Fotos gehören zum Reise-Link; alte separate Galerie-Links funktionieren weiter
     if (body.action === 'gallery')
       return json(await gallery(await getLink(body.token).catch(() => getLink(body.token, 'gallery'))))

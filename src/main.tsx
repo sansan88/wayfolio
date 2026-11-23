@@ -21,6 +21,14 @@ import { registerSW } from 'virtual:pwa-register'
 setupIonicReact({ mode: 'ios' })
 captureInstallPrompt()
 
+// Community-Ansichten: Bilder nicht per Kontextmenü/Ziehen zum Sichern anbieten
+const blockSave = (e: Event) => {
+  const t = e.target as HTMLElement | null
+  if (t && (t.tagName === 'IMG' || t.tagName === 'VIDEO' || t.classList.contains('map-photo')) && t.closest('.no-save')) e.preventDefault()
+}
+document.addEventListener('contextmenu', blockSave, true)
+document.addEventListener('dragstart', blockSave, true)
+
 // Neue Version automatisch laden: beim Start, wenn die App wieder in den Vordergrund kommt und stündlich
 const updateSW = registerSW({
   immediate: true,

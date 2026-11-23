@@ -1,5 +1,5 @@
 import type { FeedPost } from './updates'
-import { getOrCreateShareLink } from './updates'
+import { getOrCreatePostLink, getOrCreateShareLink } from './updates'
 
 /**
  * Text für WhatsApp & Co.: Einleitung, Ort bzw. Titel, Anfang des Textes und der Link direkt zum Beitrag.
@@ -34,8 +34,14 @@ const firstPhoto = async (post: FeedPost): Promise<File | null> => {
  * Beitrag über das Teilen-Menü des Geräts (Web Share API) teilen – z.B. in die WhatsApp-Community.
  * Ergebnis: 'shared' | 'copied' (kein Teilen-Menü: Text in die Zwischenablage) | 'cancelled'
  */
-export const sharePost = async (post: FeedPost, tripId: string, withPhoto = true): Promise<'shared' | 'copied' | 'cancelled'> => {
-  const url = `${await getOrCreateShareLink(tripId)}#p-${post.id}`
+export const sharePost = async (
+  post: FeedPost,
+  tripId: string,
+  scope: 'post' | 'trip' = 'trip',
+  withPhoto = true,
+): Promise<'shared' | 'copied' | 'cancelled'> => {
+  // «post»: eigener Secret Link nur für diesen Beitrag; «trip»: Reise-Link, springt zum Beitrag
+  const url = scope === 'post' ? await getOrCreatePostLink(post, tripId) : `${await getOrCreateShareLink(tripId)}#p-${post.id}`
   const text = shareText(post, url)
   if (navigator.share) {
     try {
@@ -46,7 +52,7 @@ export const sharePost = async (post: FeedPost, tripId: string, withPhoto = true
     } catch (e) {
       if ((e as Error).name === 'AbortError') return 'cancelled'
       // z.B. Dateien nicht erlaubt: ohne Foto nochmals
-      if (withPhoto) return sharePost(post, tripId, false)
+      if (withPhoto) return sharePost(post, tripId, scope, false)
     }
   }
   await navigator.clipboard?.writeText(text)

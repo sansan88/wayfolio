@@ -61,9 +61,12 @@ const GalleryGrid = ({ days, onDelete }: Props) => {
                 {index! + 1} / {all.length}
               </span>
               <span className="gallery-view__actions">
-                <IonButton fill="clear" color="light" href={open.download_url} aria-label="Herunterladen">
-                  <IonIcon slot="icon-only" icon={downloadOutline} />
-                </IonButton>
+                {/* Herunterladen nur für Reisende, nicht für die Community */}
+                {open.download_url && (
+                  <IonButton fill="clear" color="light" href={open.download_url} aria-label="Herunterladen">
+                    <IonIcon slot="icon-only" icon={downloadOutline} />
+                  </IonButton>
+                )}
                 {onDelete && (
                   <IonButton
                     fill="clear"
