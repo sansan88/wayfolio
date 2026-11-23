@@ -100,9 +100,16 @@ const ComposeModal = ({ kind, initial, onCancel, onSubmit }: Props) => {
   const [removed, setRemoved] = useState<string[]>([])
   const submitted = useRef(false)
 
-  // Beim Öffnen zurücksetzen bzw. mit den Werten zum Bearbeiten füllen
+  // Nur beim Öffnen zurücksetzen bzw. mit den Werten zum Bearbeiten füllen – nicht, wenn sich
+  // im Hintergrund Daten aktualisieren (sonst gingen Eingaben während des Tippens verloren)
+  const openedFor = useRef<ComposeKind | null>(null)
   useEffect(() => {
-    if (!kind) return
+    if (!kind) {
+      openedFor.current = null
+      return
+    }
+    if (openedFor.current === kind) return
+    openedFor.current = kind
     submitted.current = false
     setTitle(initial?.title ?? '')
     setText(initial?.text ?? '')
