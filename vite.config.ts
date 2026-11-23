@@ -9,10 +9,12 @@ const base = process.env.BASE_PATH ?? '/'
 export default defineConfig({
   base,
   worker: { format: 'es' },
+  // Build-Zeitpunkt, in den Einstellungen sichtbar (zeigt, ob die neueste Version läuft)
+  define: { __APP_BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC') },
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
       manifest: {
@@ -41,6 +43,8 @@ export default defineConfig({
         navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/^\/auth\//],
         cleanupOutdatedCaches: true,
+        // nach «Aktualisieren» übernimmt die neue Version sofort alle offenen Fenster
+        clientsClaim: true,
         runtimeCaching: [
           {
             // Fotos und Routenbilder (signierte URLs): Schlüssel ohne Token, damit sie offline wiedergefunden werden

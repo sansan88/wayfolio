@@ -13,7 +13,7 @@ import {
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { addCircle, locationOutline, logOutOutline, phonePortraitOutline } from 'ionicons/icons'
+import { addCircle, locationOutline, logOutOutline, phonePortraitOutline, refreshOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { LargeTitle, PageHeader } from '../components/PageHeader'
@@ -21,6 +21,7 @@ import TripEditorModal from '../components/TripEditorModal'
 import { useAuth } from '../lib/auth'
 import { geoDeniedHelp, useGeoPermission } from '../lib/geoPermission'
 import { installHelp, useInstall } from '../lib/pwa'
+import { APP_BUILD, usePwaUpdate } from '../lib/pwaUpdate'
 import { loadOwnName, saveOwnName } from '../lib/members'
 import { useTrip, type Trip } from '../lib/trip'
 
@@ -41,6 +42,8 @@ const TripSettingsPage = () => {
   const [myName, setMyName] = useState('')
   const geo = useGeoPermission()
   const app = useInstall()
+  const update = usePwaUpdate()
+  const [checking, setChecking] = useState(false)
 
   const toast = (message: string, color: 'success' | 'danger' = 'success') =>
     presentToast({ message, duration: 2500, position: 'top', color })
@@ -167,6 +170,26 @@ const TripSettingsPage = () => {
           </IonItem>
         </IonList>
         <IonNote className="list-footnote">Startet vom Home-Bildschirm und zeigt die zuletzt geladenen Beiträge auch offline.</IonNote>
+
+        <IonList inset>
+          <IonItem
+            button
+            detail={false}
+            disabled={checking}
+            onClick={async () => {
+              if (update.needRefresh) return void update.applyUpdate()
+              setChecking(true)
+              const found = await update.checkForUpdate()
+              setChecking(false)
+              if (found) void update.applyUpdate()
+              else toast('Du hast die neueste Version')
+            }}
+          >
+            <IonIcon slot="start" icon={refreshOutline} color="primary" />
+            <IonLabel>{update.needRefresh ? 'Jetzt aktualisieren' : checking ? 'Suche nach Updates …' : 'Nach Updates suchen'}</IonLabel>
+            <IonNote slot="end">{APP_BUILD}</IonNote>
+          </IonItem>
+        </IonList>
 
         <IonList inset>
           <IonItem button detail={false} onClick={signOut}>

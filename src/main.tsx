@@ -15,7 +15,7 @@ import '@ionic/react/css/palettes/dark.system.css'
 
 import './theme/variables.css'
 import { captureInstallPrompt } from './lib/pwa'
-import { registerSW } from 'virtual:pwa-register'
+import { initPwaUpdates } from './lib/pwaUpdate'
 
 // iOS-Stil auf allen Plattformen (Zielgruppe: iPhone; PWA und spätere iOS-App sehen gleich aus)
 setupIonicReact({ mode: 'ios' })
@@ -29,17 +29,8 @@ const blockSave = (e: Event) => {
 document.addEventListener('contextmenu', blockSave, true)
 document.addEventListener('dragstart', blockSave, true)
 
-// Neue Version automatisch laden: beim Start, wenn die App wieder in den Vordergrund kommt und stündlich
-const updateSW = registerSW({
-  immediate: true,
-  onRegisteredSW(_url, reg) {
-    if (!reg) return
-    const check = () => void reg.update().catch(() => undefined)
-    setInterval(check, 60 * 60 * 1000)
-    document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check())
-  },
-})
-void updateSW
+// Service Worker mit Update-Hinweis («Neue Version verfügbar»)
+initPwaUpdates()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

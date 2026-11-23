@@ -28,6 +28,7 @@ import MapPage from './pages/MapPage'
 import TripSettingsPage from './pages/TripSettingsPage'
 import PageSpinner from './components/PageSpinner'
 import AppStatus from './components/AppStatus'
+import UpdateBanner from './components/UpdateBanner'
 import { isStandalone } from './lib/pwa'
 
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
@@ -153,6 +154,7 @@ if (followerToken) {
 const App = () => (
   <IonApp>
     <AppStatus />
+    <UpdateBanner />
     {legalPage ? (
       <Suspense fallback={<Loading />}>
         <LegalPage page={legalPage} />
