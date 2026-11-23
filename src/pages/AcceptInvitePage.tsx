@@ -30,7 +30,7 @@ const AcceptInvitePage = ({ token }: { token: string }) => {
               </IonText>
               <p>Bitte um einen neuen Einladungslink.</p>
               <IonButton fill="outline" onClick={() => window.location.replace(import.meta.env.BASE_URL)}>
-                Zu Wayfolio
+                Zu Little Footnotes
               </IonButton>
             </>
           ) : (

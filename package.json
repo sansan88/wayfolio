@@ -1,5 +1,5 @@
 {
-  "name": "wayfolio",
+  "name": "little-footnotes",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -35,6 +35,6 @@
     "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0"
   },
-  "description": "Wayfolio – Reisetagebuch-PWA mit Ionic React, Supabase und Capacitor",
+  "description": "Little Footnotes – Reisetagebuch-PWA mit Ionic React, Supabase und Capacitor",
   "license": "BSD-3-Clause"
 }

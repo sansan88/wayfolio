@@ -17,8 +17,8 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
       manifest: {
         id: base,
-        name: 'Wayfolio – Reisetagebuch',
-        short_name: 'Wayfolio',
+        name: 'Little Footnotes – Reisetagebuch',
+        short_name: 'Footnotes',
         description: 'Reisetagebuch mit Check-ins, Fotos und Karte – Familie und Freunde folgen per Link.',
         lang: 'de-CH',
         start_url: base,

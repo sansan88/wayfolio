@@ -17,7 +17,7 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
     galleryApi(token)
       .then((d) => {
         setData(d)
-        document.title = `Fotos: ${d.trip.title} · Wayfolio`
+        document.title = `Fotos: ${d.trip.title} · Little Footnotes`
       })
       .catch((e: Error) => setError(e.message))
   }, [token])
@@ -27,7 +27,7 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
       <IonPage>
         <IonContent className="ion-padding">
           <div className="login">
-            <h1>Wayfolio</h1>
+            <h1>Little Footnotes</h1>
             <IonText color="danger">
               <p>{error}</p>
             </IonText>
@@ -49,7 +49,7 @@ const PublicGalleryPage = ({ token }: { token: string }) => {
             <GalleryGrid days={data.days} />
             <p className="ion-text-center ion-padding">
               <IonNote>
-                Privat geteilt mit Wayfolio · <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutz</a>
+                Privat geteilt mit Little Footnotes · <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutz</a>
               </IonNote>
             </p>
           </>

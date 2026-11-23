@@ -50,5 +50,5 @@ export const useInstall = () => {
 
 export const installHelp = () =>
   isIos()
-    ? 'In Safari unten auf das Teilen-Symbol tippen und «Zum Home-Bildschirm» wählen. Wayfolio startet dann wie eine App – auch offline.'
+    ? 'In Safari unten auf das Teilen-Symbol tippen und «Zum Home-Bildschirm» wählen. Little Footnotes startet dann wie eine App – auch offline.'
     : 'Im Browser-Menü «App installieren» bzw. «Zum Startbildschirm hinzufügen» wählen.'

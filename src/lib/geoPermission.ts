@@ -107,7 +107,7 @@ export const useGeoPermission = () => {
 
 /** Anleitung, wenn der Zugriff gesperrt ist. */
 export const geoDeniedHelp = () => {
-  if (Capacitor.isNativePlatform()) return 'Einstellungen › Wayfolio › Standort › «Beim Verwenden der App».'
+  if (Capacitor.isNativePlatform()) return 'Einstellungen › Little Footnotes › Standort › «Beim Verwenden der App».'
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   if (ios)
     return 'iPhone: Einstellungen › Datenschutz & Sicherheit › Ortungsdienste › Safari-Websites › «Beim Verwenden der App». Dann in Safari «aA» › Website-Einstellungen › Standort › «Erlauben» – so fragt Safari nicht jedes Mal.'

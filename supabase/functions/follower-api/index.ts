@@ -1,4 +1,4 @@
-// Wayfolio – Follower-API
+// Little Footnotes – Follower-API
 // Follower haben kein Konto. Jede Anfrage enthält den Secret Link (token) und ein
 // zufälliges Geräte-Token aus dem Browser. Die Funktion prüft den Link und arbeitet
 // mit der Service-Rolle, gibt aber nur Inhalte der Reise dieses Links heraus.

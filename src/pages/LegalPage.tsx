@@ -18,7 +18,7 @@ const Impressum = () => (
       <br />
       E-Mail: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>
     </p>
-    <p>Wayfolio ist ein privates Projekt und wird nicht von einem Unternehmen betrieben.</p>
+    <p>Little Footnotes ist ein privates Projekt und wird nicht von einem Unternehmen betrieben.</p>
 
     <h2>Haftung für Inhalte</h2>
     <p>
@@ -46,7 +46,7 @@ const Datenschutz = () => (
     <h1>Datenschutzerklärung</h1>
     <p className="legal-stand">Stand: {STAND}</p>
     <p>
-      Diese Erklärung beschreibt, welche Personendaten Wayfolio bearbeitet, wozu und wo sie gespeichert werden. Sie
+      Diese Erklärung beschreibt, welche Personendaten Little Footnotes bearbeitet, wozu und wo sie gespeichert werden. Sie
       richtet sich nach dem neuseeländischen Privacy Act 2020 und berücksichtigt das Schweizer Datenschutzgesetz
       (DSG) sowie die Datenschutz-Grundverordnung der EU (DSGVO), soweit sie auf Nutzende in der Schweiz und der EU
       anwendbar sind.
@@ -126,7 +126,7 @@ const Datenschutz = () => (
 
     <h2>6. Cookies und lokale Speicherung</h2>
     <p>
-      Wayfolio verwendet keine Tracking- oder Werbe-Cookies und keine Analysedienste. Im Browser gespeichert werden
+      Little Footnotes verwendet keine Tracking- oder Werbe-Cookies und keine Analysedienste. Im Browser gespeichert werden
       nur die Anmeldesitzung, das Geräte-Kennzeichen für Follower und die zuletzt gewählte Reise.
     </p>
 
@@ -161,7 +161,7 @@ const LegalPage = ({ page }: { page: 'impressum' | 'datenschutz' }) => (
       <div className="lp">
         <header className="lp-nav">
           <a className="lp-logo legal-home" href={home}>
-            Wayfolio
+            Little Footnotes
           </a>
         </header>
         <article className="legal">{page === 'impressum' ? <Impressum /> : <Datenschutz />}</article>
@@ -173,7 +173,7 @@ const LegalPage = ({ page }: { page: 'impressum' | 'datenschutz' }) => (
 
 export const LegalFooter = () => (
   <footer className="lp-footer">
-    <span>© {new Date().getFullYear()} Wayfolio · ein privates Projekt</span>
+    <span>© {new Date().getFullYear()} Little Footnotes · ein privates Projekt</span>
     <span className="legal-links">
       <a href={`${home}impressum`}>Impressum</a>
       <a href={`${home}datenschutz`}>Datenschutz</a>

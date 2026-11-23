@@ -6,7 +6,7 @@ import { installHelp, useInstall } from '../lib/pwa'
 
 const DISMISS_KEY = 'wayfolio-install-dismissed'
 
-/** Karte «Auf den Home-Bildschirm» – verschwindet, sobald Wayfolio installiert ist. */
+/** Karte «Auf den Home-Bildschirm» – verschwindet, sobald Little Footnotes installiert ist. */
 const InstallHint = ({ who = 'traveler' }: { who?: 'traveler' | 'follower' }) => {
   const { mode, install } = useInstall()
   const [dismissed, setDismissed] = useState(() => {
@@ -21,7 +21,7 @@ const InstallHint = ({ who = 'traveler' }: { who?: 'traveler' | 'follower' }) =>
     <div className="geo-banner install-hint">
       <IonIcon icon={addCircleOutline} className="geo-banner__icon" aria-hidden="true" />
       <div className="geo-banner__body">
-        <strong>Wayfolio auf den Home-Bildschirm</strong>
+        <strong>Little Footnotes auf den Home-Bildschirm</strong>
         <p>
           {who === 'follower' ? 'So seid ihr mit einem Tipp bei der Reise – auch ohne Netz sind die letzten Beiträge da. ' : 'Startet wie eine App und funktioniert auch offline. '}
           {mode !== 'prompt' && installHelp()}

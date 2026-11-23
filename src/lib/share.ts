@@ -24,7 +24,7 @@ const firstPhoto = async (post: FeedPost): Promise<File | null> => {
   try {
     const res = await fetch(b.mediaUrl)
     if (!res.ok) return null
-    return new File([await res.blob()], 'wayfolio.jpg', { type: 'image/jpeg' })
+    return new File([await res.blob()], 'littlefootnotes.jpg', { type: 'image/jpeg' })
   } catch {
     return null
   }

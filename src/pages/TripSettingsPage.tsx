@@ -154,7 +154,7 @@ const TripSettingsPage = () => {
             button
             detail={app.mode !== 'installed'}
             onClick={async () => {
-              if (app.mode === 'installed') return toast('Wayfolio ist installiert')
+              if (app.mode === 'installed') return toast('Little Footnotes ist installiert')
               if (app.mode === 'prompt') return void (await app.install())
               presentAlert({ header: 'Auf den Home-Bildschirm', message: installHelp(), buttons: ['OK'] })
             }}

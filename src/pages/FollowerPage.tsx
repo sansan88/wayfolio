@@ -97,7 +97,7 @@ const FollowerPage = ({ token }: { token: string }) => {
   }, [load])
 
   useEffect(() => {
-    if (data?.trip.title) document.title = `${data.trip.title} · Wayfolio`
+    if (data?.trip.title) document.title = `${data.trip.title} · Little Footnotes`
   }, [data?.trip.title])
 
   const toast = (message: string, color: 'success' | 'danger' | 'medium' = 'success') =>
@@ -141,7 +141,7 @@ const FollowerPage = ({ token }: { token: string }) => {
       <IonPage>
         <IonContent className="ion-padding">
           <div className="login">
-            <h1>Wayfolio</h1>
+            <h1>Little Footnotes</h1>
             <IonText color="danger">
               <p>{error}</p>
             </IonText>
@@ -295,7 +295,7 @@ const FollowerPage = ({ token }: { token: string }) => {
             </IonCard>
             <p className="ion-text-center">
               <IonNote>
-                Mit Wayfolio geteilt · privat per Link ·{' '}
+                Mit Little Footnotes geteilt · privat per Link ·{' '}
                 <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutz</a> ·{' '}
                 <a href={`${import.meta.env.BASE_URL}impressum`}>Impressum</a>
               </IonNote>

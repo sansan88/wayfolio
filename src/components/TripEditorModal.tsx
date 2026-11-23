@@ -100,7 +100,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
     try {
       const url = await createInvite(trip.id, userId)
       const text = `Reist du mit? Hier kannst du bei unserer Reise «${trip.title}» mitschreiben:`
-      if (navigator.share) await navigator.share({ title: 'Einladung zu Wayfolio', text, url }).catch(() => undefined)
+      if (navigator.share) await navigator.share({ title: 'Einladung zu Little Footnotes', text, url }).catch(() => undefined)
       else {
         await navigator.clipboard.writeText(url)
         toast('Einladungslink kopiert (7 Tage gültig)')

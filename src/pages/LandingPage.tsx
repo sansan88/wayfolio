@@ -1,14 +1,13 @@
 import { IonContent, IonIcon, IonPage } from '@ionic/react'
 import {
-  barChart,
   bookOutline,
-  chatbubblesOutline,
+  ellipsisHorizontalCircleOutline,
   heartOutline,
   linkOutline,
+  locationOutline,
   lockClosedOutline,
-  mailOutline,
+  logoWhatsapp,
   mapOutline,
-  phonePortraitOutline,
 } from 'ionicons/icons'
 
 import { LegalFooter } from './LegalPage'
@@ -18,39 +17,39 @@ const base = import.meta.env.BASE_URL
 const goLogin = () => window.location.assign(`${base}login`)
 
 const features = [
-  { icon: phonePortraitOutline, title: 'Stories und Beiträge', text: 'Einzelne Fotos, Videos und Sprachnachrichten landen als Story im Kreis. Eure Tagesberichte stehen im Feed.' },
-  { icon: mapOutline, title: 'Routenbild automatisch', text: 'Jeder neue Standort setzt einen Pin und erzeugt ein Kartenbild eurer Route – mit Etappe und Kilometern.' },
-  { icon: barChart, title: 'Mitentscheiden', text: 'Stellt eure Fragen an die Community, lasst abstimmen und zeigt danach, wofür ihr euch entschieden habt.' },
-  { icon: bookOutline, title: 'Hintergrund-Stories', text: 'Für Themen, die mehr Raum brauchen: Visum, Fahrzeug, Kosten, Land und Leute.' },
-  { icon: mailOutline, title: 'Updates per E-Mail', text: 'Follower wählen selbst: bei jedem Beitrag, wöchentlich oder monatlich.' },
-  { icon: lockClosedOutline, title: 'Privat von Grund auf', text: 'Nur wer euren Link hat, sieht mit. Links lassen sich jederzeit sperren. Daten in der Schweiz.' },
+  { icon: locationOutline, title: 'Check-in mit Fotos', text: '«Wir sind heute hier»: Ort per GPS oder Pin, ein paar Fotos, ein Satz dazu – fertig. Wie ein Instagram-Post, nur privat.' },
+  { icon: bookOutline, title: 'Beiträge', text: 'Für längere Geschichten: Text mit Fotos, Ort und Datum – auch nachträglich für vergangene Tage.' },
+  { icon: mapOutline, title: 'Route und Karte', text: 'Jeder Ort landet auf der Karte, mit Kartenausschnitt nah am aktuellen Ort. Ein Tipp auf den Ort zeigt alles von dort.' },
+  { icon: ellipsisHorizontalCircleOutline, title: 'Die Reise als Zeitleiste', text: 'Ein Punkt pro Tag und Update – mit Foto. Beim Scrollen läuft die Zeitleiste mit.' },
+  { icon: logoWhatsapp, title: 'In WhatsApp teilen', text: 'Ein Update direkt in eure Familien- oder Freundesgruppe schicken, mit Foto und Link zum Beitrag.' },
+  { icon: lockClosedOutline, title: 'Privat und offline', text: 'Nur wer euren Link hat, sieht mit. Als App auf dem Home-Bildschirm, die letzten Beiträge auch ohne Netz.' },
 ]
 
 const steps = [
-  { n: '1', title: 'Reise anlegen', text: 'Konto per E-Mail-Link, Reise benennen – fertig. Kein Passwort.' },
-  { n: '2', title: 'Unterwegs tippen', text: 'Foto, Standort, Sprachnachricht: ein Tipp aufs Raster, Ort und Zeit sind schon drin.' },
-  { n: '3', title: 'Link teilen', text: 'Familie und Freunde öffnen ihn im Browser, reagieren und stimmen mit ab.' },
+  { n: '1', title: 'Reise anlegen', text: 'Konto per E-Mail, Reise benennen – fertig.' },
+  { n: '2', title: 'Unterwegs einchecken', text: 'Ein Tipp auf «+»: Check-in mit Fotos oder ein Beitrag. Ort und Zeit sind schon drin.' },
+  { n: '3', title: 'Link teilen', text: 'Ein Link für Tagebuch, Karte und Fotos. Familie und Freunde öffnen ihn im Browser – ohne App und Konto.' },
 ]
 
 const plans = [
-  { name: 'Free', price: 'CHF 0', note: 'für immer', items: ['1 aktive Reise', 'Fotos, Standorte, Beiträge', 'bis 25 Follower', 'Newsletter wöchentlich'], cta: 'Kostenlos starten', primary: false },
-  { name: 'Plus', price: 'CHF 6.90', note: 'pro Monat · CHF 59 pro Jahr', items: ['Unbegrenzte Reisen und Follower', 'Video und Sprachnachrichten', 'Routenbilder und Galerie', 'Alle Newsletter-Frequenzen'], cta: 'Bald verfügbar', primary: true },
+  { name: 'Free', price: 'CHF 0', note: 'für immer', items: ['1 aktive Reise', 'Check-ins, Fotos, Beiträge', 'bis 25 Follower', 'Teilen in WhatsApp'], cta: 'Kostenlos starten', primary: false },
+  { name: 'Plus', price: 'CHF 6.90', note: 'pro Monat · CHF 59 pro Jahr', items: ['Unbegrenzte Reisen und Follower', 'Routenbilder und Galerie', 'Fotos in voller Grösse herunterladen', 'Mitreisende'], cta: 'Bald verfügbar', primary: true },
   { name: 'Reise-Pass', price: 'CHF 19', note: 'einmalig für 3 Monate', items: ['Plus für eine Reise', 'Ohne Abo', 'Ideal fürs Sabbatical'], cta: 'Bald verfügbar', primary: false },
 ]
 
 const faqs = [
-  { q: 'Brauchen meine Follower eine App?', a: 'Nein. Sie öffnen euren Link im Browser – auf Handy, Tablet oder Computer. Beim ersten Reagieren geben sie nur einen Namen an.' },
+  { q: 'Brauchen meine Follower eine App?', a: 'Nein. Sie öffnen euren Link im Browser – auf Handy, Tablet oder Computer – und können ihn auf den Home-Bildschirm legen.' },
   { q: 'Wer kann unsere Reise sehen?', a: 'Nur wer euren Secret Link hat. Er ist nicht auffindbar, und ihr könnt ihn jederzeit durch einen neuen ersetzen.' },
-  { q: 'Funktioniert das ohne Netz?', a: 'Wayfolio läuft als Web-App auf dem Home-Bildschirm. Eine iOS-App mit Hintergrund-Funktionen ist in Planung.' },
-  { q: 'Wo liegen unsere Daten?', a: 'Datenbank und Fotos liegen in einem Rechenzentrum in Zürich. Fotos werden vor dem Hochladen verkleinert, GPS-Daten aus den Bildern entfernt.' },
+  { q: 'Funktioniert das ohne Netz?', a: 'Little Footnotes läuft als App auf dem Home-Bildschirm und zeigt die zuletzt geladenen Beiträge, Fotos und Karten auch offline. Eine iOS-App ist in Planung.' },
+  { q: 'Wo liegen unsere Daten?', a: 'Datenbank und Fotos liegen in einem Rechenzentrum in Zürich. Fotos werden vor dem Hochladen fürs Handy verkleinert.' },
 ]
 
-/** Handy-Ansicht als Illustration: Story-Kreise und Abstimmung nach der Auflösung. */
+/** Handy-Ansicht als Illustration: Zeitleiste mit Punkten und Beiträgen. */
 const PhoneMock = () => (
   <div className="lp-phone" aria-hidden="true">
     <div className="lp-phone__bar">Vietnam mit dem Camper</div>
     <div className="lp-phone__stories">
-      {['Heute', 'Hoi An', 'Hué', 'Essen'].map((s, i) => (
+      {['Tag 12', 'Tag 11', 'Tag 10', 'Tag 9'].map((s, i) => (
         <div key={s} className="lp-story">
           <span className={`lp-story__dot lp-story__dot--${i}`} />
           <span>{s}</span>
@@ -67,28 +66,13 @@ const PhoneMock = () => (
         </svg>
         <span className="lp-route__caption">Tag 12 · Hué → Hoi An</span>
       </div>
-      <div className="lp-card__meta">128 km seit Hué · 1’840 km gesamt</div>
+      <div className="lp-card__title">Hoi An</div>
+      <div className="lp-card__meta">📍 Vietnam · Check-in · Tag 12</div>
     </div>
     <div className="lp-card">
-      <div className="lp-card__kind">Entscheidung</div>
-      <div className="lp-card__title">Welches Auto sollen wir kaufen?</div>
-      {[
-        { label: 'Toyota Hiace', v: 24 },
-        { label: 'Ford Transit', v: 62 },
-        { label: 'VW T5', v: 14, chosen: true },
-      ].map((o) => (
-        <div key={o.label} className={`lp-opt${o.chosen ? ' lp-opt--chosen' : ''}`}>
-          <span>
-            {o.label}
-            {o.chosen && <em>Unsere Entscheidung</em>}
-          </span>
-          <span className="lp-opt__bar">
-            <span style={{ width: `${o.v}%` }} />
-          </span>
-          <small>{o.v} %</small>
-        </div>
-      ))}
-      <div className="lp-reactions">❤️ 12 · 😮 4 · 🙏 2</div>
+      <div className="lp-card__kind">Beitrag · Tag 11</div>
+      <div className="lp-card__title">Laternenfest am Fluss</div>
+      <div className="lp-card__meta">Hunderte Lichter auf dem Wasser – und wir mittendrin mit unserem Camper.</div>
     </div>
   </div>
 )
@@ -98,7 +82,7 @@ const LandingPage = () => (
     <IonContent>
       <div className="lp">
         <header className="lp-nav">
-          <span className="lp-logo">Wayfolio</span>
+          <span className="lp-logo">Little Footnotes</span>
           <button type="button" className="lp-btn lp-btn--ghost" onClick={goLogin}>
             Anmelden
           </button>
@@ -109,8 +93,8 @@ const LandingPage = () => (
             <p className="lp-eyebrow">Travel journal for your people</p>
             <h1>Nehmt eure Liebsten mit auf die Reise.</h1>
             <p className="lp-lead">
-              Reisetagebuch mit Karte, Stories und Abstimmungen. Familie und Freunde folgen per Link – ohne App und
-              ohne Konto.
+              Kleine Fussnoten eurer Reise: Check-ins mit Fotos, Beiträge und eure Route auf der Karte. Familie und
+              Freunde folgen per Link – ohne App und ohne Konto.
             </p>
             <div className="lp-cta">
               <button type="button" className="lp-btn lp-btn--primary" onClick={goLogin}>
@@ -128,7 +112,7 @@ const LandingPage = () => (
                 <IonIcon icon={linkOutline} /> Dabei ohne App
               </li>
               <li>
-                <IonIcon icon={chatbubblesOutline} /> Mitentscheiden
+                <IonIcon icon={mapOutline} /> Route auf der Karte
               </li>
             </ul>
           </div>
@@ -163,8 +147,7 @@ const LandingPage = () => (
 
         <section className="lp-section lp-quote">
           <p>
-            «Nähe statt Lärm: Eure Follower reagieren, antworten und stimmen mit ab – aber es gibt keinen Gruppenchat,
-            der eure Reise übertönt.»
+            «Nähe statt Lärm: Eure Liebsten sind jeden Tag ein Stück dabei – ohne Gruppenchat, der eure Reise übertönt.»
           </p>
         </section>
 

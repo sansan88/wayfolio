@@ -40,7 +40,7 @@ const LoginPage = ({ invite = false }: { invite?: boolean }) => {
       <IonContent color="light">
         <div className="login">
           <a className="login__back" href={import.meta.env.BASE_URL}>
-            ← Wayfolio
+            ← Little Footnotes
           </a>
           <h1>{invite ? 'Du bist eingeladen' : 'Anmelden'}</h1>
           <p className="login__claim">

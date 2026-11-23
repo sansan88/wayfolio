@@ -1,9 +1,9 @@
-# Wayfolio
+# Little Footnotes
 
 **Travel journal for your people.**
 Reise teilen. Liebste dabei.
 
-Wayfolio ist ein Reisetagebuch als Progressive Web App (PWA). Reisende erfassen unterwegs mit einem Tipp Fotos, Sprachnachrichten, Videos, Standorte, Beiträge, Hintergrund-Stories und Abstimmungen. Familie und Freunde folgen per Secret Link – ohne App und ohne Account. Sie können reagieren, antworten, abstimmen und einen Newsletter abonnieren (sofort, wöchentlich oder monatlich).
+Little Footnotes ist ein Reisetagebuch als Progressive Web App (PWA). Reisende erfassen unterwegs mit einem Tipp Fotos, Sprachnachrichten, Videos, Standorte, Beiträge, Hintergrund-Stories und Abstimmungen. Familie und Freunde folgen per Secret Link – ohne App und ohne Account. Sie können reagieren, antworten, abstimmen und einen Newsletter abonnieren (sofort, wöchentlich oder monatlich).
 
 ## Kernfunktionen
 
@@ -77,7 +77,7 @@ Nach `npx cap add ios` in `ios/App/App/Info.plist` ergänzen:
 
 ```xml
 <key>NSLocationWhenInUseUsageDescription</key>
-<string>Wayfolio setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
+<string>Little Footnotes setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
 <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>Wayfolio setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
+<string>Little Footnotes setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
 ```

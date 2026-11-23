@@ -21,7 +21,7 @@ const locationError = (err: unknown): Error => {
   const denied = code === 1 || code === 'OS-PLUG-GLOC-0003' || /denied|permission/i.test(message)
   if (denied) {
     if (Capacitor.isNativePlatform())
-      return new Error('Standortzugriff ist nicht erlaubt. Bitte in den Einstellungen › Wayfolio › Standort «Beim Verwenden der App» wählen.')
+      return new Error('Standortzugriff ist nicht erlaubt. Bitte in den Einstellungen › Little Footnotes › Standort «Beim Verwenden der App» wählen.')
     if (isIos())
       return new Error(
         'Standortzugriff ist nicht erlaubt. iPhone: Einstellungen › Datenschutz & Sicherheit › Ortungsdienste › Safari-Websites › «Beim Verwenden der App», danach in Safari über «aA» › Website-Einstellungen › Standort «Erlauben». Oder den Ort manuell setzen.',

@@ -128,7 +128,7 @@ const Root = () => {
 }
 
 /**
- * Follower ohne Konto, die Wayfolio auf den Home-Bildschirm gelegt haben: die installierte App startet
+ * Follower ohne Konto, die Little Footnotes auf den Home-Bildschirm gelegt haben: die installierte App startet
  * auf der Startseite – dann direkt zu ihrem Reise-Link weiterleiten.
  */
 const FOLLOWER_LINK_KEY = 'wayfolio-follower-link'

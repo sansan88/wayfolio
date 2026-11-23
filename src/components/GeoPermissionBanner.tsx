@@ -42,7 +42,7 @@ const GeoPermissionBanner = () => {
         ) : (
           <>
             <strong>Standort freigeben</strong>
-            <p>Damit Wayfolio Orte und Route automatisch setzt. Euer Browser merkt sich die Freigabe für diese Seite.</p>
+            <p>Damit Little Footnotes Orte und Route automatisch setzt. Euer Browser merkt sich die Freigabe für diese Seite.</p>
           </>
         )}
         <div className="geo-banner__actions">
