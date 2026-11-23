@@ -113,7 +113,11 @@ const feed = async (link: Link, device: unknown) => {
   // Route-Updates innerhalb der Verzögerung ganz ausblenden
   // deno-lint-ignore no-explicit-any
   const rows = ((posts ?? []) as any[]).filter((p) => p.kind !== 'route_update' || Date.parse(p.published_at) <= cutoff)
-  const paths = rows.flatMap((p) => p.post_blocks.map((b: { media: { storage_path: string } | null }) => b.media?.storage_path).filter(Boolean))
+  const paths = rows.flatMap((p) =>
+    p.post_blocks
+      .flatMap((b: { media: { storage_path: string; variants: { thumb?: string } | null } | null }) => [b.media?.storage_path, b.media?.variants?.thumb])
+      .filter(Boolean),
+  )
   const urls = new Map<string, string>()
   if (paths.length) {
     const { data: signed } = await supabase.storage.from('media').createSignedUrls(paths, 3600)
@@ -169,6 +173,7 @@ const feed = async (link: Link, device: unknown) => {
           text: b.text_content,
           url: b.url,
           mediaUrl: b.media ? (urls.get(b.media.storage_path) ?? null) : null,
+          thumbUrl: b.media ? (urls.get(b.media.variants?.thumb ?? '') ?? urls.get(b.media.storage_path) ?? null) : null,
           route: !!b.media?.variants?.route,
         })),
       poll,
@@ -227,12 +232,15 @@ const gallery = async (link: Link) => {
   // Routenbilder gehören nicht in die Fotogalerie
   const rows = (media ?? []).filter((m) => !(m.variants as { route?: boolean } | null)?.route)
   const paths = rows.map((m) => m.storage_path)
-  const [view, download] = paths.length
+  const thumbOf = (m: { variants: unknown }) => (m.variants as { thumb?: string } | null)?.thumb
+  const thumbs = rows.map(thumbOf).filter(Boolean) as string[]
+  const [view, download, thumbView] = paths.length
     ? await Promise.all([
         supabase.storage.from('media').createSignedUrls(paths, 3600),
         supabase.storage.from('media').createSignedUrls(paths, 3600, { download: true }),
+        thumbs.length ? supabase.storage.from('media').createSignedUrls(thumbs, 3600) : Promise.resolve({ data: [] }),
       ])
-    : [{ data: [] }, { data: [] }]
+    : [{ data: [] }, { data: [] }, { data: [] }]
   const urlOf = (list: { path: string | null; signedUrl: string | null }[] | null, p: string) =>
     list?.find((s) => s.path === p)?.signedUrl ?? ''
   return {
@@ -243,6 +251,7 @@ const gallery = async (link: Link) => {
         kind: m.kind,
         url: urlOf(view.data, m.storage_path),
         download_url: urlOf(download.data, m.storage_path),
+        thumb_url: thumbOf(m) ? urlOf(thumbView.data, thumbOf(m)!) : undefined,
         taken_at: m.taken_at ?? m.created_at,
         // Fotoort gilt wie ein Standort: erst nach der Verzögerung sichtbar
         place: Date.parse(m.taken_at ?? m.created_at) <= cutoff ? m.taken_place : null,

@@ -33,7 +33,7 @@ const GalleryGrid = ({ days, onDelete }: Props) => {
                     <IonIcon icon={playCircle} className="gallery__play" />
                   </>
                 ) : (
-                  <img src={item.url} alt="" loading="lazy" />
+                  <img src={item.thumb_url || item.url} alt="" loading="lazy" />
                 )}
               </button>
             ))}

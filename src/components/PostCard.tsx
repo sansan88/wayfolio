@@ -14,7 +14,7 @@ import {
   IonRadioGroup,
   IonTextarea,
 } from '@ionic/react'
-import { barChart, bookOutline, checkmarkCircle, ellipsisHorizontal, eyeOffOutline, link, location, lockClosedOutline } from 'ionicons/icons'
+import { barChart, bookOutline, checkmarkCircle, documentTextOutline, ellipsisHorizontal, eyeOffOutline, imagesOutline, link, location, lockClosedOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { EMOJIS, type FeedPost } from '../lib/updates'
@@ -24,7 +24,9 @@ export const formatTime = (iso: string) =>
   new Date(iso).toLocaleString('de-CH', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 const kindLabel: Partial<Record<FeedPost['kind'], { icon: string; label: string }>> = {
-  route_update: { icon: location, label: 'Route-Update' },
+  route_update: { icon: location, label: 'Check-in' },
+  feed: { icon: documentTextOutline, label: 'Beitrag' },
+  story: { icon: imagesOutline, label: 'Moment' },
   background: { icon: bookOutline, label: 'Hintergrund' },
   poll: { icon: barChart, label: 'Entscheidung' },
 }
@@ -44,21 +46,51 @@ interface Props {
 }
 
 /** Ein Beitrag im Feed – für Reisende und Follower. */
-export const MediaBlocks = ({ post, route = false }: { post: FeedPost; route?: boolean }) => (
+export const MediaBlocks = ({ post, route = false, other = false }: { post: FeedPost; route?: boolean; other?: boolean }) => (
   <>
     {post.blocks
-      .filter((b) => !!b.route === route)
+      .filter((b) => (route ? b.route : other ? !b.route && b.kind !== 'photo' : !b.route))
       .map((b) => {
-      if (b.kind === 'photo' && b.mediaUrl)
-        return <img key={b.position} className={route ? 'post__media post__route' : 'post__media'} src={b.mediaUrl} alt={route ? 'Routenkarte' : ''} />
-      if (b.kind === 'video' && b.mediaUrl)
-        return <video key={b.position} className="post__media" src={b.mediaUrl} controls playsInline preload="metadata" />
-      if (b.kind === 'audio' && b.mediaUrl)
-        return <audio key={b.position} className="post__audio" src={b.mediaUrl} controls preload="metadata" />
-      return null
+        if (b.kind === 'photo' && b.mediaUrl)
+          return <img key={b.position} className={route ? 'post__media post__route' : 'post__media'} src={b.mediaUrl} alt={route ? 'Routenkarte' : ''} loading="lazy" />
+        if (b.kind === 'video' && b.mediaUrl)
+          return <video key={b.position} className="post__media" src={b.mediaUrl} controls playsInline preload="metadata" />
+        if (b.kind === 'audio' && b.mediaUrl)
+          return <audio key={b.position} className="post__audio" src={b.mediaUrl} controls preload="metadata" />
+        return null
       })}
   </>
 )
+
+/** Fotos zum Durchwischen (wie bei Instagram) mit Zähler. */
+export const PhotoCarousel = ({ photos }: { photos: FeedPost['blocks'] }) => {
+  const [index, setIndex] = useState(0)
+  if (photos.length === 1)
+    return <img className="post__media post__photo" src={photos[0].mediaUrl!} alt="" loading="lazy" />
+  return (
+    <div className="carousel">
+      <div
+        className="carousel__track"
+        onScroll={(e) => {
+          const el = e.currentTarget
+          setIndex(Math.round(el.scrollLeft / el.clientWidth))
+        }}
+      >
+        {photos.map((p) => (
+          <img key={p.position} src={p.mediaUrl!} alt="" loading="lazy" />
+        ))}
+      </div>
+      <span className="carousel__count">
+        {index + 1}/{photos.length}
+      </span>
+      <div className="carousel__dots" aria-hidden="true">
+        {photos.map((p, i) => (
+          <span key={p.position} className={i === index ? 'active' : ''} />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 /** Reisetag ab Start der Reise (1 = erster Tag). */
 export const dayNumber = (iso: string, start: string | null | undefined) => {
@@ -160,6 +192,8 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
   const label = kindLabel[post.kind]
   const texts = post.blocks.filter((b) => b.kind === 'text' && b.text)
   const links = post.blocks.filter((b) => b.kind === 'link' && b.url)
+  const photos = post.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route)
+  const isCheckin = post.kind === 'route_update'
 
   const send = async () => {
     if (!reply.trim() || !onReply) return
@@ -174,46 +208,67 @@ const PostCard = ({ post, mode, onReact, onReply, onVote, onResolve, onHideReply
 
   return (
     <IonCard className={`post post--${post.kind}`}>
-      {post.kind !== 'poll' && <MediaBlocks post={post} />}
-      {post.kind === 'route_update' && <MediaBlocks post={post} route />}
-      <IonCardHeader className="post__header">
+      {/* Kopfzeile wie bei Instagram: Ort bzw. Art, darunter Tag · Zeit */}
+      <div className="post__top">
+        <span className={`post__avatar${isCheckin ? ' post__avatar--place' : ''}`} aria-hidden="true">
+          <IonIcon icon={isCheckin ? location : (label?.icon ?? documentTextOutline)} />
+        </span>
+        <div className="post__who">
+          <strong>{isCheckin ? (post.place_name?.split(',')[0] ?? post.title ?? 'Check-in') : (label?.label ?? 'Beitrag')}</strong>
+          <span>
+            {[
+              day ? `Tag ${day}` : null,
+              formatTime(post.published_at),
+              !isCheckin && post.place_name ? post.place_name.split(',')[0] : null,
+              isCheckin ? post.place_name?.split(',').slice(1).join(',').trim() || null : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        </div>
         {onMenu && (
           <button type="button" className="post__menu" onClick={() => onMenu(post)} aria-label="Beitrag bearbeiten oder löschen">
             <IonIcon icon={ellipsisHorizontal} />
           </button>
         )}
-        <IonCardSubtitle className="post__meta">
-          {label && (
-            <span className="post__kind">
-              <IonIcon icon={label.icon} aria-hidden="true" /> {label.label}
-            </span>
-          )}
-          {day && <span className="post__day">Tag {day}</span>}
-          <span>{formatTime(post.published_at)}</span>
-          {post.place_name && post.kind !== 'route_update' && (
-            <span className="post__place">
-              <IonIcon icon={location} aria-hidden="true" /> {post.place_name.split(',')[0]}
-            </span>
-          )}
-          {mode === 'owner' && post.author_name && <span>· von {post.author_name}</span>}
-        </IonCardSubtitle>
-        <IonCardTitle>{post.title ?? post.place_name ?? 'Update'}</IonCardTitle>
-      </IonCardHeader>
+      </div>
 
-      {texts.map((b) => (
-        <IonCardContent key={b.position} className="post__text">
-          {b.text}
-        </IonCardContent>
-      ))}
-      {links.map((b) => (
-        <IonCardContent key={b.position}>
-          <a href={b.url!} target="_blank" rel="noopener noreferrer" className="post__link">
-            <IonIcon icon={link} aria-hidden="true" /> {b.url}
-          </a>
-        </IonCardContent>
-      ))}
-      {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}
-      {post.kind !== 'route_update' && <MediaBlocks post={post} route />}
+      {isCheckin ? (
+        <>
+          {photos.length > 0 ? <PhotoCarousel photos={photos} /> : <MediaBlocks post={post} route />}
+          {texts.length > 0 && (
+            <IonCardContent className="post__caption">
+              {post.author_name && <strong>{post.author_name} </strong>}
+              {texts.map((b) => b.text).join('\n\n')}
+            </IonCardContent>
+          )}
+        </>
+      ) : (
+        <>
+          {post.title && (
+            <IonCardHeader className="post__header">
+              <IonCardTitle>{post.title}</IonCardTitle>
+              {mode === 'owner' && post.author_name && <IonCardSubtitle className="post__meta">von {post.author_name}</IonCardSubtitle>}
+            </IonCardHeader>
+          )}
+          {texts.map((b) => (
+            <IonCardContent key={b.position} className="post__text">
+              {b.text}
+            </IonCardContent>
+          ))}
+          {photos.length > 0 && post.kind !== 'poll' && <PhotoCarousel photos={photos} />}
+          {post.kind !== 'poll' && <MediaBlocks post={post} other />}
+          {links.map((b) => (
+            <IonCardContent key={b.position}>
+              <a href={b.url!} target="_blank" rel="noopener noreferrer" className="post__link">
+                <IonIcon icon={link} aria-hidden="true" /> {b.url}
+              </a>
+            </IonCardContent>
+          ))}
+          {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}
+          <MediaBlocks post={post} route />
+        </>
+      )}
 
       <div className="post__reactions">
         {EMOJIS.map((e) => {

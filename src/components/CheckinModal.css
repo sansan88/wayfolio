@@ -1,0 +1,71 @@
+.checkin__place {
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+}
+
+.checkin__photos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 16px 8px;
+}
+
+.checkin__thumb,
+.checkin__add {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.checkin__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.checkin__thumb button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.checkin__add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1.5px dashed rgba(var(--ion-color-primary-rgb), 0.5);
+  background: var(--ion-item-background, #fff);
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.checkin__add ion-icon {
+  font-size: 26px;
+}
+
+.checkin__error {
+  color: var(--ion-color-danger);
+}
+
+.checkin__error button,
+.checkin__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-weight: 600;
+}

@@ -6,7 +6,8 @@ import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
 
 const STORY_HOURS = 24
-const MAX_IMAGE_EDGE = 2048
+/** Anzeigegrösse: lange Kante 1600 px, JPEG ~82 % – scharf auf dem Handy, meist 250–500 KB */
+const MAX_IMAGE_EDGE = 1600
 export const MAX_VIDEO_MB = 100
 
 export type PostKind = 'story' | 'feed' | 'background' | 'route_update' | 'poll'
@@ -37,18 +38,22 @@ const storyExpiry = () => new Date(Date.now() + STORY_HOURS * 3600 * 1000).toISO
  * Das Neu-Kodieren entfernt die EXIF-Daten aus der Datei; Aufnahmezeit und Ort werden vorher
  * mit readPhotoMeta gelesen und nur in der Datenbank (für Reisende/Galerie) gespeichert.
  */
-export const resizeImage = async (file: Blob): Promise<Blob> => {
+/** Bild verkleinern und als JPEG neu kodieren (entfernt EXIF aus der Datei). */
+export const resizeImage = async (file: Blob, maxEdge = MAX_IMAGE_EDGE, quality = 0.82): Promise<Blob> => {
   const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height))
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(bitmap.width * scale)
   canvas.height = Math.round(bitmap.height * scale)
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
   bitmap.close()
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Bild konnte nicht verarbeitet werden.'))), 'image/jpeg', 0.85),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Bild konnte nicht verarbeitet werden.'))), 'image/jpeg', quality),
   )
 }
+
+/** Vorschaubild (Feed-Punkte, Galerie-Raster, Karte): klein und schnell auf dem Handy. */
+const THUMB_EDGE = 480
 
 const extensionFor = (type: string, fallback: string) => {
   const sub = type.split('/')[1]?.split(';')[0]
@@ -60,6 +65,14 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind, opt
   // Aufnahmedatum und -ort aus den Metadaten übernehmen, bevor das Verkleinern sie entfernt
   const meta = kind === 'photo' && !opts.route ? await readPhotoMeta(data) : { takenAt: null, position: null }
   const blob = kind === 'photo' ? await resizeImage(data) : data
+  // zu jedem Foto ein Vorschaubild (ausser Routenbildern)
+  let thumbPath: string | null = null
+  if (kind === 'photo' && !opts.route) {
+    const thumb = await resizeImage(data, THUMB_EDGE, 0.72)
+    thumbPath = `${ctx.tripId}/${crypto.randomUUID()}_thumb.jpg`
+    const up = await supabase.storage.from('media').upload(thumbPath, thumb, { contentType: 'image/jpeg' })
+    if (up.error) thumbPath = null
+  }
   const contentType = kind === 'photo' ? 'image/jpeg' : blob.type || (kind === 'audio' ? 'audio/webm' : 'video/mp4')
   const ext = kind === 'photo' ? 'jpg' : extensionFor(contentType, kind === 'audio' ? 'webm' : 'mp4')
   const path = `${ctx.tripId}/${crypto.randomUUID()}.${ext}`
@@ -73,7 +86,7 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind, opt
       kind,
       storage_path: path,
       // Routenbilder markieren: nicht in der Galerie und nicht als Foto auf der Karte
-      variants: opts.route ? { route: true } : {},
+      variants: opts.route ? { route: true } : thumbPath ? { thumb: thumbPath } : {},
       taken_at: meta.takenAt?.toISOString() ?? when(ctx),
       // Ort aus den Foto-Metadaten, sonst der beim Erfassen gewählte Ort (GPS oder Pin)
       taken_location: meta.position ? toWkt(meta.position) : ctx.position ? toWkt(ctx.position) : null,
@@ -252,6 +265,22 @@ export const createMediaStory = async (base: Context, data: File | Blob, kind: M
   } else {
     await publish(ctx, { kind: 'story', blocks: [{ kind, mediaId }], inStories: true, checkinId: checkin?.id ?? null })
   }
+}
+
+/**
+ * Check-in («Ich bin jetzt hier»): Ort + optional Fotos + Bildtext, wie ein Instagram-Post.
+ * Der gewählte Ort zählt; nur wenn keiner da ist, kommt er aus den Fotos. Ohne Fotos zeigt
+ * der Check-in das Routenbild.
+ */
+export const createCheckin = async (base: Context, files: File[], caption: string) => {
+  const ctx = base.position ? base : await withPhotoMeta(base, files)
+  if (!ctx.position) fail('Bitte zuerst einen Ort wählen.')
+  const checkin = await checkinFor(ctx)
+  const blocks: NewBlock[] = await mediaBlocks(ctx, files)
+  if (caption.trim()) blocks.push({ kind: 'text', text: caption.trim() })
+  // ohne Fotos: Routenbild als Bild (die Distanzzeile gehört nicht in den Bildtext)
+  if (!files.length && checkin) blocks.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
+  await publish(ctx, { kind: 'route_update', title: ctx.place?.name.split(',')[0] ?? null, checkinId: checkin?.id ?? null, blocks })
 }
 
 /** Standort setzen: immer ein neuer Routenpunkt mit Routenbild im Feed. */
@@ -458,6 +487,8 @@ export interface FeedBlock {
   text: string | null
   url: string | null
   mediaUrl: string | null
+  /** Vorschaubild (klein) */
+  thumbUrl?: string | null
   /** automatisch erzeugtes Routenbild */
   route?: boolean
 }
@@ -524,7 +555,7 @@ interface RawPost {
   story_expires_at: string | null
   author: { display_name: string | null } | null
   checkin: { id: string; place_name: string | null } | null
-  post_blocks: { id: string; position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string; variants: { route?: boolean } | null } | null }[]
+  post_blocks: { id: string; position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string; variants: { route?: boolean; thumb?: string } | null } | null }[]
   polls: RawPoll | RawPoll[] | null
   reactions: { emoji: string }[]
   replies: {
@@ -558,7 +589,9 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
     .returns<RawPost[]>()
   if (error) fail(error.message)
 
-  const paths = (data ?? []).flatMap((p) => p.post_blocks.map((b) => b.media?.storage_path).filter(Boolean) as string[])
+  const paths = (data ?? []).flatMap(
+    (p) => p.post_blocks.flatMap((b) => [b.media?.storage_path, b.media?.variants?.thumb]).filter(Boolean) as string[],
+  )
   const urls = new Map<string, string>()
   if (paths.length) {
     const { data: signed } = await supabase.storage.from('media').createSignedUrls(paths, 3600)
@@ -587,6 +620,8 @@ export const loadUpdates = async (tripId: string): Promise<FeedPost[]> => {
           text: b.text_content,
           url: b.url,
           mediaUrl: b.media ? (urls.get(b.media.storage_path) ?? null) : null,
+          // Vorschaubild; ältere Fotos ohne Vorschau nutzen das grosse Bild
+          thumbUrl: b.media ? (urls.get(b.media.variants?.thumb ?? '') ?? urls.get(b.media.storage_path) ?? null) : null,
           route: !!b.media?.variants?.route,
         })),
       poll: pl

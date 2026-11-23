@@ -24,7 +24,7 @@ const LocationSheet = ({ point, points, posts, start, mode, onClose, onNavigate 
   const prev = index > 0 ? points[index - 1] : null
   const next = index >= 0 && index < points.length - 1 ? points[index + 1] : null
   const here = point ? posts.filter((p) => p.checkin_id === point.id).sort((a, b) => a.published_at.localeCompare(b.published_at)) : []
-  const photos = here.flatMap((p) => p.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route).map((b) => b.mediaUrl!))
+  const photos = here.flatMap((p) => p.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route).map((b) => b.thumbUrl ?? b.mediaUrl!))
   const day = point ? dayNumber(point.recorded_at, start ?? points[0]?.recorded_at) : null
   const leg = point && prev ? Math.round(distanceKm(prev, point)) : null
   const name = point?.place_name?.split(',')[0] ?? 'Standort'

@@ -9,6 +9,9 @@ export interface GalleryItem {
   url: string
   download_url: string
   taken_at: string
+  /** kleines Vorschaubild fürs Raster */
+  thumb_url?: string
+  thumb_path?: string
   /** Ort aus den Foto-Metadaten */
   place?: string | null
   storage_path?: string
@@ -56,10 +59,13 @@ export const loadGallery = async (tripId: string): Promise<GalleryDay[]> => {
   // automatisch erzeugte Routenbilder gehören nicht in die Fotogalerie
   const rows = (data ?? []).filter((r) => !(r.variants as { route?: boolean } | null)?.route)
   const paths = rows.map((r) => r.storage_path)
-  const [view, download, route] = await Promise.all([
+  const thumbOf = (r: { variants: unknown }) => (r.variants as { thumb?: string } | null)?.thumb
+  const thumbs = rows.map(thumbOf).filter(Boolean) as string[]
+  const [view, download, route, thumbView] = await Promise.all([
     paths.length ? supabase.storage.from('media').createSignedUrls(paths, 3600) : Promise.resolve({ data: [] }),
     paths.length ? supabase.storage.from('media').createSignedUrls(paths, 3600, { download: true }) : Promise.resolve({ data: [] }),
     loadRoute(tripId).catch(() => []),
+    thumbs.length ? supabase.storage.from('media').createSignedUrls(thumbs, 3600) : Promise.resolve({ data: [] }),
   ])
   const urlOf = (list: { path: string | null; signedUrl: string | null }[] | null, p: string) => list?.find((s) => s.path === p)?.signedUrl ?? ''
   const items: GalleryItem[] = rows
@@ -69,6 +75,8 @@ export const loadGallery = async (tripId: string): Promise<GalleryDay[]> => {
       storage_path: r.storage_path,
       url: urlOf(view.data, r.storage_path),
       download_url: urlOf(download.data, r.storage_path),
+      thumb_path: thumbOf(r),
+      thumb_url: thumbOf(r) ? urlOf(thumbView.data, thumbOf(r)!) : undefined,
       taken_at: r.taken_at ?? r.created_at,
       place: r.taken_place,
     }))
@@ -87,7 +95,7 @@ export const uploadToGallery = async (tripId: string, userId: string, files: Fil
 /** Datei aus Speicher und Galerie entfernen (Bausteine in Beiträgen verlieren das Bild). */
 export const deleteMedia = async (item: GalleryItem) => {
   if (item.storage_path) {
-    const { error } = await supabase.storage.from('media').remove([item.storage_path])
+    const { error } = await supabase.storage.from('media').remove([item.storage_path, ...(item.thumb_path ? [item.thumb_path] : [])])
     if (error) throw new Error(error.message)
   }
   const { error } = await supabase.from('media').delete().eq('id', item.id)

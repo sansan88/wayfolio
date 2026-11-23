@@ -232,3 +232,127 @@
   align-items: center;
   gap: 2px;
 }
+
+/* Kopfzeile im Instagram-Stil */
+.post__top {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 44px 10px 14px;
+}
+
+.post__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+  font-size: 18px;
+}
+
+.post__avatar--place {
+  background: rgba(var(--ion-color-danger-rgb), 0.12);
+  color: var(--ion-color-danger);
+}
+
+.post__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.post__who strong {
+  overflow: hidden;
+  color: var(--ion-text-color);
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post__who span {
+  color: var(--ion-color-medium);
+  font-size: 0.78rem;
+}
+
+.post__top .post__menu {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.post__photo,
+.carousel__track img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: cover;
+}
+
+.post__caption {
+  padding-top: 10px;
+  white-space: pre-line;
+  color: var(--ion-text-color);
+}
+
+/* Foto-Karussell */
+.carousel {
+  position: relative;
+}
+
+.carousel__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel__track img {
+  flex: 0 0 100%;
+  aspect-ratio: 4 / 5;
+  scroll-snap-align: center;
+}
+
+.carousel__count {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.carousel__dots {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 8px 0 0;
+}
+
+.carousel__dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-medium-rgb), 0.4);
+}
+
+.carousel__dots span.active {
+  background: var(--ion-color-primary);
+}
+
+/* Check-in ohne Fotos: Routenbild randlos wie ein Foto */
+.post--route_update .post__route {
+  width: 100%;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+}

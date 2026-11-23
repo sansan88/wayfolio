@@ -28,7 +28,9 @@ import {
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import PostCard, { dayNumber } from '../components/PostCard'
-import StoryBar from '../components/StoryBar'
+import TimelineDots from '../components/TimelineDots'
+import { useTimeline } from '../lib/useTimeline'
+import '../pages/FeedPage.css'
 import { followerApi, type FollowerFeed } from '../lib/follower'
 import { useCardPresenter } from '../lib/modal'
 import type { FeedPost } from '../lib/updates'
@@ -52,6 +54,7 @@ const FollowerPage = ({ token }: { token: string }) => {
   const [askName, setAskName] = useState(false)
   const namePresenter = useCardPresenter(askName)
   const [selected, setSelected] = useState<RoutePoint | null>(null)
+  const timeline = useTimeline((data?.posts ?? []).map((p) => p.id))
   const [name, setName] = useState('')
   const [pending, setPending] = useState<(() => Promise<unknown>) | null>(null)
   const [email, setEmail] = useState('')
@@ -134,13 +137,10 @@ const FollowerPage = ({ token }: { token: string }) => {
       </IonPage>
     )
 
-  const now = Date.now()
-  const stories = data.posts.filter((p) => p.story_expires_at && Date.parse(p.story_expires_at) > now).reverse()
-  const feed = data.posts.filter((p) => p.kind !== 'story')
-
+  const start = data.trip.starts_on ?? data.posts.at(-1)?.published_at
   const card = (post: FeedPost) => (
+    <div key={post.id} data-post-id={post.id}>
     <PostCard
-      key={post.id}
       post={post}
       day={dayNumber(post.published_at, data?.trip.starts_on ?? data?.posts.at(-1)?.published_at)}
       mode="follower"
@@ -153,12 +153,14 @@ const FollowerPage = ({ token }: { token: string }) => {
         })
       }
     />
+    </div>
   )
 
   // pro Ort das neueste Foto als Marker (ohne Routenbilder)
   const photos: Record<string, string> = {}
   for (const p of data.posts) {
-    const url = p.blocks.find((b) => b.kind === 'photo' && b.mediaUrl && !b.route)?.mediaUrl
+    const hit = p.blocks.find((b) => b.kind === 'photo' && b.mediaUrl && !b.route)
+      const url = hit?.thumbUrl ?? hit?.mediaUrl
     if (p.checkin_id && url && !photos[p.checkin_id]) photos[p.checkin_id] = url
   }
 
@@ -175,21 +177,18 @@ const FollowerPage = ({ token }: { token: string }) => {
 
   return (
     <IonPage>
-      <IonHeader translucent>
+      <IonHeader>
         <IonToolbar>
           <IonTitle>{data.trip.title}</IonTitle>
         </IonToolbar>
-        {tab === 'karte' && <IonToolbar>{segment}</IonToolbar>}
-      </IonHeader>
-      <IonContent scrollY={tab === 'feed'} fullscreen={tab === 'feed'} color="light">
-        {tab === 'feed' && (
-          <IonHeader collapse="condense">
-            <IonToolbar>
-              <IonTitle size="large">{data.trip.title}</IonTitle>
-            </IonToolbar>
-            <IonToolbar>{segment}</IonToolbar>
-          </IonHeader>
+        <IonToolbar>{segment}</IonToolbar>
+        {tab === 'feed' && data.posts.length > 0 && (
+          <IonToolbar className="timeline-toolbar">
+            <TimelineDots posts={data.posts} activeId={timeline.activeId} start={start} onSelect={(p) => void timeline.jumpTo(p.id)} />
+          </IonToolbar>
         )}
+      </IonHeader>
+      <IonContent ref={timeline.contentRef} scrollY={tab === 'feed'} scrollEvents onIonScroll={timeline.onScroll} color="light">
         {tab === 'karte' ? (
           <Suspense fallback={null}>
             <RouteMap points={data.route} photos={photos} onSelect={setSelected} focus={selected} />
@@ -199,14 +198,12 @@ const FollowerPage = ({ token }: { token: string }) => {
             <IonRefresher slot="fixed" onIonRefresh={(e) => void load().finally(() => e.detail.complete())}>
               <IonRefresherContent />
             </IonRefresher>
-            <StoryBar stories={stories} renderDetail={(p) => (p.kind !== 'story' ? card(p) : null)} />
-
-            {feed.length === 0 && stories.length === 0 && (
+            {data.posts.length === 0 && (
               <IonCard>
                 <IonCardContent>Noch keine Beiträge. Schau bald wieder vorbei!</IonCardContent>
               </IonCard>
             )}
-            {feed.map(card)}
+            {data.posts.map(card)}
 
             <IonCard className="newsletter">
               <IonCardHeader>

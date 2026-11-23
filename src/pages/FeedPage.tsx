@@ -8,11 +8,16 @@ import {
   IonContent,
   IonFab,
   IonFabButton,
+  IonHeader,
   IonIcon,
+  IonLoading,
   IonPage,
   IonRefresher,
   IonRefresherContent,
   IonText,
+  IonTitle,
+  IonToolbar,
+  IonButtons,
   useIonActionSheet,
   useIonAlert,
   useIonToast,
@@ -21,17 +26,19 @@ import {
 import { add, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useMemo, useState } from 'react'
 
-import CaptureModal from '../components/CaptureModal'
-import GeoPermissionBanner from '../components/GeoPermissionBanner'
+import CheckinModal from '../components/CheckinModal'
 import ComposeModal from '../components/ComposeModal'
-import { LargeTitle, PageHeader } from '../components/PageHeader'
+import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import PostCard, { dayNumber } from '../components/PostCard'
-import StoryBar from '../components/StoryBar'
+import TimelineDots from '../components/TimelineDots'
 import { useAuth } from '../lib/auth'
+import { useCapture } from '../lib/capture'
+import { useTimeline } from '../lib/useTimeline'
 import { loadRoute, type RoutePoint } from '../lib/route'
 import { useTrip } from '../lib/trip'
 import {
   addOwnerReply,
+  createFeedPost,
   deletePost,
   getOrCreateShareLink,
   hideReply,
@@ -53,7 +60,15 @@ const FeedPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [points, setPoints] = useState<RoutePoint[]>([])
   const [editing, setEditing] = useState<FeedPost | null>(null)
-  const [capturing, setCapturing] = useState(false)
+  const [checkingIn, setCheckingIn] = useState(false)
+  const [writing, setWriting] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const capture = useCapture()
+  const composeInitial = useMemo(
+    () => ({ at: capture.at, place: capture.place, position: capture.position }),
+    [capture.at, capture.place, capture.position],
+  )
+  const timeline = useTimeline(posts.map((p) => p.id))
   const editInitial = useMemo(() => {
     if (!editing) return undefined
     const point = points.find((p) => p.id === editing.checkin_id)
@@ -152,15 +167,22 @@ const FeedPage = () => {
       ],
     })
 
-  const now = Date.now()
-  const stories = posts.filter((p) => p.story_expires_at && Date.parse(p.story_expires_at) > now).reverse()
-  const feed = posts.filter((p) => p.kind !== 'story')
+  /** «+»: die zwei Arten von Updates */
+  const openCreate = () =>
+    presentSheet({
+      header: 'Neues Update',
+      buttons: [
+        { text: 'Check-in – ich bin hier (mit Fotos)', handler: () => setCheckingIn(true) },
+        { text: 'Beitrag – Text mit Fotos', handler: () => setWriting(true) },
+        { text: 'Abbrechen', role: 'cancel' },
+      ],
+    })
 
   // Reisetag ab Reisebeginn, sonst ab dem ältesten Update
   const tripStart = trip?.starts_on ?? posts.at(-1)?.published_at ?? null
   const card = (post: FeedPost) => (
+    <div key={post.id} data-post-id={post.id}>
     <PostCard
-      key={post.id}
       post={post}
       day={dayNumber(post.published_at, tripStart)}
       mode="owner"
@@ -169,30 +191,31 @@ const FeedPage = () => {
       onHideReply={(id) => void act(() => hideReply(id))}
       onMenu={openMenu}
     />
+    </div>
   )
 
   return (
     <IonPage>
-      <PageHeader
-        title={trip?.title ?? 'Feed'}
-        end={
-          <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
-            <IonIcon slot="icon-only" icon={shareSocialOutline} />
-          </IonButton>
-        }
-      />
-      <IonContent fullscreen color="light">
-        <LargeTitle title={trip?.title ?? 'Feed'} />
-        <GeoPermissionBanner />
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>{trip?.title ?? 'Feed'}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => void openShare()} aria-label="Follower einladen">
+              <IonIcon slot="icon-only" icon={shareSocialOutline} />
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+        {posts.length > 0 && (
+          <IonToolbar className="timeline-toolbar">
+            <TimelineDots posts={posts} activeId={timeline.activeId} start={tripStart} onSelect={(p) => void timeline.jumpTo(p.id)} />
+          </IonToolbar>
+        )}
+      </IonHeader>
+      <IonContent ref={timeline.contentRef} color="light" scrollEvents onIonScroll={timeline.onScroll}>
         <IonRefresher slot="fixed" onIonRefresh={(e) => void refresh().finally(() => e.detail.complete())}>
           <IonRefresherContent />
         </IonRefresher>
-
-        <StoryBar
-          stories={stories}
-          renderDetail={(p) => (p.kind !== 'story' ? card(p) : null)}
-          onDelete={(p) => void confirmDelete(p)}
-        />
+        <GeoPermissionBanner />
 
         {error && (
           <IonText color="danger">
@@ -200,20 +223,20 @@ const FeedPage = () => {
           </IonText>
         )}
 
-        {feed.length === 0 && stories.length === 0 && !error && (
+        {posts.length === 0 && !error && (
           <IonCard>
             <IonCardHeader>
               <IonCardSubtitle>Noch keine Updates</IonCardSubtitle>
               <IonCardTitle>Eure Reise beginnt hier</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              Tippt auf «+» unten rechts und erfasst euer erstes Update. Mit dem Teilen-Symbol oben ladet ihr Familie und Freunde
+              Tippt auf «+» unten rechts: ein Check-in mit Fotos («ich bin hier») oder ein Beitrag mit Text. Mit dem Teilen-Symbol oben ladet ihr Familie und Freunde
               ein – sie brauchen weder App noch Konto.
             </IonCardContent>
           </IonCard>
         )}
 
-        {feed.map(card)}
+        {posts.map(card)}
 
         <ComposeModal
           kind={editing ? 'edit' : null}
@@ -236,11 +259,40 @@ const FeedPage = () => {
           }}
         />
         <IonFab slot="fixed" vertical="bottom" horizontal="end">
-          <IonFabButton aria-label="Erfassen" onClick={() => setCapturing(true)}>
+          <IonFabButton aria-label="Erfassen" onClick={() => void openCreate()}>
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
-        <CaptureModal isOpen={capturing} onClose={() => setCapturing(false)} onPosted={() => void refresh()} />
+        <CheckinModal isOpen={checkingIn} onClose={() => setCheckingIn(false)} onPosted={() => void refresh()} />
+        <ComposeModal
+          kind={writing ? 'post' : null}
+          initial={composeInitial}
+          onCancel={() => setWriting(false)}
+          onSubmit={(_k, r) => {
+            setWriting(false)
+            setBusy(true)
+            void act(() =>
+              createFeedPost(
+                {
+                  tripId: trip!.id,
+                  userId: session!.user.id,
+                  position: r.location?.position ?? capture.position,
+                  place: r.location?.place ?? capture.place,
+                  at: r.at,
+                  source: r.location ? 'manual' : capture.source,
+                  lockPlace: !!r.location,
+                },
+                r.title,
+                r.text,
+                r.files,
+                r.link,
+              ),
+            )
+              .then(() => toast('Beitrag veröffentlicht'))
+              .finally(() => setBusy(false))
+          }}
+        />
+        <IonLoading isOpen={busy} message="Beitrag wird veröffentlicht …" />
       </IonContent>
     </IonPage>
   )
