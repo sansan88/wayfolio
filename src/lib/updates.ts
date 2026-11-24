@@ -2,7 +2,7 @@ import { appUrl } from './auth'
 import { readPhotoMeta } from './exif'
 import { cachedLoad } from './offline'
 import { distanceKm, isDistanceLine, ROUTE_IMAGE_VERSION } from './geo'
-import { cleanLinks, isKnownService } from './links'
+import { cleanLinks } from './links'
 import { loadRoute, type RoutePoint } from './route'
 import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
@@ -310,17 +310,51 @@ export const createMediaStory = async (base: Context, data: File | Blob, kind: M
   }
 }
 
-/** Seitentitel für Links holen (Edge Function «link-title»); bekannte Dienste brauchen keinen. */
+/** Seitentitel bzw. Ortsnamen für Links holen (Edge Function «link-title»). */
 const fetchTitles = async (urls: string[]): Promise<(string | null)[]> => {
-  const ask = urls.filter((u) => !isKnownService(u))
-  if (!ask.length) return urls.map(() => null)
+  if (!urls.length) return []
   try {
-    const { data } = await supabase.functions.invoke<{ titles: (string | null)[] }>('link-title', { body: { urls: ask } })
-    const map = new Map(ask.map((u, i) => [u, data?.titles?.[i] ?? null]))
-    return urls.map((u) => map.get(u) ?? null)
+    const { data } = await supabase.functions.invoke<{ titles: (string | null)[] }>('link-title', { body: { urls } })
+    return urls.map((_, i) => data?.titles?.[i] ?? null)
   } catch {
     return urls.map(() => null)
   }
+}
+
+/**
+ * Ältere Links ohne gespeicherten Titel einmalig im Hintergrund ergänzen (pro Gerät und Link nur ein Versuch).
+ * Gibt die Zahl der ergänzten Titel zurück.
+ */
+export const fillLinkTitles = async (posts: FeedPost[]) => {
+  const key = 'lf-link-title-tried'
+  let tried: string[] = []
+  try {
+    tried = JSON.parse(localStorage.getItem(key) ?? '[]') as string[]
+  } catch {
+    /* leer */
+  }
+  const todo = posts
+    .flatMap((p) => p.blocks)
+    .filter((b) => b.kind === 'link' && b.id && b.url && !b.text && !tried.includes(b.id))
+    .slice(0, 16)
+  if (!todo.length) return 0
+  let filled = 0
+  for (let i = 0; i < todo.length; i += 8) {
+    const batch = todo.slice(i, i + 8)
+    const titles = await fetchTitles(batch.map((b) => b.url!))
+    for (const [j, b] of batch.entries()) {
+      tried.push(b.id!)
+      if (!titles[j]) continue
+      const { error } = await supabase.from('post_blocks').update({ text_content: titles[j] }).eq('id', b.id!)
+      if (!error) filled++
+    }
+  }
+  try {
+    localStorage.setItem(key, JSON.stringify(tried.slice(-500)))
+  } catch {
+    /* egal */
+  }
+  return filled
 }
 
 /** Link-Bausteine (bereinigt, ohne Doppelte), mit Seitentitel als Anzeigetext */

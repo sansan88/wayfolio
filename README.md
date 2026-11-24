@@ -12,7 +12,7 @@ Live: **https://littlefootnotes.app**
 
 - **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
 - **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
-- **Links:** Check-ins und Beiträge können mehrere Links haben (Unterkunft, Museum, Google-Maps-Ort …). Angezeigt wird nie die ganze Adresse, sondern ein Symbol mit dem Namen: «Airbnb», «Booking.com», bei Google Maps der Ortsname, sonst der Seitentitel (beim Speichern über die Edge Function `link-title` gelesen) oder die Domain.
+- **Links:** Check-ins und Beiträge können mehrere Links haben (Unterkunft, Museum, Google-Maps-Ort, Instagram-Profil …). Angezeigt wird nie die ganze Adresse, sondern ein Symbol, darunter der Dienst: bei Google Maps der Ortsname, bei Airbnb/Booking die Unterkunft (z. B. «Apartment · Kerikeri»), bei Instagram «@profil», sonst der Seitentitel. Titel liest die Edge Function `link-title` beim Speichern; ältere Links ohne Titel ergänzt die App einmalig im Hintergrund.
 - **Mit Claude schreiben:** Im Beitrags-Dialog machen ein paar Stichworte und/oder Fotos auf Knopfdruck einen ausformulierten Entwurf (Titel + Text, Schweizer Rechtschreibung, Stil der bisherigen Beiträge). Der Entwurf lässt sich anpassen oder rückgängig machen; gespeichert wird erst beim Posten.
 - **Mit Claude überarbeiten:** Steht schon Text im Beitrag, öffnet der Claude-Knopf eine Auswahl: Korrekturlesen, Kürzen, Länger, Umformulieren (mit eigenem Änderungswunsch) oder aus Stichworten neu schreiben.
 - **Einwilligung:** Beim ersten Gebrauch erklärt ein Dialog, welche Daten an Anthropic gehen; erst nach «Ja, aktivieren» wird `profiles.ai_enabled_at` gesetzt (auch serverseitig geprüft). Ein- und ausschalten unter Reisen › Dein Profil.

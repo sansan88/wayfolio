@@ -49,6 +49,7 @@ import {
   deletePost,
   hideReply,
   loadUpdates,
+  fillLinkTitles,
   regenerateRouteImages,
   revokePostLinks,
   resolvePoll,
@@ -193,6 +194,20 @@ const FeedPage = () => {
       .finally(() => setRegen(null))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.id])
+
+  // Links ohne gespeicherten Titel (ältere Beiträge) einmalig im Hintergrund ergänzen
+  const titlesRunning = useRef(false)
+  useEffect(() => {
+    if (!posts?.length || titlesRunning.current) return
+    titlesRunning.current = true
+    void fillLinkTitles(posts)
+      .then((n) => {
+        if (n > 0) void refresh()
+      })
+      .catch(() => undefined)
+      .finally(() => (titlesRunning.current = false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts])
 
   // fehlende Tage bis heute (bzw. Reiseende): Tipp setzt den Zeitpunkt auf diesen Tag und öffnet «Neues Update»
   const missingDays = useMemo(() => {

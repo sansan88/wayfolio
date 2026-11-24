@@ -253,7 +253,10 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props
                     <span className="post__link-icon">
                       <IonIcon icon={d.icon} aria-hidden="true" />
                     </span>
-                    <span className="post__link-text">{d.label}</span>
+                    <span className="post__link-text">
+                      <strong>{d.label}</strong>
+                      {d.service && <span>{d.service}</span>}
+                    </span>
                     <IonIcon icon={openOutline} className="post__link-open" aria-hidden="true" />
                   </a>
                 )

@@ -27,7 +27,7 @@ const LinksEditor = ({ links, onChange }: Props) => {
               type="url"
               inputmode="url"
               autocapitalize="off"
-              placeholder="z. B. Airbnb, Museum oder Google-Maps-Link"
+              placeholder="z. B. Airbnb, Museum, Google Maps, Instagram"
               value={l}
               onIonInput={(e) => onChange(links.map((x, j) => (j === i ? String(e.detail.value ?? '') : x)))}
             />
