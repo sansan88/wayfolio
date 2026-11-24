@@ -39,19 +39,31 @@ const iconFor = (p: FeedPost) =>
 const TimelineDots = ({ posts, activeId, start, onSelect, missingDays }: Props) => {
   const strip = useRef<HTMLDivElement>(null)
 
+  // ein Punkt pro Tag: alle Beiträge desselben Tages zusammen (neueste zuerst wie im Feed)
+  const days = useMemo(() => {
+    const map = new Map<string, FeedPost[]>()
+    for (const p of posts) {
+      const k = dayKey(new Date(p.published_at))
+      map.set(k, [...(map.get(k) ?? []), p])
+    }
+    return [...map.entries()].map(([key, list]) => ({ key, posts: list }))
+  }, [posts])
+  const activeDay = days.find((d) => d.posts.some((p) => p.id === activeId))?.key ?? null
+
   // aktiven Punkt in die Mitte holen
   useEffect(() => {
-    const el = strip.current?.querySelector<HTMLElement>(`[data-dot="${activeId}"]`)
+    const el = strip.current?.querySelector<HTMLElement>(`[data-dot="${activeDay}"]`)
     if (!el || !strip.current) return
     strip.current.scrollTo({ left: el.offsetLeft - strip.current.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' })
-  }, [activeId])
+  }, [activeDay])
 
-  // Beiträge (neueste zuerst) und – für Reisende – fehlende Tage dazwischen
+  // Tage mit Beiträgen und – für Reisende – fehlende Tage dazwischen
   const items = useMemo(() => {
-    const list: ({ type: 'post'; post: FeedPost; at: number } | { type: 'gap'; day: Date; at: number })[] = posts.map((p) => ({
-      type: 'post' as const,
-      post: p,
-      at: Date.parse(p.published_at),
+    const list: ({ type: 'day'; key: string; posts: FeedPost[]; at: number } | { type: 'gap'; day: Date; at: number })[] = days.map((d) => ({
+      type: 'day' as const,
+      key: d.key,
+      posts: d.posts,
+      at: Date.parse(d.posts[0].published_at),
     }))
     if (missingDays && start) {
       const have = new Set(posts.map((p) => dayKey(new Date(p.published_at))))
@@ -62,7 +74,7 @@ const TimelineDots = ({ posts, activeId, start, onSelect, missingDays }: Props) 
       }
     }
     return list.sort((a, b) => b.at - a.at)
-  }, [posts, missingDays, start])
+  }, [days, posts, missingDays, start])
 
   return (
     <div className="timeline" ref={strip} role="tablist" aria-label="Reise-Verlauf">
@@ -85,25 +97,29 @@ const TimelineDots = ({ posts, activeId, start, onSelect, missingDays }: Props) 
             </button>
           )
         }
-        const p = item.post
-        const img = preview(p)
+        // Vorschau: erstes Foto des Tages, sonst Symbol des ersten Beitrags
+        const p = item.posts[0]
+        const withImg = item.posts.find((x) => preview(x))
+        const img = withImg ? preview(withImg) : undefined
         const day = dayNumber(p.published_at, start)
         const label = day ? `Tag ${day}` : new Date(p.published_at).toLocaleDateString('de-CH', { day: 'numeric', month: 'short' })
-        const place = p.place_name?.split(',')[0]
+        const places = [...new Set(item.posts.map((x) => x.place_name?.split(',')[0]).filter(Boolean))].join(', ')
+        const active = item.key === activeDay
         return (
           <button
-            key={p.id}
+            key={item.key}
             type="button"
             role="tab"
-            aria-selected={p.id === activeId}
-            aria-label={`${label}${place ? `, ${place}` : ''}${p.title ? `: ${p.title}` : ''}`}
-            data-dot={p.id}
-            className={`timeline__dot${p.id === activeId ? ' timeline__dot--active' : ''}${img ? '' : ' timeline__dot--icon'}`}
+            aria-selected={active}
+            aria-label={`${label}${places ? `, ${places}` : ''} – ${item.posts.length} ${item.posts.length === 1 ? 'Beitrag' : 'Beiträge'}`}
+            data-dot={item.key}
+            className={`timeline__dot${active ? ' timeline__dot--active' : ''}${img ? '' : ' timeline__dot--icon'}`}
             onClick={() => onSelect(p)}
           >
             <span className="timeline__circle">
               {img ? <img src={img.thumbUrl ?? img.mediaUrl ?? ''} alt="" loading="lazy" /> : <IonIcon icon={iconFor(p)} />}
             </span>
+            {item.posts.length > 1 && <span className="timeline__count">{item.posts.length}</span>}
             <span className="timeline__label">{label}</span>
           </button>
         )

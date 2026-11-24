@@ -48,3 +48,9 @@
   display: inline-flex;
   gap: 16px;
 }
+
+.legal-love {
+  margin-top: 32px;
+  font-style: italic;
+  color: var(--lp-muted);
+}

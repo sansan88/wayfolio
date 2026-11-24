@@ -1,206 +1,362 @@
+import { useEffect, useState, type FormEvent } from 'react'
 import { IonContent, IonIcon, IonPage } from '@ionic/react'
 import {
   bookOutline,
-  ellipsisHorizontalCircleOutline,
-  heartOutline,
-  linkOutline,
+  calendarOutline,
+  cloudOfflineOutline,
+  imagesOutline,
   locationOutline,
   lockClosedOutline,
+  logoGithub,
   logoWhatsapp,
   mapOutline,
+  moonOutline,
+  sunnyOutline,
 } from 'ionicons/icons'
 
+import { joinWaitlist } from '../lib/waitlist'
 import { LegalFooter } from './LegalPage'
+import {
+  initialLang,
+  LANGS,
+  saveLang,
+  savedTheme,
+  saveTheme,
+  TEXTS,
+  type Lang,
+  type LandingText,
+  type Theme,
+} from './landingI18n'
 import './LandingPage.css'
 
 const base = import.meta.env.BASE_URL
-const goLogin = () => window.location.assign(`${base}login`)
+const REPO = 'https://github.com/sansan88/wayfolio'
+const go = (path: string) => window.location.assign(`${base}${path}`)
 
-const features = [
-  { icon: locationOutline, title: 'Check-in mit Fotos', text: '«Wir sind heute hier»: Ort per GPS oder Pin, ein paar Fotos, ein Satz dazu – fertig. Wie ein Instagram-Post, nur privat.' },
-  { icon: bookOutline, title: 'Beiträge', text: 'Für längere Geschichten: Text mit Fotos, Ort und Datum – auch nachträglich für vergangene Tage.' },
-  { icon: mapOutline, title: 'Route und Karte', text: 'Jeder Ort landet auf der Karte, mit Kartenausschnitt nah am aktuellen Ort. Ein Tipp auf den Ort zeigt alles von dort.' },
-  { icon: ellipsisHorizontalCircleOutline, title: 'Die Reise als Zeitleiste', text: 'Ein Punkt pro Tag und Update – mit Foto. Beim Scrollen läuft die Zeitleiste mit.' },
-  { icon: logoWhatsapp, title: 'In WhatsApp teilen', text: 'Ein Update direkt in eure Familien- oder Freundesgruppe schicken, mit Foto und Link zum Beitrag.' },
-  { icon: lockClosedOutline, title: 'Privat und offline', text: 'Nur wer euren Link hat, sieht mit. Als App auf dem Home-Bildschirm, die letzten Beiträge auch ohne Netz.' },
+const featureIcons = [
+  locationOutline,
+  bookOutline,
+  mapOutline,
+  calendarOutline,
+  imagesOutline,
+  logoWhatsapp,
+  lockClosedOutline,
+  cloudOfflineOutline,
 ]
 
-const steps = [
-  { n: '1', title: 'Reise anlegen', text: 'Konto per E-Mail, Reise benennen – fertig.' },
-  { n: '2', title: 'Unterwegs einchecken', text: 'Ein Tipp auf «+»: Check-in mit Fotos oder ein Beitrag. Ort und Zeit sind schon drin.' },
-  { n: '3', title: 'Link teilen', text: 'Ein Link für Tagebuch, Karte und Fotos. Familie und Freunde öffnen ihn im Browser – ohne App und Konto.' },
+/** App-Bilder: Index in shotAlts und shotLabels. */
+const screens = [
+  { src: 'feed2.webp', alt: 1, label: 0 },
+  { src: 'map.webp', alt: 2, label: 1 },
+  { src: 'sheet.webp', alt: 3, label: 2 },
+  { src: 'checkin.webp', alt: 4, label: 3 },
 ]
 
-const plans = [
-  { name: 'Free', price: 'CHF 0', note: 'für immer', items: ['1 aktive Reise', 'Check-ins, Fotos, Beiträge', 'bis 25 Follower', 'Teilen in WhatsApp'], cta: 'Kostenlos starten', primary: false },
-  { name: 'Plus', price: 'CHF 6.90', note: 'pro Monat · CHF 59 pro Jahr', items: ['Unbegrenzte Reisen und Follower', 'Routenbilder und Galerie', 'Fotos in voller Grösse herunterladen', 'Mitreisende'], cta: 'Bald verfügbar', primary: true },
-  { name: 'Reise-Pass', price: 'CHF 19', note: 'einmalig für 3 Monate', items: ['Plus für eine Reise', 'Ohne Abo', 'Ideal fürs Sabbatical'], cta: 'Bald verfügbar', primary: false },
-]
+const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 
-const faqs = [
-  { q: 'Brauchen meine Follower eine App?', a: 'Nein. Sie öffnen euren Link im Browser – auf Handy, Tablet oder Computer – und können ihn auf den Home-Bildschirm legen.' },
-  { q: 'Wer kann unsere Reise sehen?', a: 'Nur wer euren Secret Link hat. Er ist nicht auffindbar, und ihr könnt ihn jederzeit durch einen neuen ersetzen.' },
-  { q: 'Funktioniert das ohne Netz?', a: 'Little Footnotes läuft als App auf dem Home-Bildschirm und zeigt die zuletzt geladenen Beiträge, Fotos und Karten auch offline. Eine iOS-App ist in Planung.' },
-  { q: 'Wo liegen unsere Daten?', a: 'Datenbank und Fotos liegen in einem Rechenzentrum in Zürich. Fotos werden vor dem Hochladen fürs Handy verkleinert.' },
-]
-
-/** Handy-Ansicht als Illustration: Zeitleiste mit Punkten und Beiträgen. */
-const PhoneMock = () => (
-  <div className="lp-phone" aria-hidden="true">
-    <div className="lp-phone__bar">Vietnam mit dem Camper</div>
-    <div className="lp-phone__stories">
-      {['Tag 12', 'Tag 11', 'Tag 10', 'Tag 9'].map((s, i) => (
-        <div key={s} className="lp-story">
-          <span className={`lp-story__dot lp-story__dot--${i}`} />
-          <span>{s}</span>
-        </div>
-      ))}
-    </div>
-    <div className="lp-card lp-card--route">
-      <div className="lp-route">
-        <svg viewBox="0 0 200 110" preserveAspectRatio="none">
-          <path d="M18 20 C 60 30, 80 55, 110 62 S 165 88, 182 92" fill="none" stroke="#11a683" strokeWidth="3.5" strokeLinecap="round" />
-          <circle cx="18" cy="20" r="5" fill="#fff" stroke="#11a683" strokeWidth="3" />
-          <circle cx="110" cy="62" r="5" fill="#fff" stroke="#11a683" strokeWidth="3" />
-          <circle cx="182" cy="92" r="8" fill="#11a683" />
-        </svg>
-        <span className="lp-route__caption">Tag 12 · Hué → Hoi An</span>
-      </div>
-      <div className="lp-card__title">Hoi An</div>
-      <div className="lp-card__meta">📍 Vietnam · Check-in · Tag 12</div>
-    </div>
-    <div className="lp-card">
-      <div className="lp-card__kind">Beitrag · Tag 11</div>
-      <div className="lp-card__title">Laternenfest am Fluss</div>
-      <div className="lp-card__meta">Hunderte Lichter auf dem Wasser – und wir mittendrin mit unserem Camper.</div>
-    </div>
-  </div>
+/** Handy-Rahmen mit echtem App-Bild im festen Seitenverhältnis 390:844. */
+const Phone = ({ src, alt, className = '' }: { src: string; alt: string; className?: string }) => (
+  <figure className={`lp-phone ${className}`}>
+    <img src={`${base}screens/${src}`} alt={alt} width={390} height={844} loading="lazy" decoding="async" />
+  </figure>
 )
 
-const LandingPage = () => (
-  <IonPage>
-    <IonContent>
-      <div className="lp">
-        <header className="lp-nav">
-          <span className="lp-logo">Little Footnotes</span>
-          <button type="button" className="lp-btn lp-btn--ghost" onClick={goLogin}>
-            Anmelden
-          </button>
-        </header>
+const Sun = () => (
+  <svg className="lp-doodle lp-doodle--sun" viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="22" />
+    {Array.from({ length: 12 }, (_, i) => (
+      <line key={i} x1="60" y1="8" x2="60" y2="24" transform={`rotate(${i * 30} 60 60)`} />
+    ))}
+  </svg>
+)
 
-        <section className="lp-hero">
-          <div className="lp-hero__text">
-            <p className="lp-eyebrow">Travel journal for your people</p>
-            <h1>Nehmt eure Liebsten mit auf die Reise.</h1>
-            <p className="lp-lead">
-              Kleine Fussnoten eurer Reise: Check-ins mit Fotos, Beiträge und eure Route auf der Karte. Familie und
-              Freunde folgen per Link – ohne App und ohne Konto.
-            </p>
-            <div className="lp-cta">
-              <button type="button" className="lp-btn lp-btn--primary" onClick={goLogin}>
-                Kostenlos starten
-              </button>
-              <a className="lp-btn lp-btn--ghost" href="#so-gehts">
-                So funktioniert’s
-              </a>
+const Arch = () => (
+  <svg className="lp-doodle lp-doodle--arch" viewBox="0 0 160 120" aria-hidden="true">
+    <path d="M10 118 V70 a70 70 0 0 1 140 0 V118" />
+    <path d="M34 118 V72 a46 46 0 0 1 92 0 V118" />
+    <path d="M58 118 V74 a22 22 0 0 1 44 0 V118" />
+  </svg>
+)
+
+const Trail = () => (
+  <svg className="lp-trail" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M4 40 C 90 4, 150 56, 240 30 S 400 8, 470 34 S 560 50, 596 18" />
+  </svg>
+)
+
+const Waitlist = ({ t }: { t: LandingText }) => {
+  const [email, setEmail] = useState('')
+  const [trap, setTrap] = useState('')
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (state === 'busy') return
+    if (trap) return setState('done')
+    setState('busy')
+    try {
+      await joinWaitlist(email)
+      setState('done')
+    } catch {
+      setState('error')
+    }
+  }
+
+  if (state === 'done')
+    return (
+      <p className="lp-waitlist__done" role="status">
+        {t.wlDone}
+      </p>
+    )
+
+  return (
+    <form className="lp-waitlist" onSubmit={submit}>
+      <label htmlFor="lp-waitlist-email">{t.wlLabel}</label>
+      <div className="lp-waitlist__row">
+        <input
+          id="lp-waitlist-email"
+          type="email"
+          required
+          autoComplete="email"
+          inputMode="email"
+          placeholder={t.wlPlaceholder}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="lp-waitlist__trap"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          value={trap}
+          onChange={(e) => setTrap(e.target.value)}
+        />
+        <button type="submit" className="lp-btn lp-btn--primary" disabled={state === 'busy'}>
+          {state === 'busy' ? t.wlBusy : t.wlSubmit}
+        </button>
+      </div>
+      {state === 'error' ? (
+        <p className="lp-waitlist__hint lp-waitlist__hint--error" role="alert">
+          {t.wlError}
+        </p>
+      ) : (
+        <p className="lp-waitlist__hint">{t.wlHint}</p>
+      )}
+    </form>
+  )
+}
+
+const LandingPage = ({ signedIn = false }: { signedIn?: boolean }) => {
+  const [lang, setLang] = useState<Lang>(initialLang)
+  const [theme, setTheme] = useState<Theme>(() => savedTheme() ?? (prefersDark() ? 'dark' : 'light'))
+  const [scrolled, setScrolled] = useState(false)
+  const t = TEXTS[lang]
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+    return () => {
+      document.documentElement.lang = 'de'
+    }
+  }, [lang])
+
+  const start = () => go(signedIn ? 'feed' : 'login')
+  const startLabel = signedIn ? t.toDiary : t.start
+  const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark'
+
+  const toggleTheme = () => {
+    setTheme(nextTheme)
+    saveTheme(nextTheme)
+  }
+
+  const changeLang = (l: Lang) => {
+    setLang(l)
+    saveLang(l)
+  }
+
+  return (
+    <IonPage>
+      <IonContent scrollEvents onIonScroll={(e) => setScrolled(e.detail.scrollTop > 12)}>
+        <div className="lp" data-theme={theme}>
+          <header className={`lp-nav${scrolled ? ' lp-nav--scrolled' : ''}`}>
+            <div className="lp-nav__inner">
+              <span className="lp-logo">Little Footnotes</span>
+              <nav className="lp-nav__links">
+                <label className="lp-lang">
+                  <span className="lp-sr">{t.langLabel}</span>
+                  <select value={lang} onChange={(e) => changeLang(e.target.value as Lang)} aria-label={t.langLabel}>
+                    {LANGS.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.code.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="lp-icon-btn"
+                  onClick={toggleTheme}
+                  aria-label={nextTheme === 'dark' ? t.themeDark : t.themeLight}
+                  title={nextTheme === 'dark' ? t.themeDark : t.themeLight}
+                >
+                  <IonIcon icon={theme === 'dark' ? sunnyOutline : moonOutline} />
+                </button>
+                <a className="lp-icon-btn lp-hide-xs" href={REPO} target="_blank" rel="noreferrer" aria-label={t.sourceAria}>
+                  <IonIcon icon={logoGithub} />
+                </a>
+                <button type="button" className="lp-btn lp-btn--ghost lp-btn--small" onClick={start}>
+                  {signedIn ? t.toApp : t.signIn}
+                </button>
+              </nav>
             </div>
-            <ul className="lp-pills">
-              <li>
-                <IonIcon icon={heartOutline} /> Ein Tipp, ein Update
-              </li>
-              <li>
-                <IonIcon icon={linkOutline} /> Dabei ohne App
-              </li>
-              <li>
-                <IonIcon icon={mapOutline} /> Route auf der Karte
-              </li>
-            </ul>
-          </div>
-          <PhoneMock />
-        </section>
+          </header>
 
-        <section className="lp-section" id="so-gehts">
-          <h2>So funktioniert’s</h2>
-          <div className="lp-steps">
-            {steps.map((s) => (
-              <div key={s.n} className="lp-step">
-                <span className="lp-step__n">{s.n}</span>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
+          <section className="lp-hero">
+            <Sun />
+            <div className="lp-hero__text">
+              <p className="lp-eyebrow">{t.eyebrow}</p>
+              <h1>
+                {t.h1a}
+                <em>{t.h1em}</em>
+                {t.h1b}
+              </h1>
+              <p className="lp-lead">{t.lead}</p>
+              <div className="lp-cta">
+                <button type="button" className="lp-btn lp-btn--primary" onClick={start}>
+                  {startLabel}
+                </button>
+                <a className="lp-btn lp-btn--ghost" href="#so-gehts">
+                  {t.howLink}
+                </a>
               </div>
-            ))}
-          </div>
-        </section>
+              <ul className="lp-stamps">
+                {t.stamps.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="lp-hero__phones">
+              <Phone src="feed.webp" alt={t.shotAlts[0]} className="lp-phone--back" />
+              <Phone src="map.webp" alt={t.shotAlts[2]} className="lp-phone--front" />
+              <span className="lp-tag">{t.routeTag}</span>
+            </div>
+          </section>
 
-        <section className="lp-section lp-section--tint">
-          <h2>Alles, was eure Reise erzählt</h2>
-          <div className="lp-features">
-            {features.map((f) => (
-              <div key={f.title} className="lp-feature">
-                <IonIcon icon={f.icon} />
-                <h3>{f.title}</h3>
-                <p>{f.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+          <Trail />
 
-        <section className="lp-section lp-quote">
-          <p>
-            «Nähe statt Lärm: Eure Liebsten sind jeden Tag ein Stück dabei – ohne Gruppenchat, der eure Reise übertönt.»
-          </p>
-        </section>
+          <section className="lp-section lp-mindful">
+            <Arch />
+            <h2>{t.mindfulTitle}</h2>
+            <p>{t.mindfulText}</p>
+          </section>
 
-        <section className="lp-section" id="preise">
-          <h2>Preise</h2>
-          <p className="lp-sub">Follower sind immer gratis. Bezahlt wird nur von Reisenden.</p>
-          <div className="lp-plans">
-            {plans.map((p) => (
-              <div key={p.name} className={`lp-plan${p.primary ? ' lp-plan--primary' : ''}`}>
-                <h3>{p.name}</h3>
-                <p className="lp-plan__price">{p.price}</p>
-                <p className="lp-plan__note">{p.note}</p>
+          <section className="lp-section" id="so-gehts">
+            <h2>{t.howTitle}</h2>
+            <div className="lp-steps">
+              {t.steps.map((s, i) => (
+                <div key={s.title} className="lp-step">
+                  <span className="lp-step__n">{i + 1}</span>
+                  <h3>{s.title}</h3>
+                  <p>{s.text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="lp-section lp-section--sand">
+            <h2>{t.shotsTitle}</h2>
+            <p className="lp-sub">{t.shotsSub}</p>
+            <div className="lp-gallery">
+              {screens.map((s) => (
+                <div key={s.src} className="lp-gallery__item">
+                  <Phone src={s.src} alt={t.shotAlts[s.alt]} />
+                  <span>{t.shotLabels[s.label]}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="lp-section">
+            <h2>{t.featuresTitle}</h2>
+            <div className="lp-features">
+              {t.features.map((f, i) => (
+                <div key={f.title} className="lp-feature">
+                  <span className="lp-feature__icon">
+                    <IonIcon icon={featureIcons[i]} />
+                  </span>
+                  <h3>{f.title}</h3>
+                  <p>{f.text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="lp-section lp-section--sand" id="preise">
+            <h2>{t.plansTitle}</h2>
+            <p className="lp-sub">{t.plansSub}</p>
+            <div className="lp-plans">
+              <div className="lp-plan">
+                <h3>{t.privTitle}</h3>
+                <p className="lp-plan__price">CHF 0</p>
+                <p className="lp-plan__note">{t.privNote}</p>
                 <ul>
-                  {p.items.map((i) => (
+                  {t.privItems.map((i) => (
                     <li key={i}>{i}</li>
                   ))}
                 </ul>
-                <button
-                  type="button"
-                  className={`lp-btn ${p.primary ? 'lp-btn--primary' : 'lp-btn--ghost'}`}
-                  disabled={p.cta === 'Bald verfügbar'}
-                  onClick={goLogin}
-                >
-                  {p.cta}
+                <button type="button" className="lp-btn lp-btn--primary" onClick={start}>
+                  {startLabel}
                 </button>
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="lp-plan lp-plan--soon">
+                <span className="lp-badge">{t.soon}</span>
+                <h3>{t.pubTitle}</h3>
+                <p className="lp-plan__price">{t.pubPrice}</p>
+                <p className="lp-plan__note">{t.pubNote}</p>
+                <ul>
+                  {t.pubItems.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
+                </ul>
+                <Waitlist t={t} />
+              </div>
+            </div>
+          </section>
 
-        <section className="lp-section lp-section--tint">
-          <h2>Häufige Fragen</h2>
-          <div className="lp-faq">
-            {faqs.map((f) => (
-              <details key={f.q}>
-                <summary>{f.q}</summary>
-                <p>{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
+          <section className="lp-section lp-oss">
+            <IonIcon icon={logoGithub} />
+            <h2>{t.ossTitle}</h2>
+            <p>{t.ossText}</p>
+            <a className="lp-btn lp-btn--ghost" href={REPO} target="_blank" rel="noreferrer">
+              {t.ossCta}
+            </a>
+          </section>
 
-        <section className="lp-section lp-final">
-          <h2>Eure nächste Reise beginnt mit einem Link.</h2>
-          <button type="button" className="lp-btn lp-btn--primary" onClick={goLogin}>
-            Kostenlos starten
-          </button>
-        </section>
+          <section className="lp-section lp-section--sand">
+            <h2>{t.faqTitle}</h2>
+            <div className="lp-faq">
+              {t.faqs.map((f) => (
+                <details key={f.q}>
+                  <summary>{f.q}</summary>
+                  <p>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
 
-        <LegalFooter />
-      </div>
-    </IonContent>
-  </IonPage>
-)
+          <section className="lp-section lp-final">
+            <Sun />
+            <h2>{t.finalTitle}</h2>
+            <button type="button" className="lp-btn lp-btn--primary" onClick={start}>
+              {startLabel}
+            </button>
+          </section>
+
+          <LegalFooter />
+        </div>
+      </IonContent>
+    </IonPage>
+  )
+}
 
 export default LandingPage

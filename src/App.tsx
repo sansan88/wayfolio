@@ -102,9 +102,18 @@ const SignedIn = () => {
   )
 }
 
+// Startseite (Produktseite) – auch für Angemeldete; die installierte App startet direkt im Feed
+const onLandingRoot = window.location.pathname === import.meta.env.BASE_URL && !isStandalone()
+
 const Root = () => {
   const { session, loading } = useAuth()
   if (loading) return <Loading />
+  if (session && onLandingRoot && !inviteToken)
+    return (
+      <Suspense fallback={<Loading />}>
+        <LandingPage signedIn />
+      </Suspense>
+    )
   if (!session) {
     if (inviteToken || wantsLogin) return <LoginPage invite={!!inviteToken} />
     return (
@@ -121,7 +130,7 @@ const Root = () => {
     )
   if (wantsLogin) {
     // Bereits angemeldet: /login nicht im Verlauf lassen
-    window.history.replaceState(null, '', import.meta.env.BASE_URL)
+    window.history.replaceState(null, '', `${import.meta.env.BASE_URL}feed`)
   }
   return (
     <TripProvider>

@@ -1,10 +1,11 @@
 import { IonContent, IonPage } from '@ionic/react'
 
+import { savedTheme } from './landingI18n'
 import './LandingPage.css'
 import './LegalPage.css'
 
 const CONTACT = 'team@littlefootnotes.app'
-const STAND = '20. November 2026'
+const STAND = '24. November 2026'
 const home = import.meta.env.BASE_URL
 
 const Impressum = () => (
@@ -37,6 +38,17 @@ const Impressum = () => (
     <p>
       Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a> (ODbL),
       Kartenkacheln von <a href="https://openfreemap.org">OpenFreeMap</a>, Darstellung mit MapLibre.
+    </p>
+
+    <h2>Urheberrecht</h2>
+    <p>
+      © {new Date().getFullYear()} Sandro Scalco. Der Quellcode von Little Footnotes ist Open Source unter der{' '}
+      <a href="https://github.com/sansan88/wayfolio/blob/main/LICENSE">BSD-3-Clause-Lizenz</a>. Fotos und Texte in
+      den Reisetagebüchern gehören den jeweiligen Reisenden und dürfen nicht ohne deren Zustimmung weiterverwendet
+      werden.
+    </p>
+    <p className="legal-love">
+      Made with <span aria-label="Liebe">❤️</span> and some <span aria-label="Kaffee">☕️</span>
     </p>
   </>
 )
@@ -74,6 +86,13 @@ const Datenschutz = () => (
       </li>
       <li>Reaktionen, Antworten und Stimmen bei Abstimmungen</li>
       <li>Freiwillig: E-Mail-Adresse und gewünschte Häufigkeit für Updates per E-Mail</li>
+    </ul>
+    <h3>Warteliste für öffentliche Reisen</h3>
+    <ul>
+      <li>
+        Freiwillig: E-Mail-Adresse, um euch einmalig zu informieren, sobald öffentliche Reisen verfügbar sind. Ein
+        Mail an {CONTACT} genügt, und wir löschen den Eintrag.
+      </li>
     </ul>
     <h3>Technische Daten</h3>
     <p>
@@ -158,15 +177,21 @@ const Datenschutz = () => (
   </>
 )
 
+/** Gleiches Design wie auf der Startseite: gespeicherte Wahl, sonst Systemeinstellung. */
+const pageTheme = () =>
+  savedTheme() ?? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+
 /** Impressum und Datenschutzerklärung – ohne Anmeldung erreichbar. */
 const LegalPage = ({ page }: { page: 'impressum' | 'datenschutz' }) => (
   <IonPage>
     <IonContent>
-      <div className="lp">
+      <div className="lp" data-theme={pageTheme()}>
         <header className="lp-nav">
-          <a className="lp-logo legal-home" href={home}>
-            Little Footnotes
-          </a>
+          <div className="lp-nav__inner">
+            <a className="lp-logo legal-home" href={home}>
+              Little Footnotes
+            </a>
+          </div>
         </header>
         <article className="legal">{page === 'impressum' ? <Impressum /> : <Datenschutz />}</article>
         <LegalFooter />
@@ -177,8 +202,16 @@ const LegalPage = ({ page }: { page: 'impressum' | 'datenschutz' }) => (
 
 export const LegalFooter = () => (
   <footer className="lp-footer">
-    <span>© {new Date().getFullYear()} Little Footnotes · ein privates Projekt</span>
+    <span className="lp-footer__made">
+      <span>© {new Date().getFullYear()} Little Footnotes · Sandro Scalco</span>
+      <span>
+        Made with <span aria-label="Liebe">❤️</span> and some <span aria-label="Kaffee">☕️</span>
+      </span>
+    </span>
     <span className="legal-links">
+      <a href="https://github.com/sansan88/wayfolio" target="_blank" rel="noreferrer">
+        Quellcode
+      </a>
       <a href={`${home}impressum`}>Impressum</a>
       <a href={`${home}datenschutz`}>Datenschutz</a>
     </span>

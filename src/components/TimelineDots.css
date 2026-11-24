@@ -96,3 +96,22 @@
   color: var(--ion-color-medium);
   font-size: 22px;
 }
+
+/* Anzahl Beiträge an diesem Tag */
+.timeline__count {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--ion-toolbar-background, var(--ion-background-color, #fff));
+  border-radius: 999px;
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}

@@ -23,7 +23,7 @@ export default defineConfig({
         short_name: 'Footnotes',
         description: 'Reisetagebuch mit Check-ins, Fotos und Karte – Familie und Freunde folgen per Link.',
         lang: 'de-CH',
-        start_url: base,
+        start_url: `${base}feed`,
         scope: base,
         display: 'standalone',
         orientation: 'portrait',

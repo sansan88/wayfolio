@@ -1,83 +1,111 @@
 # Little Footnotes
 
-**Travel journal for your people.**
-Reise teilen. Liebste dabei.
+**Bewusst reisen. Momente teilen mit denen, die euch wichtig sind.**
 
-Little Footnotes ist ein Reisetagebuch als Progressive Web App (PWA). Reisende erfassen unterwegs mit einem Tipp Fotos, Sprachnachrichten, Videos, Standorte, Beiträge, Hintergrund-Stories und Abstimmungen. Familie und Freunde folgen per Secret Link – ohne App und ohne Account. Sie können reagieren, antworten, abstimmen und einen Newsletter abonnieren (sofort, wöchentlich oder monatlich).
+Little Footnotes ist ein Open-Source-Reisetagebuch als Progressive Web App (PWA). Reisende halten unterwegs mit wenigen Tipps fest, wo sie sind und was sie erleben. Familie und Freunde lesen per Secret Link mit – im Browser, ohne App und ohne Konto. Es gibt keine Likes, keine Followerzahlen und keinen Algorithmus.
 
-## Kernfunktionen
+Live: **https://littlefootnotes.app**
 
-- **Aktions-Raster:** «Beitrag schreiben» plus Kacheln für Foto, Standort, Entscheidung, Hintergrund-Story, Sprachnachricht und Video-Update
-- **Feed & Stories:** Was einzeln gepostet wird, kommt in die Stories; was in einem Beitrag steht, kommt in den Feed. Hintergrund-Stories und Abstimmungen erscheinen in beiden.
-- **Karte & Routenbild:** Jeder neue Standort setzt einen Pin und erzeugt automatisch ein Kartenbild der Route (MapTiler oder Mapbox, OpenStreetMap-Daten)
-- **Community-Abstimmungen:** Resultat nach der eigenen Stimme, danach «Unsere Entscheidung»
-- **Follower ohne Account:** Secret Links, Emoji-Reaktionen, Antworten ohne Gruppenchat
-- **Newsletter:** E-Mail mit frei wählbarer Frequenz, WhatsApp Business später
-- **Private Fotogalerie:** eigener Link, verknüpft mit Route und Tagebuch
+## Funktionen
 
-## Geplanter Tech-Stack
+**Für Reisende (mit Konto, Anmeldung per E-Mail-Link)**
+
+- **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
+- **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
+- **Ort und Zeit frei wählbar:** Beiträge lassen sich rückwirkend erfassen; Ort und Aufnahmezeit werden wenn möglich aus den Foto-Metadaten (EXIF) übernommen. Beiträge sind nachträglich bearbeitbar.
+- **Feed mit Zeitleiste:** einheitliche Karten (Bild oben, Titel, Ort, Metazeile). Im Kopf eine Zeitleiste mit **einem Punkt pro Tag** (erstes Foto des Tages, Zähler bei mehreren Beiträgen); fehlende Tage erscheinen als gestrichelter Punkt mit «+» zum Nachtragen. Feed und Zeitleiste scrollen synchron.
+- **Karte:** Route aller Orte (MapLibre + OpenFreeMap), Fotos als Marker, Tipp auf einen Ort öffnet ein Sheet mit allen Beiträgen von dort. Routenbilder werden automatisch erzeugt.
+- **Galerie** aller Fotos der Reise.
+- **Teilen:** über die Share-API (z. B. WhatsApp) mit Einleitung «Wir sind heute hier.» bzw. «Wir haben ein Update für euch». Wahlweise mit dem Link zur ganzen Reise oder mit einem **eigenen Secret Link nur für diesen Beitrag**. Beitrags-Links lassen sich sperren.
+- **Mitreisende** per Einladung.
+- **PWA:** installierbar auf dem Home-Bildschirm, offline nutzbar (zuletzt geladene Beiträge, Fotos, Kartenkacheln), Hinweis bei neuen Versionen.
+
+**Für Familie und Freunde (ohne Konto)**
+
+- Ein Link `/t/<token>` für Tagebuch, Route und Fotos; ein Beitrags-Link `/p/<token>` zeigt nur diesen einen Beitrag.
+- Tipp auf einen Ort springt auf der Karte genau dorthin.
+- Kein Download-Knopf für Fotos.
+
+**Produktseite (`/`)**
+
+- Positionierung als Open-Source-Reisetagebuch für bewusstes Reisen, Boho-/Travel-Design.
+- Sprachen Deutsch, Englisch, Französisch, Spanisch; helles und dunkles Design (Wahl wird im Browser gespeichert); Kopfzeile bleibt beim Scrollen oben.
+- Echte App-Bilder einer Demo-Reise Zürich → Dubai → Auckland → Wellington.
+- Angemeldete sehen die Startseite ebenfalls, mit «Zur App».
+- Die App selbst ist derzeit nur auf Deutsch.
+
+## Preise
+
+| | Private Reise | Öffentliche Reise |
+| --- | --- | --- |
+| Preis | kostenlos | Abo, **bald verfügbar** |
+| Sichtbar für | wer den Secret Link hat | alle, ohne Secret Link |
+| Status | umgesetzt | noch nicht gebaut – Interessierte tragen sich auf der Startseite in eine Warteliste ein |
+
+Follower zahlen nie.
+
+## Tech-Stack
 
 | Bereich | Technologie |
 | --- | --- |
-| Web-App | Ionic React, TypeScript, Vite, PWA |
-| Backend | Supabase: Postgres + PostGIS, Auth, Storage, Edge Functions, Realtime |
-| Abos | Stripe Billing (Checkout, Kundenportal, Webhooks) |
-| Karten | MapLibre, MapTiler oder Mapbox |
-| E-Mail | Resend oder Postmark |
-| iOS-App (später) | Capacitor (im Ionic-Projekt integriert) |
-
-## Roadmap
-
-- **Phase 0 – Grundgerüst:** Repository, Ionic-React-PWA (Vite, TypeScript), Supabase-Projekt (Region Europa), Datenbankschema mit Row-Level-Security, Anmeldung
-- **Phase 1 – MVP als PWA:** Aktions-Raster, Feed & Stories, Karte mit Routenbild, Follower-Seite, Reaktionen, Abstimmungen, Newsletter, Free- und Plus-Plan
-- **Phase 2:** Sprachnachrichten mit Transkription, Video, Hintergrund-Stories, Galerie, Gruppen-Links, Reise-Pass
-- **Phase 3:** iOS-App, WhatsApp-Zustellung, Co-Autor:innen, Fotobuch-Export
-
-## Live
-
-https://sansan88.github.io/wayfolio/ – wird bei jedem Push auf `main` automatisch über GitHub Actions veröffentlicht (`.github/workflows/deploy-pages.yml`).
+| Web-App | Ionic React 9 (iOS-Modus), React Router 6, TypeScript, Vite |
+| PWA | vite-plugin-pwa (Workbox, `registerType: 'prompt'`) |
+| Backend | Supabase: Postgres + PostGIS, Auth, Storage, Edge Functions – Region Zürich (eu-central-2) |
+| Karten | MapLibre GL, OpenFreeMap, Nominatim (Suche und Ortsnamen) |
+| E-Mail | Supabase Auth über SMTP von Infomaniak (`team@littlefootnotes.app`) |
+| Hosting | GitHub Pages mit eigener Domain, Deploy über GitHub Actions |
+| iOS (vorbereitet) | Capacitor, `@capacitor/geolocation` |
 
 ## Lokal starten
 
 ```bash
 npm install
-cp .env.example .env.local   # Supabase-URL und Publishable Key eintragen
+cp .env.example .env.local   # Supabase-URL und Publishable Key
 npm run dev                  # http://localhost:5173
-npm run build                # Produktions-Build inkl. Service Worker (PWA)
+BASE_PATH=/ npm run build    # Produktions-Build inkl. Service Worker
+BASE_PATH=/ npx vite preview --port 4173
 ```
+
+Ins Frontend gehört nur der **Publishable Key**. Der Secret Key (`sb_secret_…`) wird nie eingecheckt.
 
 ## Projektstruktur
 
 ```
 src/
-  App.tsx              Tabs: Feed · Erfassen · Karte (Ionic React Router)
-  pages/               CapturePage (Aktions-Raster), FeedPage (Stories + Feed), MapPage
-  lib/supabase.ts      Supabase-Client
-  theme/variables.css  Farben
-supabase/migrations/   Datenbankschema mit Row-Level-Security
-capacitor.config.ts    Vorbereitung iOS-App (Phase 3)
+  App.tsx                Routen: Startseite, /login, /impressum, /datenschutz, /t/, /p/, /g/ und Tabs (feed, karte, galerie, reise)
+  pages/                 LandingPage (+ landingI18n.ts), FeedPage, MapPage, GalleryPage, TripSettingsPage,
+                         FollowerPage (/t/), SharedPostPage (/p/), PublicGalleryPage (/g/, alt), LegalPage, LoginPage
+  components/            PostCard, CheckinModal, ComposeModal, LocationPicker, DateTimeSheet, LocationSheet,
+                         RouteMap, TimelineDots, GalleryGrid, PageSpinner (Camper-Ladeanimation), UpdateBanner …
+  lib/                   updates.ts (Beiträge, Medien, Links), share.ts, follower.ts, map.ts, geo.ts, offline.ts,
+                         pwaUpdate.ts, location.ts, waitlist.ts …
+  theme/variables.css    Farben (Mint #11a683 / dunkel #5ee0b5)
+public/screens/          App-Bilder für die Startseite (390 × 844, WebP)
+supabase/migrations/     Datenbankschema mit Row-Level-Security
+supabase/functions/follower-api/   Zugriff für Follower ohne Konto
 ```
 
-## Datenbank
+## Datenbank und Server
 
-Supabase-Projekt: `fmafhdivuooqfixoozmi` (Region Zürich, eu-central-2). Alle Migrationen in `supabase/migrations/` sind dort eingespielt. Hilfsfunktionen für die Zugriffsregeln liegen im nicht exponierten Schema `private`. Reisende haben ein Konto, Follower nicht: Sie greifen nur über Edge Functions zu, die den Secret Link prüfen. Deshalb gibt es keine Policies für die Rolle `anon`.
+- Supabase-Projekt `fmafhdivuooqfixoozmi`. Alle Migrationen in `supabase/migrations/` sind eingespielt.
+- Reisende greifen mit ihrem Konto über RLS zu. Follower haben kein Konto: Sie lesen nur über die Edge Function `follower-api`, die den Secret Link prüft (`verify_jwt = false`).
+- `share_links.role`: `follower` (ganze Reise), `post` (ein Beitrag), `gallery` (alt).
+- Fotos liegen im privaten Bucket `media` (`<trip_id>/<uuid>.jpg` plus `_thumb.jpg`), ausgeliefert über signierte URLs.
+- `waitlist`: Warteliste für öffentliche Reisen – `anon` darf nur einfügen, lesen nur mit dem Service-Role-Key.
 
-## Status
+## Deploy
 
-Phase 0: Grundgerüst. Das vollständige Produktkonzept liegt separat vor.
+Jeder Push auf `main` baut und veröffentlicht die App über `.github/workflows/deploy-pages.yml` auf GitHub Pages (`littlefootnotes.app`).
 
-## Server-Funktion
+## iOS-App: Standort (Capacitor Geolocation)
 
-`supabase/functions/follower-api` – Zugang für Follower ohne Konto (Feed, Reaktionen, Antworten, Abstimmen, Newsletter-Anmeldung). Prüft den Secret Link selbst, deshalb ohne JWT-Prüfung deployt (`verify_jwt = false`).
-
-### iOS-App: Standort (Capacitor Geolocation)
-
-Der Standort läuft über `@capacitor/geolocation` (im Browser über `navigator.geolocation`, in der App über CoreLocation).
 Nach `npx cap add ios` in `ios/App/App/Info.plist` ergänzen:
 
 ```xml
 <key>NSLocationWhenInUseUsageDescription</key>
-<string>Little Footnotes setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
-<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>Little Footnotes setzt euren aktuellen Ort für Standort-Updates und Fotos.</string>
+<string>Little Footnotes setzt euren aktuellen Ort für Check-ins und Fotos.</string>
 ```
+
+## Lizenz
+
+BSD 3-Clause, siehe [LICENSE](LICENSE). Made with ❤️ and some ☕️.
