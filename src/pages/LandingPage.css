@@ -11,6 +11,7 @@
   --lp-clay: #c9714f;
   --lp-ochre: #dda94b;
   --lp-sage: #9aae8c;
+  --lp-highlight: #0e9474;
   --lp-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   min-height: 100%;
   overflow-x: clip;
@@ -33,6 +34,7 @@
   --lp-clay: #e39474;
   --lp-ochre: #e6bb6a;
   --lp-sage: #a9bc9b;
+  --lp-highlight: #5ee0b5;
   color-scheme: dark;
 }
 
@@ -308,7 +310,7 @@
 
 .lp h1 em {
   font-style: italic;
-  color: var(--lp-clay);
+  color: var(--lp-highlight);
 }
 
 .lp-lead {
