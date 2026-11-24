@@ -1,7 +1,9 @@
 import { supabase } from "./supabase";
 
 export interface DraftInput {
-  tripId: string;
+  tripId: string
+  /** «recap»: Rückblick auf alle Updates seit dem letzten Beitrag (Server lädt Updates und Fotos selbst) */
+  mode?: 'post' | 'recap';
   notes: string;
   title?: string;
   place?: string | null;
@@ -59,6 +61,8 @@ export const draftPost = async (input: DraftInput): Promise<Draft> => {
     Draft & { error?: string }
   >("ai-draft", {
     body: {
+      mode: input.mode ?? 'post',
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       tripId: input.tripId,
       notes: input.notes,
       title: input.title ?? "",
@@ -85,3 +89,6 @@ export const draftPost = async (input: DraftInput): Promise<Draft> => {
     );
   return { title: data.title ?? "", text: data.text };
 };
+
+/** Vorlage für einen Beitrag: Claude fasst die Check-ins seit dem letzten Beitrag zusammen. */
+export const draftRecap = (tripId: string) => draftPost({ tripId, mode: 'recap', notes: '' })

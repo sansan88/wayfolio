@@ -13,6 +13,7 @@ Live: **https://littlefootnotes.app**
 - **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
 - **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
 - **Mit Claude schreiben:** Im Beitrags-Dialog machen ein paar Stichworte und/oder Fotos auf Knopfdruck einen ausformulierten Entwurf (Titel + Text, Schweizer Rechtschreibung, Stil der bisherigen Beiträge). Der Entwurf lässt sich anpassen oder rückgängig machen; gespeichert wird erst beim Posten.
+- **Rückblick mit Claude:** dritte Option im «+»-Menü. Claude fasst alle Check-ins seit dem letzten Beitrag (Orte, Texte, bis zu vier Fotos) zu einer Vorlage zusammen; sie öffnet sich als normaler Beitrag zum Bearbeiten und lässt sich danach nochmals mit Claude ausformulieren.
 - **Ort und Zeit frei wählbar:** Beiträge lassen sich rückwirkend erfassen; Ort und Aufnahmezeit werden wenn möglich aus den Foto-Metadaten (EXIF) übernommen. Beiträge sind nachträglich bearbeitbar.
 - **Feed mit Zeitleiste:** einheitliche Karten (Bild oben, Titel, Ort, Metazeile). Im Kopf eine Zeitleiste mit **einem Punkt pro Tag** (erstes Foto des Tages, Zähler bei mehreren Beiträgen); fehlende Tage erscheinen als gestrichelter Punkt mit «+» zum Nachtragen. Feed und Zeitleiste scrollen synchron.
 - **Karte:** Route aller Orte (MapLibre + OpenFreeMap), Fotos als Marker, Tipp auf einen Ort öffnet ein Sheet mit allen Beiträgen von dort. Routenbilder werden automatisch erzeugt.
@@ -29,6 +30,7 @@ Live: **https://littlefootnotes.app**
 
 **Produktseite (`/`)**
 
+- App-Icon und Favicon: der Camper aus der Ladeanimation (`public/icon.svg`, `icon-maskable.svg`, `favicon.svg`, daraus die PNGs).
 - Positionierung als Open-Source-Reisetagebuch für bewusstes Reisen, Boho-/Travel-Design.
 - Sprachen Deutsch, Englisch, Französisch, Spanisch; helles und dunkles Design (Wahl wird im Browser gespeichert); Kopfzeile bleibt beim Scrollen oben.
 - Echte App-Bilder einer Demo-Reise Zürich → Dubai → Auckland → Wellington.

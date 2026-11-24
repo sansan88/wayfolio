@@ -20,6 +20,7 @@ import {
   IonButtons,
   useIonActionSheet,
   useIonAlert,
+  useIonLoading,
   useIonToast,
   useIonRouter,
   useIonViewWillEnter,
@@ -34,6 +35,7 @@ import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import PostCard, { dayNumber } from '../components/PostCard'
 import TimelineDots from '../components/TimelineDots'
 import { useAuth } from '../lib/auth'
+import { draftRecap } from '../lib/aiDraft'
 import { useCapture } from '../lib/capture'
 import { peekCache } from '../lib/offline'
 import { sharePost } from '../lib/share'
@@ -70,11 +72,14 @@ const FeedPage = () => {
   const [editing, setEditing] = useState<FeedPost | null>(null)
   const [checkingIn, setCheckingIn] = useState(false)
   const [writing, setWriting] = useState(false)
+  /** Vorlage von Claude für den nächsten Beitrag */
+  const [prefill, setPrefill] = useState<{ title: string; text: string } | null>(null)
+  const [presentLoading, dismissLoading] = useIonLoading()
   const [busy, setBusy] = useState(false)
   const capture = useCapture()
   const composeInitial = useMemo(
-    () => ({ at: capture.at, place: capture.place, position: capture.position }),
-    [capture.at, capture.place, capture.position],
+    () => ({ at: capture.at, place: capture.place, position: capture.position, title: prefill?.title, text: prefill?.text }),
+    [capture.at, capture.place, capture.position, prefill],
   )
   const timeline = useTimeline(posts.map((p) => p.id))
   const [regen, setRegen] = useState<{ done: number; total: number } | null>(null)
@@ -203,13 +208,35 @@ const FeedPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.ends_on, posts.length])
 
-  /** «+»: die zwei Arten von Updates */
+  /** Claude fasst alles seit dem letzten Beitrag zusammen; das Ergebnis öffnet sich als normaler Beitrag zum Bearbeiten. */
+  const startRecap = async () => {
+    if (!trip) return
+    await presentLoading({ message: 'Claude liest eure letzten Updates …' })
+    try {
+      const d = await draftRecap(trip.id)
+      setPrefill(d)
+      setWriting(true)
+    } catch (e) {
+      void presentToast({ message: (e as Error).message, duration: 4500, position: 'top', color: 'warning' })
+    } finally {
+      void dismissLoading()
+    }
+  }
+
+  /** «+»: Check-in, Beitrag oder Rückblick mit Claude */
   const openCreate = (header = 'Neues Update') =>
     presentSheet({
       header,
       buttons: [
         { text: 'Check-in – ich bin hier (mit Fotos)', handler: () => setCheckingIn(true) },
-        { text: 'Beitrag – Text mit Fotos', handler: () => setWriting(true) },
+        {
+          text: 'Beitrag – Text mit Fotos',
+          handler: () => {
+            setPrefill(null)
+            setWriting(true)
+          },
+        },
+        { text: 'Rückblick mit Claude – Vorlage aus den letzten Check-ins', handler: () => void startRecap() },
         { text: 'Abbrechen', role: 'cancel' },
       ],
     })
@@ -325,9 +352,13 @@ const FeedPage = () => {
           kind={writing ? 'post' : null}
           tripId={trip?.id}
           initial={composeInitial}
-          onCancel={() => setWriting(false)}
+          onCancel={() => {
+            setWriting(false)
+            setPrefill(null)
+          }}
           onSubmit={(_k, r) => {
             setWriting(false)
+            setPrefill(null)
             setBusy(true)
             void act(() =>
               createFeedPost(

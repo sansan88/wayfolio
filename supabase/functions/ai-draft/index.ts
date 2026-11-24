@@ -40,6 +40,11 @@ So schreibst du:
 Antworte ausschliesslich mit JSON in dieser Form, ohne weiteren Text:
 {"title": "…", "text": "…"}`
 
+const RECAP = `Aufgabe: Fasse die Updates seit dem letzten Beitrag zu EINEM neuen Beitrag zusammen – ein Rückblick auf diese Tage, chronologisch erzählt, als Vorlage, die die Reisenden danach selbst bearbeiten.
+- Nutze nur, was in den Updates steht (Orte, Daten, Texte) und was auf den mitgeschickten Fotos zu sehen ist.
+- Verbinde die Stationen zu einer kleinen Geschichte statt einer Liste. Nenne die Orte, aber zähle nicht jedes Datum auf.
+- Länge: etwa 100 bis 220 Wörter, 2 bis 4 kurze Absätze.`
+
 interface ImageIn {
   data?: unknown
   mediaType?: unknown
@@ -69,11 +74,18 @@ Deno.serve(async (req) => {
     return json({ error: 'Ungültige Anfrage' }, 400)
   }
 
+  const mode = body.mode === 'recap' ? 'recap' : 'post'
   const tripId = clip(body.tripId, 64)
   const notes = clip(body.notes, 3000)
   const title = clip(body.title, 200)
   const place = clip(body.place, 200)
   const when = clip(body.when, 80)
+  let tz = clip(body.tz, 64) || 'Europe/Zurich'
+  try {
+    new Intl.DateTimeFormat('de-CH', { timeZone: tz })
+  } catch {
+    tz = 'Europe/Zurich'
+  }
   const images = (Array.isArray(body.images) ? (body.images as ImageIn[]) : [])
     .filter((i) => typeof i.data === 'string' && (i.data as string).length < MAX_IMAGE_BYTES)
     .slice(0, MAX_IMAGES)
@@ -83,7 +95,7 @@ Deno.serve(async (req) => {
     }))
 
   if (!tripId) return json({ error: 'Reise fehlt' }, 400)
-  if (!notes && !images.length && !title) return json({ error: 'Schreib ein paar Stichworte oder füge Fotos hinzu.' }, 400)
+  if (mode === 'post' && !notes && !images.length && !title) return json({ error: 'Schreib ein paar Stichworte oder füge Fotos hinzu.' }, 400)
 
   const { data: trip } = await userClient.from('trips').select('id, title, description').eq('id', tripId).maybeSingle()
   if (!trip) return json({ error: 'Reise nicht gefunden' }, 404)
@@ -98,10 +110,12 @@ Deno.serve(async (req) => {
   if ((count ?? 0) >= DAILY_LIMIT) return json({ error: 'Für heute sind genug Entwürfe erstellt. Morgen geht es weiter.' }, 429)
 
   // Frühere Beiträge als Stilvorlage (nur Titel und Textanfang)
+  // Im Rückblick nur klassische Beiträge, damit die Check-ins nicht doppelt vorkommen
   const { data: recent } = await userClient
     .from('posts')
-    .select('title, published_at, post_blocks(kind, text_content, position)')
+    .select('title, published_at, post_blocks!post_blocks_post_id_fkey(kind, text_content, position)')
     .eq('trip_id', tripId)
+    .in('kind', mode === 'recap' ? ['feed', 'background'] : ['feed', 'background', 'route_update', 'story'])
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
     .limit(5)
@@ -116,12 +130,67 @@ Deno.serve(async (req) => {
     .filter(Boolean)
     .slice(0, 3)
 
+  // Rückblick: alle Updates seit dem letzten klassischen Beitrag
+  let recap = ''
+  if (mode === 'recap') {
+    const { data: last } = await userClient
+      .from('posts')
+      .select('published_at')
+      .eq('trip_id', tripId)
+      .in('kind', ['feed', 'background'])
+      .not('published_at', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    let q = userClient
+      .from('posts')
+      .select('title, kind, published_at, checkins(place_name), post_blocks!post_blocks_post_id_fkey(kind, text_content, position, media(storage_path, variants))')
+      .eq('trip_id', tripId)
+      .in('kind', ['route_update', 'story'])
+      .not('published_at', 'is', null)
+      .order('published_at', { ascending: true })
+      .limit(40)
+    if (last?.published_at) q = q.gt('published_at', last.published_at)
+    const { data: updates } = await q
+    if (!updates?.length)
+      return json({ error: 'Seit dem letzten Beitrag gibt es keine neuen Check-ins. Erfasse zuerst ein paar Updates.' }, 400)
+
+    type Blk = { kind: string; text_content: string | null; position: number; media: { storage_path: string; variants: Record<string, unknown> | null } | null }
+    const photoPaths: string[] = []
+    recap = updates
+      .map((u) => {
+        const blocks = ((u as { post_blocks?: Blk[] }).post_blocks ?? []).sort((a, b) => a.position - b.position)
+        const text = blocks.filter((b) => b.kind === 'text' && b.text_content).map((b) => b.text_content).join(' ')
+        const photo = blocks.find((b) => b.kind === 'photo' && b.media && !(b.media.variants as { route?: boolean } | null)?.route)
+        if (photo?.media) photoPaths.push(String((photo.media.variants as { thumb?: string } | null)?.thumb ?? photo.media.storage_path))
+        const place = (u as { checkins?: { place_name: string | null } | null }).checkins?.place_name ?? u.title ?? ''
+        const date = new Date(u.published_at as string).toLocaleDateString('de-CH', { weekday: 'short', day: 'numeric', month: 'long', timeZone: tz })
+        return `- ${date}${place ? ` · ${place}` : ''}${text ? `: ${text.slice(0, 400)}` : ''}`
+      })
+      .join('\n')
+
+    // Bis zu vier Fotos, über den Zeitraum verteilt
+    const step = Math.max(1, Math.ceil(photoPaths.length / MAX_IMAGES))
+    for (const path of photoPaths.filter((_, i) => i % step === 0).slice(0, MAX_IMAGES)) {
+      const { data: file } = await admin.storage.from('media').download(path)
+      if (!file || file.size > 900_000) continue
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      let bin = ''
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+      images.push({ data: btoa(bin), mediaType: 'image/jpeg' })
+    }
+  }
+
   const facts = [
     `Reise: ${trip.title}${trip.description ? ` – ${String(trip.description).slice(0, 300)}` : ''}`,
     place && `Ort: ${place}`,
     when && `Zeitpunkt: ${when}`,
     title && `Gewünschter Titel oder Thema: ${title}`,
-    notes ? `Stichworte der Reisenden:\n${notes}` : 'Keine Stichworte – schreibe anhand der Fotos.',
+    mode === 'recap'
+      ? `Updates seit dem letzten Beitrag (chronologisch):\n${recap}${notes ? `\n\nZusätzliche Stichworte:\n${notes}` : ''}`
+      : notes
+        ? `Stichworte der Reisenden:\n${notes}`
+        : 'Keine Stichworte – schreibe anhand der Fotos.',
     images.length ? `Dazu ${images.length} Foto(s), siehe oben.` : '',
     examples.length ? `Frühere Beiträge dieser Reise (nur als Stilvorlage):\n\n${examples.join('\n\n---\n\n')}` : '',
   ]
@@ -140,7 +209,7 @@ Deno.serve(async (req) => {
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ model: MODEL, max_tokens: 1200, system: SYSTEM, messages: [{ role: 'user', content }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: mode === 'recap' ? `${SYSTEM}\n\n${RECAP}` : SYSTEM, messages: [{ role: 'user', content }] }),
   })
 
   if (!res.ok) {
