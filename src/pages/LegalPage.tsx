@@ -129,6 +129,12 @@ const Datenschutz = () => (
         Zugriffsdaten verarbeitet; Inhalte eurer Reisen werden dort nicht gespeichert.
       </li>
       <li>
+        <strong>Anthropic</strong> (Anthropic PBC, USA): Nur wenn Reisende «Mit Claude schreiben» antippen, gehen
+        ihre Stichworte, Ort, Datum, bis zu vier verkleinerte Fotos und Ausschnitte früherer Beiträge an das
+        Sprachmodell Claude, um einen Textentwurf zu erstellen. Anthropic verwendet diese Daten gemäss seinen
+        kommerziellen Bedingungen nicht zum Training. Der Entwurf wird erst gespeichert, wenn die Reisenden ihn posten.
+      </li>
+      <li>
         <strong>OpenStreetMap Nominatim</strong> (OpenStreetMap Foundation, Vereinigtes Königreich): Beim Erfassen
         eines Standorts sendet der Browser der Reisenden die Koordinaten, um den Ortsnamen zu ermitteln.
       </li>

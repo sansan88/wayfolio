@@ -12,6 +12,7 @@ Live: **https://littlefootnotes.app**
 
 - **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
 - **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
+- **Mit Claude schreiben:** Im Beitrags-Dialog machen ein paar Stichworte und/oder Fotos auf Knopfdruck einen ausformulierten Entwurf (Titel + Text, Schweizer Rechtschreibung, Stil der bisherigen Beiträge). Der Entwurf lässt sich anpassen oder rückgängig machen; gespeichert wird erst beim Posten.
 - **Ort und Zeit frei wählbar:** Beiträge lassen sich rückwirkend erfassen; Ort und Aufnahmezeit werden wenn möglich aus den Foto-Metadaten (EXIF) übernommen. Beiträge sind nachträglich bearbeitbar.
 - **Feed mit Zeitleiste:** einheitliche Karten (Bild oben, Titel, Ort, Metazeile). Im Kopf eine Zeitleiste mit **einem Punkt pro Tag** (erstes Foto des Tages, Zähler bei mehreren Beiträgen); fehlende Tage erscheinen als gestrichelter Punkt mit «+» zum Nachtragen. Feed und Zeitleiste scrollen synchron.
 - **Karte:** Route aller Orte (MapLibre + OpenFreeMap), Fotos als Marker, Tipp auf einen Ort öffnet ein Sheet mit allen Beiträgen von dort. Routenbilder werden automatisch erzeugt.
@@ -52,6 +53,7 @@ Follower zahlen nie.
 | PWA | vite-plugin-pwa (Workbox, `registerType: 'prompt'`) |
 | Backend | Supabase: Postgres + PostGIS, Auth, Storage, Edge Functions – Region Zürich (eu-central-2) |
 | Karten | MapLibre GL, OpenFreeMap, Nominatim (Suche und Ortsnamen) |
+| KI-Entwürfe | Claude (Anthropic API) über die Edge Function `ai-draft` |
 | E-Mail | Supabase Auth über SMTP von Infomaniak (`team@littlefootnotes.app`) |
 | Hosting | GitHub Pages mit eigener Domain, Deploy über GitHub Actions |
 | iOS (vorbereitet) | Capacitor, `@capacitor/geolocation` |
@@ -83,6 +85,7 @@ src/
 public/screens/          App-Bilder für die Startseite (390 × 844, WebP)
 supabase/migrations/     Datenbankschema mit Row-Level-Security
 supabase/functions/follower-api/   Zugriff für Follower ohne Konto
+supabase/functions/ai-draft/       Beitragsentwürfe mit Claude
 ```
 
 ## Datenbank und Server
@@ -91,6 +94,7 @@ supabase/functions/follower-api/   Zugriff für Follower ohne Konto
 - Reisende greifen mit ihrem Konto über RLS zu. Follower haben kein Konto: Sie lesen nur über die Edge Function `follower-api`, die den Secret Link prüft (`verify_jwt = false`).
 - `share_links.role`: `follower` (ganze Reise), `post` (ein Beitrag), `gallery` (alt).
 - Fotos liegen im privaten Bucket `media` (`<trip_id>/<uuid>.jpg` plus `_thumb.jpg`), ausgeliefert über signierte URLs.
+- `ai-draft`: Edge Function für Entwürfe mit Claude (JWT-Prüfung aktiv, nur Mitglieder der Reise). Secret `ANTHROPIC_API_KEY`, optional `AI_MODEL` (Standard `claude-sonnet-5-5`) und `AI_DAILY_LIMIT` (Standard 40 pro Person und Tag, gezählt in `ai_usage`).
 - `waitlist`: Warteliste für öffentliche Reisen – `anon` darf nur einfügen, lesen nur mit dem Service-Role-Key.
 
 ## Deploy

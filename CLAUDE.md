@@ -28,6 +28,7 @@ Vor jedem Commit bauen. UI-Änderungen mit Playwright prüfen (Chrome: `/usr/bin
 - Teilen: `src/lib/share.ts` – ganze Reise (`/t/<token>`) oder nur ein Beitrag (`/p/<token>`).
 - Routenbilder: `media.variants = {route: true, v: n}`; `ROUTE_IMAGE_VERSION` in `src/lib/geo.ts` erhöhen, um alle neu zu erzeugen.
 - Startseite `/` ist auch für Angemeldete sichtbar (ausser in der installierten PWA, die startet auf `/feed`).
+- Entwürfe mit Claude: Knopf «Mit Claude schreiben» in `ComposeModal.tsx` → `src/lib/aiDraft.ts` → Edge Function `ai-draft` (Prompt dort). Bilder werden im Browser auf 1024 px verkleinert, max. 4. Limit pro Tag über `ai_usage`.
 - Ladeanimation: `PageSpinner.tsx` (Camper auf der Strasse), respektiert `prefers-reduced-motion`.
 
 ## Regeln

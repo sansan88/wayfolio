@@ -14,14 +14,27 @@ import {
   IonSelect,
   IonSelectOption,
   IonTextarea,
+  IonSpinner,
   IonThumbnail,
   IonTitle,
   IonToolbar,
   useIonActionSheet,
+  useIonToast,
 } from '@ionic/react'
-import { addCircle, documentAttachOutline, images, locationOutline, micOutline, removeCircle, timeOutline, videocamOutline } from 'ionicons/icons'
+import {
+  addCircle,
+  documentAttachOutline,
+  images,
+  locationOutline,
+  micOutline,
+  removeCircle,
+  sparklesOutline,
+  timeOutline,
+  videocamOutline,
+} from 'ionicons/icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { draftPost } from '../lib/aiDraft'
 import { formatWhen } from '../lib/datetime'
 import type { Place, Position } from '../lib/location'
 import { useCardPresenter } from '../lib/modal'
@@ -53,6 +66,8 @@ export interface ExistingMedia {
 
 interface Props {
   kind: ComposeKind | null
+  /** Reise – nötig für Entwürfe mit Claude */
+  tripId?: string
   /** Startwerte: beim Erfassen Ort/Zeit aus «Erfassen», beim Bearbeiten der ganze Beitrag */
   initial?: {
     title?: string
@@ -82,7 +97,7 @@ const FilePreview = ({ file }: { file: File }) => {
 }
 
 /** iOS-Card-Modal für Beitrag, Hintergrund-Story, Abstimmung und Bearbeiten – Formular als Inset-Listen. */
-const ComposeModal = ({ kind, initial, onCancel, onSubmit }: Props) => {
+const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const presenter = useCardPresenter(kind !== null)
   const modal = useRef<HTMLIonModalElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -98,6 +113,8 @@ const ComposeModal = ({ kind, initial, onCancel, onSubmit }: Props) => {
   const [location, setLocation] = useState<{ position: Position; place: Place } | null>(null)
   const [picking, setPicking] = useState(false)
   const [removed, setRemoved] = useState<string[]>([])
+  const [drafting, setDrafting] = useState(false)
+  const [presentToast] = useIonToast()
   const submitted = useRef(false)
 
   // Nur beim Öffnen zurücksetzen bzw. mit den Werten zum Bearbeiten füllen – nicht, wenn sich
@@ -160,6 +177,52 @@ const ComposeModal = ({ kind, initial, onCancel, onSubmit }: Props) => {
     })
   }
 
+  const canDraft = !!tripId && (kind === 'post' || kind === 'edit' || kind === 'background')
+  const draftInput = !!(
+    text.trim() ||
+    title.trim() ||
+    files.some((f) => f.type.startsWith('image')) ||
+    existing.some((m) => m.kind === 'photo')
+  )
+
+  /** Stichworte, Ort, Zeit und Fotos an Claude – Ergebnis ersetzt Titel und Text, mit «Rückgängig». */
+  const draftWithClaude = async () => {
+    if (!tripId || drafting) return
+    const before = { title, text }
+    setDrafting(true)
+    try {
+      const d = await draftPost({
+        tripId,
+        notes: text,
+        title,
+        place: placeName,
+        when: formatWhen(at ?? initial?.at ?? new Date()),
+        files,
+        urls: existing.filter((m) => m.kind === 'photo').map((m) => m.url),
+      })
+      if (d.title) setTitle(d.title)
+      setText(d.text)
+      void presentToast({
+        message: 'Entwurf von Claude – passe ihn ruhig an.',
+        duration: 6000,
+        position: 'top',
+        buttons: [
+          {
+            text: 'Rückgängig',
+            handler: () => {
+              setTitle(before.title)
+              setText(before.text)
+            },
+          },
+        ],
+      })
+    } catch (e) {
+      void presentToast({ message: (e as Error).message, duration: 4000, position: 'top', color: 'danger' })
+    } finally {
+      setDrafting(false)
+    }
+  }
+
   const submit = () => {
     if (!kind || !valid) return
     submitted.current = true
@@ -207,7 +270,25 @@ const ComposeModal = ({ kind, initial, onCancel, onSubmit }: Props) => {
               onIonInput={(e) => setText(String(e.detail.value ?? ''))}
             />
           </IonItem>
+          {canDraft && (
+            <IonItem button detail={false} disabled={drafting || !draftInput} onClick={() => void draftWithClaude()}>
+              {drafting ? (
+                <IonSpinner slot="start" name="crescent" color="primary" />
+              ) : (
+                <IonIcon slot="start" icon={sparklesOutline} color="primary" />
+              )}
+              <IonLabel color="primary">
+                {drafting ? 'Claude schreibt …' : text.trim() ? 'Mit Claude ausformulieren' : 'Mit Claude schreiben'}
+              </IonLabel>
+            </IonItem>
+          )}
         </IonList>
+        {canDraft && !text.trim() && (
+          <IonNote className="compose__note">
+            Ein paar Stichworte oder Fotos genügen – Claude macht daraus einen Beitrag. Stichworte und Fotos gehen dafür
+            an Anthropic.
+          </IonNote>
+        )}
 
         <IonList inset>
           <IonItem button detail onClick={() => setPicking(true)}>

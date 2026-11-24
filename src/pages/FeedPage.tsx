@@ -290,6 +290,7 @@ const FeedPage = () => {
 
         <ComposeModal
           kind={editing ? 'edit' : null}
+          tripId={trip?.id}
           initial={editInitial}
           onCancel={() => setEditing(null)}
           onSubmit={(_k, r) => {
@@ -322,6 +323,7 @@ const FeedPage = () => {
         <CheckinModal isOpen={checkingIn} onClose={() => setCheckingIn(false)} onPosted={() => void refresh()} />
         <ComposeModal
           kind={writing ? 'post' : null}
+          tripId={trip?.id}
           initial={composeInitial}
           onCancel={() => setWriting(false)}
           onSubmit={(_k, r) => {

@@ -222,7 +222,7 @@
 .lp a:focus-visible,
 .lp summary:focus-visible,
 .lp input:focus-visible {
-  outline: 3px solid var(--lp-clay);
+  outline: 3px solid var(--lp-accent);
   outline-offset: 2px;
 }
 
@@ -294,9 +294,9 @@
   display: inline-block;
   margin-bottom: 14px !important;
   padding: 4px 12px;
-  border: 1.5px dashed var(--lp-clay);
+  border: 1.5px dashed var(--lp-highlight);
   border-radius: 999px;
-  color: var(--lp-clay);
+  color: var(--lp-highlight);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -351,7 +351,7 @@
 
 .lp-stamps li:nth-child(even) {
   transform: rotate(1.5deg);
-  border-color: var(--lp-ochre);
+  border-color: var(--lp-accent);
 }
 
 /* ---------- Handy-Rahmen: echtes App-Bild, nie verzerrt ---------- */
@@ -405,8 +405,8 @@
   transform: translateX(-50%) rotate(-2deg);
   border: 1.5px solid var(--lp-ink);
   border-radius: 4px;
-  background: var(--lp-ochre);
-  color: #2b2420;
+  background: var(--lp-accent);
+  color: var(--lp-on-accent);
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
@@ -477,8 +477,8 @@
   margin-bottom: 12px;
   border: 1.5px solid var(--lp-ink);
   border-radius: 50%;
-  background: var(--lp-ochre);
-  color: #2b2420;
+  background: var(--lp-accent);
+  color: var(--lp-on-accent);
   font-family: var(--lp-serif);
   font-size: 1.15rem;
   font-weight: 700;
@@ -587,16 +587,12 @@
   transform: rotate(3deg);
   border: 1.5px solid var(--lp-ink);
   border-radius: 6px;
-  background: var(--lp-clay);
-  color: #fff;
+  background: var(--lp-accent);
+  color: var(--lp-on-accent);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.lp[data-theme='dark'] .lp-badge {
-  color: #2b2420;
 }
 
 .lp-plan h3 {
