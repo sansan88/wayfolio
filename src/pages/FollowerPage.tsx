@@ -3,8 +3,6 @@ import {
   IonButtons,
   IonCard,
   IonCardContent,
-  IonCardHeader,
-  IonCardTitle,
   IonContent,
   IonIcon,
   IonHeader,
@@ -14,8 +12,6 @@ import {
   IonModal,
   IonNote,
   IonPage,
-  IonSelect,
-  IonSelectOption,
   IonText,
   IonTitle,
   IonToolbar,
@@ -27,6 +23,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import CamperRefresher from '../components/CamperRefresher'
 import PostCard, { dayNumber } from '../components/PostCard'
 import InstallHint from '../components/InstallHint'
+import NewsletterCard from '../components/NewsletterCard'
 import TimelineDots from '../components/TimelineDots'
 import { useTimeline } from '../lib/useTimeline'
 import '../pages/FeedPage.css'
@@ -40,8 +37,6 @@ import LocationSheet from '../components/LocationSheet'
 import type { RoutePoint } from '../lib/route'
 
 const RouteMap = lazy(() => import('../components/RouteMap'))
-
-const frequencyLabel = { instant: 'bei jedem Beitrag', weekly: 'wöchentlich', monthly: 'monatlich' } as const
 
 /** Ansicht für Familie und Freunde – ohne Konto, nur über den Secret Link. */
 const FollowerPage = ({ token }: { token: string }) => {
@@ -77,8 +72,6 @@ const FollowerPage = ({ token }: { token: string }) => {
   }, [data])
   const [name, setName] = useState('')
   const [pending, setPending] = useState<(() => Promise<unknown>) | null>(null)
-  const [email, setEmail] = useState('')
-  const [frequency, setFrequency] = useState<'instant' | 'weekly' | 'monthly'>('weekly')
 
   const load = useCallback(async () => {
     try {
@@ -126,12 +119,6 @@ const FollowerPage = ({ token }: { token: string }) => {
       toast((e as Error).message, 'danger')
     }
   }
-
-  const subscribe = () =>
-    withName(async () => {
-      await api.subscribe(email, frequency)
-      toast('Danke! Du bist für den Newsletter vorgemerkt.')
-    })
 
   if (error && !data)
     return (
@@ -233,51 +220,7 @@ const FollowerPage = ({ token }: { token: string }) => {
             )}
             {data.posts.map(card)}
 
-            <IonCard className="newsletter">
-              <IonCardHeader>
-                <IonCardTitle>Updates per E-Mail</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                {data.subscription && data.subscription.status !== 'unsubscribed' ? (
-                  <>
-                    <p>
-                      Du bekommst Updates {frequencyLabel[data.subscription.frequency]} an {data.subscription.email}
-                      {data.subscription.status === 'pending' && ' (Bestätigung ausstehend)'}.
-                    </p>
-                    <IonButton size="small" fill="clear" color="medium" onClick={() => void withName(() => api.unsubscribe())}>
-                      Abmelden
-                    </IonButton>
-                  </>
-                ) : (
-                  <>
-                    <IonInput
-                      type="email"
-                      fill="outline"
-                      label="E-Mail"
-                      labelPlacement="floating"
-                      value={email}
-                      onIonInput={(e) => setEmail(String(e.detail.value ?? ''))}
-                    />
-                    <IonSelect
-                      className="ion-margin-top"
-                      fill="outline"
-                      label="Wie oft?"
-                      labelPlacement="floating"
-                      value={frequency}
-                      onIonChange={(e) => setFrequency(e.detail.value)}
-                    >
-                      <IonSelectOption value="instant">Bei jedem Beitrag</IonSelectOption>
-                      <IonSelectOption value="weekly">Wöchentlich</IonSelectOption>
-                      <IonSelectOption value="monthly">Monatlich</IonSelectOption>
-                    </IonSelect>
-                    <IonButton className="ion-margin-top" expand="block" disabled={!email.includes('@')} onClick={() => void subscribe()}>
-                      Anmelden
-                    </IonButton>
-                    <IonNote>Jederzeit abbestellbar. Kein Konto nötig.</IonNote>
-                  </>
-                )}
-              </IonCardContent>
-            </IonCard>
+            <NewsletterCard token={token} toast={toast} />
             <p className="ion-text-center">
               <IonNote>
                 Mit Little Footnotes geteilt · privat per Link ·{' '}

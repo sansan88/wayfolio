@@ -12,6 +12,7 @@ Live: **https://littlefootnotes.app**
 
 - **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
 - **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
+- **Newsletter-Abos sehen:** Im Reise-Editor (Reisen › Reise antippen) stehen alle Abonnent:innen mit Name, E-Mail, Häufigkeit und Status; einzelne lassen sich entfernen. Ältere, nie bestätigte Anmeldungen erscheinen als «E-Mail nicht bestätigt».
 - **Links:** Check-ins und Beiträge können mehrere Links haben (Unterkunft, Museum, Google-Maps-Ort, Instagram-Profil …). Angezeigt wird nie die ganze Adresse, sondern ein Symbol, darunter der Dienst: bei Google Maps der Ortsname, bei Airbnb/Booking die Unterkunft (z. B. «Apartment · Kerikeri»), bei Instagram «@profil», sonst der Seitentitel. Titel liest die Edge Function `link-title` beim Speichern; ältere Links ohne Titel ergänzt die App einmalig im Hintergrund.
 - **Mit Claude schreiben:** Im Beitrags-Dialog machen ein paar Stichworte und/oder Fotos auf Knopfdruck einen ausformulierten Entwurf (Titel + Text, Schweizer Rechtschreibung, Stil der bisherigen Beiträge). Der Entwurf lässt sich anpassen oder rückgängig machen; gespeichert wird erst beim Posten.
 - **Mit Claude überarbeiten:** Steht schon Text im Beitrag, öffnet der Claude-Knopf eine Auswahl: Korrekturlesen, Kürzen, Länger, Umformulieren (mit eigenem Änderungswunsch) oder aus Stichworten neu schreiben.
@@ -30,6 +31,7 @@ Live: **https://littlefootnotes.app**
 - Ein Link `/t/<token>` öffnet das Tagebuch; die Route kommt über den Karten-Knopf oben rechts, zurück geht es mit «‹ Tagebuch» (keine separate Fotogalerie); ein Beitrags-Link `/p/<token>` zeigt nur diesen einen Beitrag.
 - Tipp auf einen Ort springt auf der Karte genau dorthin.
 - Kein Download-Knopf für Fotos.
+- **Newsletter mit eigenem Konto:** Unten im Reise-Link «Updates per E-Mail»: Häufigkeit wählen (bei jedem Beitrag oder wöchentlich), E-Mail eingeben. Supabase schickt einen Bestätigungs-Link; damit ist das Konto angelegt und das Abo aktiv. Unter `/abos` («Meine Abos») verwaltet man alle abonnierten Reisen (Häufigkeit, Pausieren, Beenden) und seinen Namen. Ein Konto kann mehrere Reisen abonnieren und später auch eigene anlegen.
 
 **Produktseite (`/`)**
 
@@ -99,6 +101,7 @@ supabase/functions/ai-draft/       Beitragsentwürfe mit Claude
 - Reisende greifen mit ihrem Konto über RLS zu. Follower haben kein Konto: Sie lesen nur über die Edge Function `follower-api`, die den Secret Link prüft (`verify_jwt = false`).
 - `share_links.role`: `follower` (ganze Reise), `post` (ein Beitrag), `gallery` (alt).
 - Fotos liegen im privaten Bucket `media` (`<trip_id>/<uuid>.jpg` plus `_thumb.jpg`), ausgeliefert über signierte URLs.
+- Newsletter: Tabelle `trip_subscriptions` (Konto ↔ Reise, `frequency` instant/weekly, `status`), RPCs `subscribe_trip` (nur mit gültigem Follower-Link), `my_subscriptions`, `trip_subscribers` (nur Reise-Mitglieder). Versand durch die Edge Function `newsletter` alle 15 Minuten (pg_cron + pg_net, Geheimnis im Vault `newsletter_cron_secret`), SMTP über Infomaniak mit dem Secret `SMTP_PASS`. Layout der Mail wie die Startseite. Abmelden ohne Login über `/abmelden/<token>`.
 - `link-title`: liest beim Speichern den Titel verlinkter Seiten (JWT-Prüfung aktiv, keine privaten Adressen/IPs); gespeichert in `post_blocks.text_content` des Link-Bausteins.
 - `ai-draft`: Edge Function für Entwürfe mit Claude (JWT-Prüfung aktiv, nur Mitglieder der Reise). Secret `ANTHROPIC_API_KEY`, optional `AI_MODEL` (Standard `claude-sonnet-5-5`) und `AI_DAILY_LIMIT` (Standard 40 pro Person und Tag, gezählt in `ai_usage`).
 - `waitlist`: Warteliste für öffentliche Reisen – `anon` darf nur einfügen, lesen nur mit dem Service-Role-Key.

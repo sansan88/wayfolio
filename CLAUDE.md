@@ -26,6 +26,7 @@ Vor jedem Commit bauen. UI-Änderungen mit Playwright prüfen (Chrome: `/usr/bin
 - Zwei Beitragsarten: **Check-in** (Ort + Fotos + Satz) und **Beitrag** (Text, optional Fotos/Link/Ort). Ort und Zeitpunkt sind pro Beitrag frei setzbar (Rückdatieren).
 - Zeitleiste: ein Punkt **pro Tag** (`TimelineDots.tsx`), Lücken nur für Besitzer als «+».
 - Links: beliebig viele pro Check-in/Beitrag (`LinksEditor.tsx`, `src/lib/links.ts`). Link-Baustein = `url` + Seitentitel in `text_content` (Edge Function `link-title`). Anzeige über `describeLink()`: bekannte Dienste mit Namen/Symbol, nie die ganze URL.
+- Newsletter: Community-Konten abonnieren über den Follower-Link (`NewsletterCard.tsx` → Magic Link → `/abos`, `SubscriptionsPage.tsx`). Tabelle `trip_subscriptions`, Versand `supabase/functions/newsletter` (Cron alle 15 Min., Vorschau mit `{"dryRun": true}` + Header `x-newsletter-secret` aus dem Vault). Admin-Liste im `TripEditorModal`. Mail-Layout = Startseite (Sand, Serif, Mint).
 - Teilen: `src/lib/share.ts` – ganze Reise (`/t/<token>`) oder nur ein Beitrag (`/p/<token>`).
 - Routenbilder: `media.variants = {route: true, v: n}`; `ROUTE_IMAGE_VERSION` in `src/lib/geo.ts` erhöhen, um alle neu zu erzeugen.
 - Startseite `/` ist auch für Angemeldete sichtbar (ausser in der installierten PWA, die startet auf `/feed`).

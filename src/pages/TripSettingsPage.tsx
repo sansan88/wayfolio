@@ -14,7 +14,7 @@ import {
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { addCircle, locationOutline, logOutOutline, phonePortraitOutline, refreshOutline, sparklesOutline } from 'ionicons/icons'
+import { addCircle, locationOutline, logOutOutline, phonePortraitOutline, mailOutline, refreshOutline, sparklesOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { LargeTitle, PageHeader } from '../components/PageHeader'
@@ -126,6 +126,10 @@ const TripSettingsPage = () => {
           <IonItem>
             <IonLabel>E-Mail</IonLabel>
             <IonNote slot="end">{session?.user.email}</IonNote>
+          </IonItem>
+          <IonItem button href={`${import.meta.env.BASE_URL}abos`} detail>
+            <IonIcon slot="start" icon={mailOutline} color="primary" />
+            <IonLabel>Meine Abos</IonLabel>
           </IonItem>
           <IonItem>
             <IonIcon slot="start" icon={sparklesOutline} color="primary" />

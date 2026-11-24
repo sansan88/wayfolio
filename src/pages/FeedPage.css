@@ -141,3 +141,16 @@
   font-size: 0.8rem;
   text-align: center;
 }
+
+/* Newsletter-Formular für die Community */
+.newsletter__email {
+  --padding-start: 14px;
+  --padding-end: 14px;
+  border: 1px solid var(--ion-color-step-250, #c8c7cc);
+  border-radius: 12px;
+}
+
+.newsletter__as {
+  display: block;
+  margin-top: 12px;
+}

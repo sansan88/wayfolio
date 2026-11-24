@@ -30,11 +30,14 @@ import PageSpinner from './components/PageSpinner'
 import AppStatus from './components/AppStatus'
 import UpdateBanner from './components/UpdateBanner'
 import { isStandalone } from './lib/pwa'
+import { hasPending } from './lib/subscriptions'
 
 const FollowerPage = lazy(() => import('./pages/FollowerPage'))
 const SharedPostPage = lazy(() => import('./pages/SharedPostPage'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
+const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'))
+const UnsubscribePage = lazy(() => import('./pages/UnsubscribePage'))
 const LegalPage = lazy(() => import('./pages/LegalPage'))
 const PublicGalleryPage = lazy(() => import('./pages/PublicGalleryPage'))
 
@@ -48,6 +51,10 @@ const postToken = postTokenFromPath(window.location.pathname)
 const inviteToken = inviteTokenFromPath(window.location.pathname)
 const galleryToken = galleryTokenFromPath(window.location.pathname)
 const wantsLogin = path.startsWith('/login')
+/** «Meine Abos» (Newsletter) – braucht ein Konto, aber keine eigene Reise */
+const wantsAbos = path.startsWith('/abos')
+/** Abmelden per Link aus der Newsletter-Mail: /abmelden/<token> */
+const unsubscribeToken = path.match(/^\/abmelden\/([0-9a-f]{20,})/i)?.[1] ?? null
 const legalPage = path.startsWith('/impressum') ? 'impressum' : path.startsWith('/datenschutz') ? 'datenschutz' : null
 
 const Loading = () => (
@@ -108,6 +115,13 @@ const onLandingRoot = window.location.pathname === import.meta.env.BASE_URL && !
 const Root = () => {
   const { session, loading } = useAuth()
   if (loading) return <Loading />
+  // Abo-Bestätigung: auch wenn der Link auf der Startseite gelandet ist
+  if (session && (wantsAbos || hasPending()))
+    return (
+      <Suspense fallback={<Loading />}>
+        <SubscriptionsPage />
+      </Suspense>
+    )
   if (session && onLandingRoot && !inviteToken)
     return (
       <Suspense fallback={<Loading />}>
@@ -115,7 +129,7 @@ const Root = () => {
       </Suspense>
     )
   if (!session) {
-    if (inviteToken || wantsLogin) return <LoginPage invite={!!inviteToken} />
+    if (inviteToken || wantsLogin || wantsAbos) return <LoginPage invite={!!inviteToken} returnHere={wantsAbos} />
     return (
       <Suspense fallback={<Loading />}>
         <LandingPage />
@@ -164,7 +178,11 @@ const App = () => (
   <IonApp>
     <AppStatus />
     <UpdateBanner />
-    {legalPage ? (
+    {unsubscribeToken ? (
+      <Suspense fallback={<Loading />}>
+        <UnsubscribePage token={unsubscribeToken} />
+      </Suspense>
+    ) : legalPage ? (
       <Suspense fallback={<Loading />}>
         <LegalPage page={legalPage} />
       </Suspense>

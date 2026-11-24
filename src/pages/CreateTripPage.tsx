@@ -1,7 +1,8 @@
 import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonList, IonPage, IonSpinner, IonText } from '@ionic/react'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 
 import { useAuth } from '../lib/auth'
+import { mySubscriptions } from '../lib/subscriptions'
 import { useTrip } from '../lib/trip'
 import './LoginPage.css'
 
@@ -12,6 +13,13 @@ const CreateTripPage = () => {
   const [startsOn, setStartsOn] = useState(new Date().toISOString().slice(0, 10))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Community-Mitglieder mit Abos: Weg zu «Meine Abos»
+  const [subCount, setSubCount] = useState(0)
+  useEffect(() => {
+    void mySubscriptions()
+      .then((s) => setSubCount(s.filter((x) => x.status !== 'unsubscribed').length))
+      .catch(() => undefined)
+  }, [])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -29,6 +37,11 @@ const CreateTripPage = () => {
     <IonPage>
       <IonContent color="light">
         <div className="login">
+          {subCount > 0 && (
+            <IonButton expand="block" fill="outline" href={`${import.meta.env.BASE_URL}abos`} className="ion-margin-bottom">
+              Meine Abos ({subCount})
+            </IonButton>
+          )}
           <h1>Eure erste Reise</h1>
           <p className="login__claim">Gib ihr einen Namen – den sehen später auch eure Follower.</p>
           <form onSubmit={submit}>

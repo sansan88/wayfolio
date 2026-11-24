@@ -5,7 +5,7 @@ import './LandingPage.css'
 import './LegalPage.css'
 
 const CONTACT = 'team@littlefootnotes.app'
-const STAND = '24. November 2026'
+const STAND = '25. November 2026'
 const home = import.meta.env.BASE_URL
 
 const Impressum = () => (
@@ -85,7 +85,22 @@ const Datenschutz = () => (
         nicht umkehrbarer Hashwert
       </li>
       <li>Reaktionen, Antworten und Stimmen bei Abstimmungen</li>
-      <li>Freiwillig: E-Mail-Adresse und gewünschte Häufigkeit für Updates per E-Mail</li>
+    </ul>
+    <h3>Newsletter-Abos (Community-Konto)</h3>
+    <ul>
+      <li>
+        E-Mail-Adresse, freiwillig ein Name, abonnierte Reisen, gewünschte Häufigkeit (bei jedem Beitrag oder
+        wöchentlich), Pausen und Versandzeitpunkte. Die Adresse wird per Link bestätigt (Double-Opt-in); erst danach
+        verschicken wir Mails.
+      </li>
+      <li>
+        Die Reisenden einer Reise sehen Name, E-Mail-Adresse, Häufigkeit und Status ihrer Abonnent:innen und können
+        einzelne Abos entfernen.
+      </li>
+      <li>
+        Abmelden geht jederzeit über den Link in jeder Mail oder unter «Meine Abos». Fotos in den Mails sind über
+        zeitlich begrenzte Links (30 Tage) eingebunden.
+      </li>
     </ul>
     <h3>Warteliste für öffentliche Reisen</h3>
     <ul>
@@ -143,7 +158,7 @@ const Datenschutz = () => (
       </li>
       <li>
         <strong>Infomaniak</strong> (Infomaniak Network SA, Schweiz): Domain littlefootnotes.app, E-Mail-Postfach und
-        Versand der Anmelde-E-Mails.
+        Versand der Anmelde-E-Mails und des Newsletters.
       </li>
     </ul>
     <p>

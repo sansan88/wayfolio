@@ -15,7 +15,7 @@ import { appUrl } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import './LoginPage.css'
 
-const LoginPage = ({ invite = false }: { invite?: boolean }) => {
+const LoginPage = ({ invite = false, returnHere = false }: { invite?: boolean; returnHere?: boolean }) => {
   const [email, setEmail] = useState('')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
@@ -28,7 +28,7 @@ const LoginPage = ({ invite = false }: { invite?: boolean }) => {
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       // Bei Einladungen zurück auf den Einladungslink, sonst an den Anfang der App
-      options: { emailRedirectTo: invite ? window.location.href : appUrl() },
+      options: { emailRedirectTo: invite || returnHere ? window.location.href : appUrl() },
     })
     setSending(false)
     if (err) setError(err.message)

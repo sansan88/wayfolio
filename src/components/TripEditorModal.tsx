@@ -19,11 +19,12 @@ import {
   useIonAlert,
   useIonToast,
 } from '@ionic/react'
-import { logOutOutline, openOutline, personAddOutline, trashOutline } from 'ionicons/icons'
+import { logOutOutline, mailOutline, openOutline, personAddOutline, trashOutline } from 'ionicons/icons'
 import { useEffect, useRef, useState } from 'react'
 
 import { useAuth } from '../lib/auth'
 import { createInvite, loadMembers, removeMember, type Member } from '../lib/members'
+import { FREQUENCY_LABEL, removeSubscriber, tripSubscribers, type Subscriber } from '../lib/subscriptions'
 import { useTrip, type Trip } from '../lib/trip'
 import { useCardPresenter } from '../lib/modal'
 import { toLocalIso } from '../lib/datetime'
@@ -57,6 +58,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
   const [endsOn, setEndsOn] = useState('')
   const [delay, setDelay] = useState(0)
   const [members, setMembers] = useState<Member[]>([])
+  const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null)
   const [saving, setSaving] = useState(false)
 
   const isOwner = trip?.owner_id === userId
@@ -73,7 +75,37 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
     setEndsOn(trip.ends_on ?? '')
     setDelay(trip.location_delay_minutes ?? 0)
     void refreshMembers(trip.id)
+    setSubscribers(null)
+    void tripSubscribers(trip.id)
+      .then(setSubscribers)
+      .catch(() => setSubscribers([]))
   }, [trip])
+
+  const subStatus = (s: Subscriber) =>
+    s.status === 'unconfirmed'
+      ? 'E-Mail nicht bestätigt'
+      : s.status === 'paused'
+        ? 'pausiert'
+        : s.frequency === 'instant' || s.frequency === 'weekly'
+          ? FREQUENCY_LABEL[s.frequency]
+          : 'monatlich'
+
+  const confirmRemoveSubscriber = (s: Subscriber) =>
+    presentAlert({
+      header: `${s.name} entfernen?`,
+      message: `${s.email} bekommt keine Updates dieser Reise mehr per E-Mail.`,
+      buttons: [
+        { text: 'Abbrechen', role: 'cancel' },
+        {
+          text: 'Entfernen',
+          role: 'destructive',
+          handler: () =>
+            void removeSubscriber(s)
+              .then(() => setSubscribers((l) => l?.filter((x) => x.id !== s.id) ?? null))
+              .catch((e: Error) => toast(e.message, 'danger')),
+        },
+      ],
+    })
 
   const save = async () => {
     if (!trip) return
@@ -232,6 +264,39 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
         <IonNote className="list-footnote">
           Gilt nur für diese Reise. Der Einladungslink ist 7 Tage gültig; Mitreisende melden sich mit ihrer eigenen
           E-Mail an und können danach alles erfassen und bearbeiten.
+        </IonNote>
+
+        <IonList inset>
+          <IonListHeader>
+            <IonLabel>Newsletter-Abos{subscribers?.length ? ` (${subscribers.length})` : ''}</IonLabel>
+          </IonListHeader>
+          {subscribers === null && (
+            <IonItem>
+              <IonLabel color="medium">Wird geladen …</IonLabel>
+            </IonItem>
+          )}
+          {subscribers?.length === 0 && (
+            <IonItem>
+              <IonLabel color="medium">Noch niemand hat die Updates per E-Mail abonniert.</IonLabel>
+            </IonItem>
+          )}
+          {subscribers?.map((s) => (
+            <IonItem key={s.id}>
+              <IonIcon slot="start" icon={mailOutline} color={s.status === 'active' ? 'primary' : 'medium'} />
+              <IonLabel>
+                {s.name}
+                <p>{s.email}</p>
+                <p>{subStatus(s)}</p>
+              </IonLabel>
+              <IonButton slot="end" fill="clear" color="danger" onClick={() => void confirmRemoveSubscriber(s)} aria-label={`${s.name} entfernen`}>
+                <IonIcon slot="icon-only" icon={trashOutline} />
+              </IonButton>
+            </IonItem>
+          ))}
+        </IonList>
+        <IonNote className="list-footnote">
+          Abonnieren geht über den Reise-Link («Updates per E-Mail»). Die Adresse wird per Link bestätigt; danach
+          verwalten Abonnent:innen Häufigkeit und Pausen selbst.
         </IonNote>
 
         <DateTimeSheet
