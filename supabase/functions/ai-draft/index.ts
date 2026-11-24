@@ -45,6 +45,14 @@ const RECAP = `Aufgabe: Fasse die Updates seit dem letzten Beitrag zu EINEM neue
 - Verbinde die Stationen zu einer kleinen Geschichte statt einer Liste. Nenne die Orte, aber zähle nicht jedes Datum auf.
 - Länge: etwa 100 bis 220 Wörter, 2 bis 4 kurze Absätze.`
 
+// Überarbeiten eines vorhandenen Texts (Action Sheet in der App)
+const EDITS: Record<string, string> = {
+  proofread: `Aufgabe: Lies den vorhandenen Text Korrektur. Korrigiere nur Rechtschreibung, Grammatik, Zeichensetzung und Tippfehler (Schweizer Rechtschreibung, «ss» statt «ß»). Lass Wortwahl, Ton, Aufbau, Absätze, Emojis und Länge sonst unverändert. Den Titel nur korrigieren, nicht umschreiben; ist keiner da, bleibt er leer.`,
+  shorten: `Aufgabe: Kürze den vorhandenen Text auf etwa die Hälfte. Behalte die wichtigsten Momente, die Stimme und die Wir-/Ich-Form. Nichts Neues hinzufügen. Titel beibehalten, ausser er passt nicht mehr.`,
+  lengthen: `Aufgabe: Mach den vorhandenen Text etwa anderthalbmal so lang. Vertiefe Stimmung, Sinneseindrücke und Gedanken zu dem, was schon dasteht oder auf den Fotos zu sehen ist. Erfinde keine neuen Ereignisse, Namen oder Orte. Stimme und Form beibehalten. Titel beibehalten, ausser er passt nicht mehr.`,
+  rewrite: `Aufgabe: Überarbeite den vorhandenen Text nach dem Wunsch der Reisenden (siehe «Änderungswunsch»). Ändere nur, was der Wunsch verlangt, und halte dich an alle Regeln oben. Erfinde keine Fakten.`,
+}
+
 interface ImageIn {
   data?: unknown
   mediaType?: unknown
@@ -67,6 +75,11 @@ Deno.serve(async (req) => {
   const user = userData?.user
   if (!user) return json({ error: 'Bitte anmelden.' }, 401)
 
+  // Nur mit Einwilligung (Hinweis in der App, gespeichert im Profil)
+  const { data: profile } = await userClient.from('profiles').select('ai_enabled_at').eq('id', user.id).maybeSingle()
+  if (!profile?.ai_enabled_at)
+    return json({ error: 'Bitte zuerst die KI-Funktionen bestätigen.', code: 'consent_required' }, 403)
+
   let body: Record<string, unknown>
   try {
     body = await req.json()
@@ -75,6 +88,9 @@ Deno.serve(async (req) => {
   }
 
   const mode = body.mode === 'recap' ? 'recap' : 'post'
+  const action = typeof body.action === 'string' && body.action in EDITS ? body.action : null
+  const instruction = clip(body.instruction, 500)
+  if (action === 'rewrite' && !instruction) return json({ error: 'Schreib kurz, was Claude ändern soll.' }, 400)
   const tripId = clip(body.tripId, 64)
   const notes = clip(body.notes, 3000)
   const title = clip(body.title, 200)
@@ -86,7 +102,9 @@ Deno.serve(async (req) => {
   } catch {
     tz = 'Europe/Zurich'
   }
-  const images = (Array.isArray(body.images) ? (body.images as ImageIn[]) : [])
+  // Korrekturlesen und Kürzen brauchen keine Fotos
+  const wantsImages = action !== 'proofread' && action !== 'shorten'
+  const images = (wantsImages && Array.isArray(body.images) ? (body.images as ImageIn[]) : [])
     .filter((i) => typeof i.data === 'string' && (i.data as string).length < MAX_IMAGE_BYTES)
     .slice(0, MAX_IMAGES)
     .map((i) => ({
@@ -95,6 +113,7 @@ Deno.serve(async (req) => {
     }))
 
   if (!tripId) return json({ error: 'Reise fehlt' }, 400)
+  if (action && !notes) return json({ error: 'Es gibt noch keinen Text zum Überarbeiten.' }, 400)
   if (mode === 'post' && !notes && !images.length && !title) return json({ error: 'Schreib ein paar Stichworte oder füge Fotos hinzu.' }, 400)
 
   const { data: trip } = await userClient.from('trips').select('id, title, description').eq('id', tripId).maybeSingle()
@@ -185,8 +204,10 @@ Deno.serve(async (req) => {
     `Reise: ${trip.title}${trip.description ? ` – ${String(trip.description).slice(0, 300)}` : ''}`,
     place && `Ort: ${place}`,
     when && `Zeitpunkt: ${when}`,
-    title && `Gewünschter Titel oder Thema: ${title}`,
-    mode === 'recap'
+    !action && title && `Gewünschter Titel oder Thema: ${title}`,
+    action
+      ? `Vorhandener Titel: ${title || '(keiner)'}\n\nVorhandener Text:\n${notes}${action === 'rewrite' ? `\n\nÄnderungswunsch: ${instruction}` : ''}`
+      : mode === 'recap'
       ? `Updates seit dem letzten Beitrag (chronologisch):\n${recap}${notes ? `\n\nZusätzliche Stichworte:\n${notes}` : ''}`
       : notes
         ? `Stichworte der Reisenden:\n${notes}`
@@ -209,7 +230,7 @@ Deno.serve(async (req) => {
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: mode === 'recap' ? `${SYSTEM}\n\n${RECAP}` : SYSTEM, messages: [{ role: 'user', content }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: action ? `${SYSTEM}\n\n${EDITS[action]}` : mode === 'recap' ? `${SYSTEM}\n\n${RECAP}` : SYSTEM, messages: [{ role: 'user', content }] }),
   })
 
   if (!res.ok) {

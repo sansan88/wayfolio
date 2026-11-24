@@ -9,15 +9,17 @@ import {
   IonListHeader,
   IonNote,
   IonPage,
+  IonToggle,
   useIonAlert,
   useIonToast,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { addCircle, locationOutline, logOutOutline, phonePortraitOutline, refreshOutline } from 'ionicons/icons'
+import { addCircle, locationOutline, logOutOutline, phonePortraitOutline, refreshOutline, sparklesOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { LargeTitle, PageHeader } from '../components/PageHeader'
 import TripEditorModal from '../components/TripEditorModal'
+import { useAiConsent } from '../lib/aiConsent'
 import { useAuth } from '../lib/auth'
 import { geoDeniedHelp, useGeoPermission } from '../lib/geoPermission'
 import { installHelp, useInstall } from '../lib/pwa'
@@ -34,6 +36,7 @@ const formatRange = (t: Trip) => {
 /** Tab «Reisen»: alle Reisen (je mit Details und Mitreisenden) und das eigene Profil. */
 const TripSettingsPage = () => {
   const { session, signOut } = useAuth()
+  const ai = useAiConsent()
   const userId = session!.user.id
   const { trip: current, trips, createTrip } = useTrip()
   const [presentToast] = useIonToast()
@@ -124,8 +127,35 @@ const TripSettingsPage = () => {
             <IonLabel>E-Mail</IonLabel>
             <IonNote slot="end">{session?.user.email}</IonNote>
           </IonItem>
+          <IonItem>
+            <IonIcon slot="start" icon={sparklesOutline} color="primary" />
+            <IonToggle
+              checked={!!ai.enabled}
+              onIonChange={async (e) => {
+                const on = e.detail.checked
+                try {
+                  if (on) {
+                    // Einschalten nur mit bestätigtem Hinweis
+                    if (!(await ai.ensure())) e.target.checked = false
+                    else toast('KI-Funktionen aktiviert')
+                  } else {
+                    await ai.disable()
+                    toast('KI-Funktionen ausgeschaltet')
+                  }
+                } catch (err) {
+                  e.target.checked = !on
+                  toast((err as Error).message, 'danger')
+                }
+              }}
+            >
+              KI-Funktionen (Claude)
+            </IonToggle>
+          </IonItem>
         </IonList>
-        <IonNote className="list-footnote">Dein Name steht an deinen Beiträgen.</IonNote>
+        <IonNote className="list-footnote">
+          Dein Name steht an deinen Beiträgen. Mit den KI-Funktionen schreibt und überarbeitet Claude Beiträge; dafür gehen
+          Text, Ort, Datum und Fotos an Anthropic.
+        </IonNote>
 
         <IonList inset>
           <IonListHeader>

@@ -19,6 +19,7 @@ import {
   IonTitle,
   IonToolbar,
   useIonActionSheet,
+  useIonAlert,
   useIonToast,
 } from '@ionic/react'
 import {
@@ -34,7 +35,8 @@ import {
 } from 'ionicons/icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { draftPost } from '../lib/aiDraft'
+import { useAiConsent } from '../lib/aiConsent'
+import { draftPost, type DraftAction } from '../lib/aiDraft'
 import { formatWhen } from '../lib/datetime'
 import type { Place, Position } from '../lib/location'
 import { useCardPresenter } from '../lib/modal'
@@ -115,6 +117,8 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const [removed, setRemoved] = useState<string[]>([])
   const [drafting, setDrafting] = useState(false)
   const [presentToast] = useIonToast()
+  const [presentAlert] = useIonAlert()
+  const ai = useAiConsent()
   const submitted = useRef(false)
 
   // Nur beim Öffnen zurücksetzen bzw. mit den Werten zum Bearbeiten füllen – nicht, wenn sich
@@ -186,7 +190,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   )
 
   /** Stichworte, Ort, Zeit und Fotos an Claude – Ergebnis ersetzt Titel und Text, mit «Rückgängig». */
-  const draftWithClaude = async () => {
+  const draftWithClaude = async (action?: DraftAction, instruction?: string) => {
     if (!tripId || drafting) return
     const before = { title, text }
     setDrafting(true)
@@ -195,6 +199,8 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
         tripId,
         notes: text,
         title,
+        action,
+        instruction,
         place: placeName,
         when: formatWhen(at ?? initial?.at ?? new Date()),
         files,
@@ -203,7 +209,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
       if (d.title) setTitle(d.title)
       setText(d.text)
       void presentToast({
-        message: 'Entwurf von Claude – passe ihn ruhig an.',
+        message: action === 'proofread' ? 'Korrigiert von Claude.' : 'Entwurf von Claude – passe ihn ruhig an.',
         duration: 6000,
         position: 'top',
         buttons: [
@@ -221,6 +227,50 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     } finally {
       setDrafting(false)
     }
+  }
+
+  /** «Umformulieren»: Wunsch eingeben, dann überarbeiten */
+  const askRewrite = () =>
+    presentAlert({
+      header: 'Umformulieren',
+      message: 'Was soll Claude ändern?',
+      inputs: [
+        {
+          name: 'wish',
+          type: 'textarea',
+          placeholder: 'z. B. lockerer, mehr über das Essen, ohne Emojis',
+          attributes: { maxlength: 500, rows: 3 },
+        },
+      ],
+      buttons: [
+        { text: 'Abbrechen', role: 'cancel' },
+        {
+          text: 'Umformulieren',
+          handler: (v: { wish?: string }) => {
+            const wish = v.wish?.trim()
+            if (!wish) return false
+            void draftWithClaude('rewrite', wish)
+          },
+        },
+      ],
+    })
+
+  /** Mit Text: Auswahl, was Claude tun soll. Ohne Text: direkt aus Stichworten/Fotos schreiben. */
+  const openClaude = async () => {
+    // Beim ersten Mal: Hinweis zum Datenschutz, aktiv mit «Ja» bestätigen
+    if (!(await ai.ensure())) return
+    if (!text.trim()) return void draftWithClaude()
+    void presentSheet({
+      header: 'Mit Claude überarbeiten',
+      buttons: [
+        { text: 'Korrekturlesen', handler: () => void draftWithClaude('proofread') },
+        { text: 'Kürzen', handler: () => void draftWithClaude('shorten') },
+        { text: 'Länger', handler: () => void draftWithClaude('lengthen') },
+        { text: 'Umformulieren …', handler: () => void askRewrite() },
+        { text: 'Aus Stichworten neu schreiben', handler: () => void draftWithClaude() },
+        { text: 'Abbrechen', role: 'cancel' },
+      ],
+    })
   }
 
   const submit = () => {
@@ -271,14 +321,14 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
             />
           </IonItem>
           {canDraft && (
-            <IonItem button detail={false} disabled={drafting || !draftInput} onClick={() => void draftWithClaude()}>
+            <IonItem button detail={false} disabled={drafting || !draftInput} onClick={() => void openClaude()}>
               {drafting ? (
                 <IonSpinner slot="start" name="crescent" color="primary" />
               ) : (
                 <IonIcon slot="start" icon={sparklesOutline} color="primary" />
               )}
               <IonLabel color="primary">
-                {drafting ? 'Claude schreibt …' : text.trim() ? 'Mit Claude ausformulieren' : 'Mit Claude schreiben'}
+                {drafting ? 'Claude schreibt …' : text.trim() ? 'Mit Claude überarbeiten …' : 'Mit Claude schreiben'}
               </IonLabel>
             </IonItem>
           )}

@@ -35,6 +35,7 @@ import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import PostCard, { dayNumber } from '../components/PostCard'
 import TimelineDots from '../components/TimelineDots'
 import { useAuth } from '../lib/auth'
+import { useAiConsent } from '../lib/aiConsent'
 import { draftRecap } from '../lib/aiDraft'
 import { useCapture } from '../lib/capture'
 import { peekCache } from '../lib/offline'
@@ -75,6 +76,7 @@ const FeedPage = () => {
   /** Vorlage von Claude für den nächsten Beitrag */
   const [prefill, setPrefill] = useState<{ title: string; text: string } | null>(null)
   const [presentLoading, dismissLoading] = useIonLoading()
+  const ai = useAiConsent()
   const [busy, setBusy] = useState(false)
   const capture = useCapture()
   const composeInitial = useMemo(
@@ -210,7 +212,7 @@ const FeedPage = () => {
 
   /** Claude fasst alles seit dem letzten Beitrag zusammen; das Ergebnis öffnet sich als normaler Beitrag zum Bearbeiten. */
   const startRecap = async () => {
-    if (!trip) return
+    if (!trip || !(await ai.ensure())) return
     await presentLoading({ message: 'Claude liest eure letzten Updates …' })
     try {
       const d = await draftRecap(trip.id)

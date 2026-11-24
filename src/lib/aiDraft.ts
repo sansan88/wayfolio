@@ -3,7 +3,11 @@ import { supabase } from "./supabase";
 export interface DraftInput {
   tripId: string
   /** «recap»: Rückblick auf alle Updates seit dem letzten Beitrag (Server lädt Updates und Fotos selbst) */
-  mode?: 'post' | 'recap';
+  mode?: 'post' | 'recap'
+  /** vorhandenen Text überarbeiten statt neu schreiben */
+  action?: DraftAction
+  /** nur bei «rewrite»: was geändert werden soll */
+  instruction?: string;
   notes: string;
   title?: string;
   place?: string | null;
@@ -13,6 +17,8 @@ export interface DraftInput {
   /** bereits hochgeladene Fotos (signierte URLs) beim Bearbeiten */
   urls?: string[];
 }
+
+export type DraftAction = 'proofread' | 'shorten' | 'lengthen' | 'rewrite'
 
 export interface Draft {
   title: string;
@@ -41,10 +47,13 @@ const toJpegBase64 = async (blob: Blob): Promise<string | null> => {
 
 /** Entwurf für einen Beitrag von Claude – über die Edge Function «ai-draft», der API-Key bleibt auf dem Server. */
 export const draftPost = async (input: DraftInput): Promise<Draft> => {
-  const blobs: Blob[] = (input.files ?? [])
+  const skipImages = input.action === 'proofread' || input.action === 'shorten'
+  const blobs: Blob[] = skipImages
+    ? []
+    : (input.files ?? [])
     .filter((f) => f.type.startsWith("image"))
     .slice(0, MAX_IMAGES);
-  for (const url of input.urls ?? []) {
+  for (const url of skipImages ? [] : (input.urls ?? [])) {
     if (blobs.length >= MAX_IMAGES) break;
     try {
       const res = await fetch(url);
@@ -62,6 +71,8 @@ export const draftPost = async (input: DraftInput): Promise<Draft> => {
   >("ai-draft", {
     body: {
       mode: input.mode ?? 'post',
+      action: input.action,
+      instruction: input.instruction,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       tripId: input.tripId,
       notes: input.notes,

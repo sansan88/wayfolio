@@ -132,7 +132,7 @@ const Datenschutz = () => (
         <strong>Anthropic</strong> (Anthropic PBC, USA): Nur wenn Reisende «Mit Claude schreiben» antippen, gehen
         ihre Stichworte, Ort, Datum, bis zu vier verkleinerte Fotos und Ausschnitte früherer Beiträge an das
         Sprachmodell Claude, um einen Textentwurf zu erstellen. Anthropic verwendet diese Daten gemäss seinen
-        kommerziellen Bedingungen nicht zum Training. Der Entwurf wird erst gespeichert, wenn die Reisenden ihn posten.
+        kommerziellen Bedingungen nicht zum Training. Der Entwurf wird erst gespeichert, wenn die Reisenden ihn posten. Die Funktion ist erst nach ausdrücklicher Zustimmung aktiv (Zeitpunkt wird im Profil gespeichert) und lässt sich in den Einstellungen jederzeit ausschalten.
       </li>
       <li>
         <strong>OpenStreetMap Nominatim</strong> (OpenStreetMap Foundation, Vereinigtes Königreich): Beim Erfassen
