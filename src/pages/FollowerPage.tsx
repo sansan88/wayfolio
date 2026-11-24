@@ -14,8 +14,6 @@ import {
   IonModal,
   IonNote,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonSegment,
   IonSegmentButton,
   IonSelect,
@@ -27,6 +25,7 @@ import {
 } from '@ionic/react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import CamperRefresher from '../components/CamperRefresher'
 import PostCard, { dayNumber } from '../components/PostCard'
 import InstallHint from '../components/InstallHint'
 import TimelineDots from '../components/TimelineDots'
@@ -237,9 +236,7 @@ const FollowerPage = ({ token }: { token: string }) => {
           </Suspense>
         ) : (
           <>
-            <IonRefresher slot="fixed" onIonRefresh={(e) => void load().finally(() => e.detail.complete())}>
-              <IonRefresherContent />
-            </IonRefresher>
+            <CamperRefresher onRefresh={() => load()} />
             <InstallHint who="follower" />
             {data.posts.length === 0 && (
               <IonCard>

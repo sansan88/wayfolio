@@ -30,7 +30,7 @@ Vor jedem Commit bauen. UI-Änderungen mit Playwright prüfen (Chrome: `/usr/bin
 - Routenbilder: `media.variants = {route: true, v: n}`; `ROUTE_IMAGE_VERSION` in `src/lib/geo.ts` erhöhen, um alle neu zu erzeugen.
 - Startseite `/` ist auch für Angemeldete sichtbar (ausser in der installierten PWA, die startet auf `/feed`).
 - Entwürfe mit Claude: Knopf «Mit Claude schreiben» in `ComposeModal.tsx` → `src/lib/aiDraft.ts` → Edge Function `ai-draft` (Prompt dort). Bilder werden im Browser auf 1024 px verkleinert, max. 4. Limit pro Tag über `ai_usage`. Nur mit Einwilligung: `profiles.ai_enabled_at` (Dialog über `useAiConsent().ensure()` in `src/lib/aiConsent.tsx`, die Function prüft es ebenfalls). Mit vorhandenem Text Parameter `action` (`proofread`, `shorten`, `lengthen`, `rewrite` + `instruction`). Modus `recap` («Rückblick mit Claude» im «+»-Menü): fasst Check-ins (`route_update`, `story`) seit dem letzten `feed`/`background`-Beitrag zusammen. Embeds auf `post_blocks` immer mit `post_blocks!post_blocks_post_id_fkey` (zwei Fremdschlüssel zu `posts`).
-- Ladeanimation: `PageSpinner.tsx` (Camper auf der Strasse), respektiert `prefers-reduced-motion`. Derselbe Camper ist App-Icon und Favicon; PNGs mit `rsvg-convert` aus den SVGs in `public/` erzeugen.
+- Ladeanimation: `PageSpinner.tsx` (Camper auf der Strasse), respektiert `prefers-reduced-motion`. Derselbe Camper (`CamperScene`) zeigt sich beim Ziehen zum Aktualisieren (`CamperRefresher.tsx`) und ist App-Icon und Favicon; PNGs mit `rsvg-convert` aus den SVGs in `public/` erzeugen.
 
 ## Regeln
 

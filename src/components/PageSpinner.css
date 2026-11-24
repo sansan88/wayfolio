@@ -143,3 +143,29 @@
     animation: none;
   }
 }
+
+/* Ziehen zum Aktualisieren: Camper steht beim Ziehen, fährt beim Laden */
+.camper-refresher {
+  height: 72px;
+}
+
+.camper-refresher__content {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  padding-bottom: 6px;
+}
+
+.camper-refresher__content svg {
+  overflow: visible;
+}
+
+.camper-refresher:not(.refresher-refreshing) .camper-refresher__content * {
+  animation-play-state: paused;
+}
+
+.camper-refresher.refresher-pulling .camper-refresher__content,
+.camper-refresher.refresher-ready .camper-refresher__content {
+  opacity: 0.85;
+}

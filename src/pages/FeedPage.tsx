@@ -12,8 +12,6 @@ import {
   IonIcon,
   IonLoading,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonText,
   IonTitle,
   IonToolbar,
@@ -28,6 +26,7 @@ import {
 import { add, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import CamperRefresher from '../components/CamperRefresher'
 import CheckinModal from '../components/CheckinModal'
 import ComposeModal from '../components/ComposeModal'
 import FeedSkeleton from '../components/FeedSkeleton'
@@ -284,9 +283,7 @@ const FeedPage = () => {
         )}
       </IonHeader>
       <IonContent ref={timeline.contentRef} color="light" scrollEvents onIonScroll={timeline.onScroll}>
-        <IonRefresher slot="fixed" onIonRefresh={(e) => void refresh().finally(() => e.detail.complete())}>
-          <IonRefresherContent />
-        </IonRefresher>
+        <CamperRefresher onRefresh={() => refresh()} />
         <GeoPermissionBanner />
         {regen && (
           <p className="regen-note" role="status">

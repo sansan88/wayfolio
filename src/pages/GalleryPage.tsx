@@ -6,8 +6,6 @@ import {
   IonIcon,
   IonLoading,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonText,
   useIonAlert,
   useIonToast,
@@ -16,6 +14,7 @@ import {
 import { addOutline, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useRef, useState } from 'react'
 
+import CamperRefresher from '../components/CamperRefresher'
 import GalleryGrid from '../components/GalleryGrid'
 import { LargeTitle, PageHeader } from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
@@ -111,9 +110,7 @@ const GalleryPage = () => {
       />
       <IonContent fullscreen>
         <LargeTitle title="Galerie" />
-        <IonRefresher slot="fixed" onIonRefresh={(e) => void refresh().finally(() => e.detail.complete())}>
-          <IonRefresherContent />
-        </IonRefresher>
+        <CamperRefresher onRefresh={() => refresh()} />
         {error && (
           <IonText color="danger">
             <p className="ion-padding">{error}</p>
