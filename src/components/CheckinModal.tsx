@@ -73,6 +73,8 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
   const [choosingTime, setChoosingTime] = useState(false)
   const [busy, setBusy] = useState(false)
   const submitted = useRef(false)
+  /** Schliessen ist schon entschieden – keine zweite Nachfrage (z. B. wenn die Eltern-Seite isOpen nachzieht) */
+  const closing = useRef(false)
 
   const locate = async () => {
     setLocating(true)
@@ -91,6 +93,7 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
   useEffect(() => {
     if (!isOpen) return
     submitted.current = false
+    closing.current = false
     setFiles([])
     setCaption('')
     setLinks([])
@@ -102,7 +105,10 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
   const dirty = files.length > 0 || caption.trim().length > 0 || cleanLinks(links).length > 0
   const linksOk = links.every((l) => !l.trim() || normalizeUrl(l))
   const canDismiss = async () => {
-    if (submitted.current || !dirty) return true
+    if (closing.current || submitted.current || !dirty || !isOpen) {
+      closing.current = true
+      return true
+    }
     return new Promise<boolean>((resolve) => {
       void presentSheet({
         header: 'Check-in verwerfen?',
@@ -110,7 +116,11 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
           { text: 'Verwerfen', role: 'confirm' },
           { text: 'Weiter bearbeiten', role: 'cancel' },
         ],
-        onWillDismiss: (e) => resolve(e.detail.role === 'confirm'),
+        onWillDismiss: (e) => {
+          const ok = e.detail.role === 'confirm'
+          if (ok) closing.current = true
+          resolve(ok)
+        },
       })
     })
   }

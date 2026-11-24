@@ -122,6 +122,8 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const [presentAlert] = useIonAlert()
   const ai = useAiConsent()
   const submitted = useRef(false)
+  /** Schliessen ist schon entschieden – keine zweite Nachfrage (z. B. wenn die Eltern-Seite isOpen nachzieht) */
+  const closing = useRef(false)
 
   // Nur beim Öffnen zurücksetzen bzw. mit den Werten zum Bearbeiten füllen – nicht, wenn sich
   // im Hintergrund Daten aktualisieren (sonst gingen Eingaben während des Tippens verloren)
@@ -134,6 +136,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     if (openedFor.current === kind) return
     openedFor.current = kind
     submitted.current = false
+    closing.current = false
     setTitle(initial?.title ?? '')
     setText(initial?.text ?? '')
     setLinks(initial?.links ?? [])
@@ -173,7 +176,10 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
 
   /** iOS-Muster (Ionic-Doku «canDismiss»): bei ungespeicherten Eingaben per Action Sheet nachfragen. */
   const canDismiss = async () => {
-    if (submitted.current || !dirty) return true
+    if (closing.current || submitted.current || !dirty || !kind) {
+      closing.current = true
+      return true
+    }
     return new Promise<boolean>((resolve) => {
       void presentSheet({
         header: 'Eingaben verwerfen?',
@@ -181,7 +187,11 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
           { text: 'Verwerfen', role: 'confirm' },
           { text: 'Weiter bearbeiten', role: 'cancel' },
         ],
-        onWillDismiss: (e) => resolve(e.detail.role === 'confirm'),
+        onWillDismiss: (e) => {
+          const ok = e.detail.role === 'confirm'
+          if (ok) closing.current = true
+          resolve(ok)
+        },
       })
     })
   }

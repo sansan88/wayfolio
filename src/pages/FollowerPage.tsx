@@ -6,16 +6,14 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonContent,
+  IonIcon,
   IonHeader,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
   IonModal,
   IonNote,
   IonPage,
-  IonSegment,
-  IonSegmentButton,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -23,6 +21,7 @@ import {
   IonToolbar,
   useIonToast,
 } from '@ionic/react'
+import { chevronBack, mapOutline } from 'ionicons/icons'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import CamperRefresher from '../components/CamperRefresher'
@@ -31,9 +30,7 @@ import InstallHint from '../components/InstallHint'
 import TimelineDots from '../components/TimelineDots'
 import { useTimeline } from '../lib/useTimeline'
 import '../pages/FeedPage.css'
-import { followerApi, galleryApi, type FollowerFeed } from '../lib/follower'
-import type { GalleryDay } from '../lib/gallery'
-import GalleryGrid from '../components/GalleryGrid'
+import { followerApi, type FollowerFeed } from '../lib/follower'
 import { useCardPresenter } from '../lib/modal'
 import type { FeedPost } from '../lib/updates'
 import './FeedPage.css'
@@ -52,22 +49,23 @@ const FollowerPage = ({ token }: { token: string }) => {
   const [presentToast] = useIonToast()
   const [data, setData] = useState<FollowerFeed | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<'feed' | 'karte' | 'fotos'>(() =>
-    window.location.hash === '#fotos' ? 'fotos' : window.location.hash === '#route' ? 'karte' : 'feed',
-  )
-  const [gallery, setGallery] = useState<GalleryDay[] | null>(null)
+  // Standard ist das Tagebuch; die Route öffnet sich über den Karten-Knopf oben rechts
+  const [tab, setTabState] = useState<'feed' | 'karte'>(() => (window.location.hash === '#route' ? 'karte' : 'feed'))
+  const feedScroll = useRef(0)
   const [askName, setAskName] = useState(false)
   const namePresenter = useCardPresenter(askName)
   const [selected, setSelected] = useState<RoutePoint | null>(null)
   const timeline = useTimeline((data?.posts ?? []).map((p) => p.id))
 
-  // Fotos erst laden, wenn der Bereich geöffnet wird
-  useEffect(() => {
-    if (tab !== 'fotos' || gallery) return
-    galleryApi(token)
-      .then((g) => setGallery(g.days))
-      .catch(() => setGallery([]))
-  }, [tab, gallery, token])
+  /** Wechsel Tagebuch ↔ Route; die Scroll-Position im Tagebuch bleibt erhalten. */
+  const setTab = (next: 'feed' | 'karte') => {
+    const content = timeline.contentRef.current
+    if (next === 'karte' && tab === 'feed' && content) {
+      void content.getScrollElement().then((el) => (feedScroll.current = el.scrollTop))
+    }
+    setTabState(next)
+    if (next === 'feed') setTimeout(() => void timeline.contentRef.current?.scrollToPoint(0, feedScroll.current, 0), 60)
+  }
   // geteilter Link (…#p-<id>): einmal zum Beitrag springen
   const jumped = useRef(false)
   useEffect(() => {
@@ -192,27 +190,27 @@ const FollowerPage = ({ token }: { token: string }) => {
     if (p.checkin_id && url && !photos[p.checkin_id]) photos[p.checkin_id] = url
   }
 
-  const segment = (
-    <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as 'feed' | 'karte' | 'fotos')}>
-      <IonSegmentButton value="feed">
-        <IonLabel>Tagebuch</IonLabel>
-      </IonSegmentButton>
-      <IonSegmentButton value="karte">
-        <IonLabel>Route</IonLabel>
-      </IonSegmentButton>
-      <IonSegmentButton value="fotos">
-        <IonLabel>Fotos</IonLabel>
-      </IonSegmentButton>
-    </IonSegment>
-  )
-
   return (
     <IonPage className="no-save">
       <IonHeader>
         <IonToolbar>
-          <IonTitle>{data.trip.title}</IonTitle>
+          {tab === 'karte' && (
+            <IonButtons slot="start">
+              <IonButton onClick={() => setTab('feed')} aria-label="Zurück zum Tagebuch">
+                <IonIcon slot="start" icon={chevronBack} />
+                Tagebuch
+              </IonButton>
+            </IonButtons>
+          )}
+          <IonTitle>{tab === 'karte' ? 'Route' : data.trip.title}</IonTitle>
+          {tab === 'feed' && (
+            <IonButtons slot="end">
+              <IonButton onClick={() => setTab('karte')} aria-label="Route auf der Karte">
+                <IonIcon slot="icon-only" icon={mapOutline} />
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
-        <IonToolbar>{segment}</IonToolbar>
         {tab === 'feed' && data.posts.length > 0 && (
           <IonToolbar className="timeline-toolbar">
             <TimelineDots posts={data.posts} activeId={timeline.activeId} start={start} onSelect={(p) => void timeline.jumpTo(p.id)} />
@@ -220,17 +218,7 @@ const FollowerPage = ({ token }: { token: string }) => {
         )}
       </IonHeader>
       <IonContent ref={timeline.contentRef} scrollY={tab !== 'karte'} scrollEvents onIonScroll={timeline.onScroll} color="light">
-        {tab === 'fotos' ? (
-          gallery === null ? (
-            <PageSpinner />
-          ) : gallery.length === 0 ? (
-            <IonCard>
-              <IonCardContent>Noch keine Fotos.</IonCardContent>
-            </IonCard>
-          ) : (
-            <GalleryGrid days={gallery} />
-          )
-        ) : tab === 'karte' ? (
+        {tab === 'karte' ? (
           <Suspense fallback={null}>
             <RouteMap points={data.route} photos={photos} onSelect={setSelected} focus={selected} />
           </Suspense>

@@ -27,7 +27,7 @@ Live: **https://littlefootnotes.app**
 
 **Für Familie und Freunde (ohne Konto)**
 
-- Ein Link `/t/<token>` für Tagebuch, Route und Fotos; ein Beitrags-Link `/p/<token>` zeigt nur diesen einen Beitrag.
+- Ein Link `/t/<token>` öffnet das Tagebuch; die Route kommt über den Karten-Knopf oben rechts, zurück geht es mit «‹ Tagebuch» (keine separate Fotogalerie); ein Beitrags-Link `/p/<token>` zeigt nur diesen einen Beitrag.
 - Tipp auf einen Ort springt auf der Karte genau dorthin.
 - Kein Download-Knopf für Fotos.
 
