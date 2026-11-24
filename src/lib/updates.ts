@@ -2,6 +2,7 @@ import { appUrl } from './auth'
 import { readPhotoMeta } from './exif'
 import { cachedLoad } from './offline'
 import { distanceKm, isDistanceLine, ROUTE_IMAGE_VERSION } from './geo'
+import { cleanLinks, isKnownService } from './links'
 import { loadRoute, type RoutePoint } from './route'
 import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
@@ -309,17 +310,39 @@ export const createMediaStory = async (base: Context, data: File | Blob, kind: M
   }
 }
 
+/** Seitentitel für Links holen (Edge Function «link-title»); bekannte Dienste brauchen keinen. */
+const fetchTitles = async (urls: string[]): Promise<(string | null)[]> => {
+  const ask = urls.filter((u) => !isKnownService(u))
+  if (!ask.length) return urls.map(() => null)
+  try {
+    const { data } = await supabase.functions.invoke<{ titles: (string | null)[] }>('link-title', { body: { urls: ask } })
+    const map = new Map(ask.map((u, i) => [u, data?.titles?.[i] ?? null]))
+    return urls.map((u) => map.get(u) ?? null)
+  } catch {
+    return urls.map(() => null)
+  }
+}
+
+/** Link-Bausteine (bereinigt, ohne Doppelte), mit Seitentitel als Anzeigetext */
+const linkBlocks = async (links: string[]): Promise<NewBlock[]> => {
+  const urls = cleanLinks(links)
+  if (!urls.length) return []
+  const titles = await fetchTitles(urls)
+  return urls.map((url, i) => ({ kind: 'link', url, text: titles[i] ?? undefined }))
+}
+
 /**
  * Check-in («Ich bin jetzt hier»): Ort + optional Fotos + Bildtext, wie ein Instagram-Post.
  * Der gewählte Ort zählt; nur wenn keiner da ist, kommt er aus den Fotos. Ohne Fotos zeigt
  * der Check-in das Routenbild.
  */
-export const createCheckin = async (base: Context, files: File[], caption: string) => {
+export const createCheckin = async (base: Context, files: File[], caption: string, links: string[] = []) => {
   const ctx = base.position ? base : await withPhotoMeta(base, files)
   if (!ctx.position) fail('Bitte zuerst einen Ort wählen.')
   const checkin = await checkinFor(ctx)
   const blocks: NewBlock[] = await mediaBlocks(ctx, files)
   if (caption.trim()) blocks.push({ kind: 'text', text: caption.trim() })
+  blocks.push(...(await linkBlocks(links)))
   // ohne Fotos: Routenbild als Bild (die Distanzzeile gehört nicht in den Bildtext)
   if (!files.length && checkin) blocks.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
   await publish(ctx, { kind: 'route_update', title: ctx.place?.name.split(',')[0] ?? null, checkinId: checkin?.id ?? null, blocks })
@@ -334,13 +357,13 @@ export const createLocationUpdate = async (ctx: Context) => {
 }
 
 /** Beitrag: Ort/Zeit aus den Fotos; an einem neuen Ort kommt das Routenbild dazu. */
-export const createFeedPost = async (base: Context, title: string, text: string, files: File[], link?: string) => {
+export const createFeedPost = async (base: Context, title: string, text: string, files: File[], links: string[] = []) => {
   const ctx = await withPhotoMeta(base, files)
   const checkin = await checkinFor(ctx)
   const blocks: NewBlock[] = []
   if (text.trim()) blocks.push({ kind: 'text', text: text.trim() })
   blocks.push(...(await mediaBlocks(ctx, files)))
-  if (link?.trim()) blocks.push({ kind: 'link', url: link.trim() })
+  blocks.push(...(await linkBlocks(links)))
   if (checkin?.isNew) blocks.push(...(await routeBlocks(ctx, checkin.id)))
   await publish(ctx, { kind: 'feed', title: title.trim() || null, blocks, checkinId: checkin?.id ?? null })
 }
@@ -405,7 +428,7 @@ export const hideReply = async (replyId: string) => {
 export interface PostChanges {
   title: string
   text: string
-  link: string
+  links: string[]
   at: Date | null
   location: { position: Position; place: Place } | null
   files: File[]
@@ -454,10 +477,12 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
     if (res.error) fail(res.error.message)
   }
 
-  // Link
-  const linkBlock = post.blocks.find((b) => b.kind === 'link' && b.id)
-  if (linkBlock && !c.link.trim()) await supabase.from('post_blocks').delete().eq('id', linkBlock.id!)
-  if (linkBlock && c.link.trim()) await supabase.from('post_blocks').update({ url: c.link.trim() }).eq('id', linkBlock.id!)
+  // Links: alle bisherigen ersetzen (Reihenfolge wie im Dialog)
+  const oldLinkIds = post.blocks.filter((b) => b.kind === 'link' && b.id).map((b) => b.id!)
+  if (oldLinkIds.length) {
+    const { error: e } = await supabase.from('post_blocks').delete().in('id', oldLinkIds)
+    if (e) fail(e.message)
+  }
 
   // entfernte Medien; an neuem Ort das alte Routenbild ersetzen
   const removeIds = [...c.removedBlockIds, ...(extra.length ? post.blocks.filter((b) => b.route && b.id).map((b) => b.id!) : [])]
@@ -470,7 +495,7 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
   const added: NewBlock[] = []
   if (!textBlock && c.text.trim()) added.push({ kind: 'text', text: c.text.trim() })
   added.push(...(await mediaBlocks(ctx, c.files)))
-  if (!linkBlock && c.link.trim()) added.push({ kind: 'link', url: c.link.trim() })
+  added.push(...(await linkBlocks(c.links)))
   added.push(...extra)
   if (added.length) {
     // Position aus der Datenbank: ausgeblendete Bausteine (z.B. alte Distanzzeilen) zählen mit

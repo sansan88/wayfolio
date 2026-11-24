@@ -12,9 +12,10 @@ import {
   IonRadioGroup,
   IonTextarea,
 } from '@ionic/react'
-import { barChart, bookOutline, checkmarkCircle, documentTextOutline, ellipsisHorizontal, imagesOutline, link, location } from 'ionicons/icons'
+import { barChart, bookOutline, checkmarkCircle, documentTextOutline, ellipsisHorizontal, imagesOutline, location, openOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
+import { describeLink } from '../lib/links'
 import type { FeedPost } from '../lib/updates'
 import './PostCard.css'
 
@@ -243,11 +244,22 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props
             </p>
           ))}
           {post.kind !== 'poll' && <MediaBlocks post={post} other />}
-          {links.map((b) => (
-            <a key={b.position} href={b.url!} target="_blank" rel="noopener noreferrer" className="post__link">
-              <IonIcon icon={link} aria-hidden="true" /> {b.url}
-            </a>
-          ))}
+          {links.length > 0 && (
+            <div className="post__links">
+              {links.map((b) => {
+                const d = describeLink(b.url!, b.text)
+                return (
+                  <a key={b.position} href={b.url!} target="_blank" rel="noopener noreferrer" className="post__link">
+                    <span className="post__link-icon">
+                      <IonIcon icon={d.icon} aria-hidden="true" />
+                    </span>
+                    <span className="post__link-text">{d.label}</span>
+                    <IonIcon icon={openOutline} className="post__link-open" aria-hidden="true" />
+                  </a>
+                )
+              })}
+            </div>
+          )}
         </IonCardContent>
       )}
       {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}

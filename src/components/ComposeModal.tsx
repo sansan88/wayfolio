@@ -38,9 +38,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAiConsent } from '../lib/aiConsent'
 import { draftPost, type DraftAction } from '../lib/aiDraft'
 import { formatWhen } from '../lib/datetime'
+import { cleanLinks, normalizeUrl } from '../lib/links'
 import type { Place, Position } from '../lib/location'
 import { useCardPresenter } from '../lib/modal'
 import DateTimeSheet from './DateTimeSheet'
+import LinksEditor from './LinksEditor'
 import LocationPicker from './LocationPicker'
 
 export type ComposeKind = 'post' | 'background' | 'poll' | 'edit'
@@ -49,7 +51,7 @@ export interface ComposeResult {
   title: string
   text: string
   files: File[]
-  link: string
+  links: string[]
   options: string[]
   closesInHours: number | null
   /** Zeitpunkt; null = jetzt bzw. Aufnahmezeit der Fotos */
@@ -74,7 +76,7 @@ interface Props {
   initial?: {
     title?: string
     text?: string
-    link?: string
+    links?: string[]
     at?: Date | null
     place?: Place | null
     position?: Position | null
@@ -106,7 +108,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const [presentSheet] = useIonActionSheet()
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
-  const [link, setLink] = useState('')
+  const [links, setLinks] = useState<string[]>([])
   const [files, setFiles] = useState<File[]>([])
   const [options, setOptions] = useState(['', ''])
   const [closesInHours, setClosesInHours] = useState<number | null>(48)
@@ -134,7 +136,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     submitted.current = false
     setTitle(initial?.title ?? '')
     setText(initial?.text ?? '')
-    setLink(initial?.link ?? '')
+    setLinks(initial?.links ?? [])
     setFiles([])
     setOptions(['', ''])
     setClosesInHours(48)
@@ -151,14 +153,17 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     kind === 'edit'
       ? title !== (initial?.title ?? '') ||
         text !== (initial?.text ?? '') ||
-        link !== (initial?.link ?? '') ||
+        cleanLinks(links).join('\n') !== cleanLinks(initial?.links ?? []).join('\n') ||
         at?.getTime() !== initial?.at?.getTime() ||
         !!location ||
         files.length > 0 ||
         removed.length > 0
-      : !!(title || text || link || files.length || filledOptions.length)
+      : !!(title || text || cleanLinks(links).length || files.length || filledOptions.length)
+  const linksOk = links.every((l) => !l.trim() || normalizeUrl(l))
   const valid =
-    kind === 'poll'
+    !linksOk
+      ? false
+      : kind === 'poll'
       ? title.trim().length > 0 && filledOptions.length >= 2
       : kind === 'background'
         ? title.trim().length > 0 && text.trim().length > 0
@@ -276,7 +281,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const submit = () => {
     if (!kind || !valid) return
     submitted.current = true
-    onSubmit(kind, { title, text, files, link, options: filledOptions, closesInHours, at, location, removedBlockIds: removed })
+    onSubmit(kind, { title, text, files, links: cleanLinks(links), options: filledOptions, closesInHours, at, location, removedBlockIds: removed })
   }
 
   return (
@@ -424,11 +429,6 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
 
         {(kind === 'post' || kind === 'background' || kind === 'edit') && (
           <IonList inset>
-            {(kind === 'post' || kind === 'edit') && (
-              <IonItem>
-                <IonInput label="Link" type="url" placeholder="optional" value={link} onIonInput={(e) => setLink(String(e.detail.value ?? ''))} />
-              </IonItem>
-            )}
             {existing.map((m) => (
               <IonItem key={m.blockId}>
                 <IonThumbnail slot="start" className="compose__thumb">
@@ -468,6 +468,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
             />
           </IonList>
         )}
+        {(kind === 'post' || kind === 'edit') && <LinksEditor links={links} onChange={setLinks} />}
       </IonContent>
     </IonModal>
   )

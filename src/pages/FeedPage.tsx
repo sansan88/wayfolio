@@ -92,7 +92,7 @@ const FeedPage = () => {
     return {
       title: editing.title ?? '',
       text: editing.blocks.find((b) => b.kind === 'text')?.text ?? '',
-      link: editing.blocks.find((b) => b.kind === 'link')?.url ?? '',
+      links: editing.blocks.filter((b) => b.kind === 'link' && b.url).map((b) => b.url!),
       at: new Date(editing.published_at),
       place: editing.place_name ? { name: editing.place_name, countryCode: null } : null,
       position: point ? { lat: point.lat, lon: point.lon, accuracy: 0 } : null,
@@ -329,7 +329,7 @@ const FeedPage = () => {
               updatePost(post, trip!.id, session!.user.id, {
                 title: r.title,
                 text: r.text,
-                link: r.link,
+                links: r.links,
                 at: r.at,
                 location: r.location,
                 files: r.files,
@@ -376,7 +376,7 @@ const FeedPage = () => {
                 r.title,
                 r.text,
                 r.files,
-                r.link,
+                r.links,
               ),
             )
               .then(() => toast('Beitrag veröffentlicht'))

@@ -23,12 +23,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { useCapture } from '../lib/capture'
 import { formatWhen } from '../lib/datetime'
+import { cleanLinks, normalizeUrl } from '../lib/links'
 import { useGeoPermission } from '../lib/geoPermission'
 import { getPosition, reverseGeocode } from '../lib/location'
 import { useCardPresenter } from '../lib/modal'
 import { useTrip } from '../lib/trip'
 import { createCheckin } from '../lib/updates'
 import DateTimeSheet from './DateTimeSheet'
+import LinksEditor from './LinksEditor'
 import LocationPicker from './LocationPicker'
 import './CheckinModal.css'
 
@@ -64,6 +66,7 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
   const [presentToast] = useIonToast()
   const [files, setFiles] = useState<File[]>([])
   const [caption, setCaption] = useState('')
+  const [links, setLinks] = useState<string[]>([])
   const [locating, setLocating] = useState(false)
   const [locError, setLocError] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
@@ -90,12 +93,14 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
     submitted.current = false
     setFiles([])
     setCaption('')
+    setLinks([])
     setLocError(null)
     if (source === 'gps' && geo.state === 'granted') void locate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, geo.state])
 
-  const dirty = files.length > 0 || caption.trim().length > 0
+  const dirty = files.length > 0 || caption.trim().length > 0 || cleanLinks(links).length > 0
+  const linksOk = links.every((l) => !l.trim() || normalizeUrl(l))
   const canDismiss = async () => {
     if (submitted.current || !dirty) return true
     return new Promise<boolean>((resolve) => {
@@ -114,7 +119,7 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
     if (!trip || !session || !position) return
     setBusy(true)
     try {
-      await createCheckin({ tripId: trip.id, userId: session.user.id, position, place, at, source, lockPlace: true }, files, caption)
+      await createCheckin({ tripId: trip.id, userId: session.user.id, position, place, at, source, lockPlace: true }, files, caption, links)
       submitted.current = true
       presentToast({ message: `Check-in: ${place?.name.split(',')[0] ?? 'Ort'}`, duration: 2000, position: 'top', color: 'success' })
       onPosted()
@@ -135,7 +140,7 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
           </IonButtons>
           <IonTitle>Check-in</IonTitle>
           <IonButtons slot="end">
-            <IonButton strong disabled={!position || busy} onClick={() => void post()}>
+            <IonButton strong disabled={!position || busy || !linksOk} onClick={() => void post()}>
               Posten
             </IonButton>
           </IonButtons>
@@ -212,6 +217,8 @@ const CheckinModal = ({ isOpen, onClose, onPosted }: Props) => {
         <IonNote className="compose__note">
           {files.length ? `${files.length} Foto${files.length > 1 ? 's' : ''} · werden fürs Handy verkleinert.` : 'Ohne Fotos zeigt der Check-in eure Route.'}
         </IonNote>
+
+        <LinksEditor links={links} onChange={setLinks} />
 
         <LocationPicker
           isOpen={picking}

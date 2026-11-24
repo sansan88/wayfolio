@@ -12,6 +12,7 @@ Live: **https://littlefootnotes.app**
 
 - **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
 - **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
+- **Links:** Check-ins und Beiträge können mehrere Links haben (Unterkunft, Museum, Google-Maps-Ort …). Angezeigt wird nie die ganze Adresse, sondern ein Symbol mit dem Namen: «Airbnb», «Booking.com», bei Google Maps der Ortsname, sonst der Seitentitel (beim Speichern über die Edge Function `link-title` gelesen) oder die Domain.
 - **Mit Claude schreiben:** Im Beitrags-Dialog machen ein paar Stichworte und/oder Fotos auf Knopfdruck einen ausformulierten Entwurf (Titel + Text, Schweizer Rechtschreibung, Stil der bisherigen Beiträge). Der Entwurf lässt sich anpassen oder rückgängig machen; gespeichert wird erst beim Posten.
 - **Mit Claude überarbeiten:** Steht schon Text im Beitrag, öffnet der Claude-Knopf eine Auswahl: Korrekturlesen, Kürzen, Länger, Umformulieren (mit eigenem Änderungswunsch) oder aus Stichworten neu schreiben.
 - **Einwilligung:** Beim ersten Gebrauch erklärt ein Dialog, welche Daten an Anthropic gehen; erst nach «Ja, aktivieren» wird `profiles.ai_enabled_at` gesetzt (auch serverseitig geprüft). Ein- und ausschalten unter Reisen › Dein Profil.
@@ -98,6 +99,7 @@ supabase/functions/ai-draft/       Beitragsentwürfe mit Claude
 - Reisende greifen mit ihrem Konto über RLS zu. Follower haben kein Konto: Sie lesen nur über die Edge Function `follower-api`, die den Secret Link prüft (`verify_jwt = false`).
 - `share_links.role`: `follower` (ganze Reise), `post` (ein Beitrag), `gallery` (alt).
 - Fotos liegen im privaten Bucket `media` (`<trip_id>/<uuid>.jpg` plus `_thumb.jpg`), ausgeliefert über signierte URLs.
+- `link-title`: liest beim Speichern den Titel verlinkter Seiten (JWT-Prüfung aktiv, keine privaten Adressen/IPs); gespeichert in `post_blocks.text_content` des Link-Bausteins.
 - `ai-draft`: Edge Function für Entwürfe mit Claude (JWT-Prüfung aktiv, nur Mitglieder der Reise). Secret `ANTHROPIC_API_KEY`, optional `AI_MODEL` (Standard `claude-sonnet-5-5`) und `AI_DAILY_LIMIT` (Standard 40 pro Person und Tag, gezählt in `ai_usage`).
 - `waitlist`: Warteliste für öffentliche Reisen – `anon` darf nur einfügen, lesen nur mit dem Service-Role-Key.
 
