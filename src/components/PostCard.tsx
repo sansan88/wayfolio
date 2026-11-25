@@ -12,7 +12,7 @@ import {
   IonRadioGroup,
   IonTextarea,
 } from '@ionic/react'
-import { barChart, bookOutline, checkmarkCircle, documentTextOutline, ellipsisHorizontal, imagesOutline, location, openOutline } from 'ionicons/icons'
+import { checkmarkCircle, ellipsisHorizontal, location, openOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { describeLink } from '../lib/links'
@@ -21,14 +21,6 @@ import './PostCard.css'
 
 export const formatTime = (iso: string) =>
   new Date(iso).toLocaleString('de-CH', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-
-const kindLabel: Partial<Record<FeedPost['kind'], { icon: string; label: string }>> = {
-  route_update: { icon: location, label: 'Check-in' },
-  feed: { icon: documentTextOutline, label: 'Beitrag' },
-  story: { icon: imagesOutline, label: 'Moment' },
-  background: { icon: bookOutline, label: 'Hintergrund' },
-  poll: { icon: barChart, label: 'Entscheidung' },
-}
 
 interface Props {
   post: FeedPost
@@ -187,7 +179,6 @@ const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode'
 }
 
 const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props) => {
-  const label = kindLabel[post.kind]
   const texts = post.blocks.filter((b) => b.kind === 'text' && b.text)
   const links = post.blocks.filter((b) => b.kind === 'link' && b.url)
   // Bilder oben: Fotos, danach das Routenbild (bei Orten ohne Fotos ist es das einzige Bild)
@@ -197,18 +188,11 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props
   ]
   const others = post.blocks.some((b) => (b.kind === 'video' || b.kind === 'audio') && b.mediaUrl)
   const placeParts = post.place_name?.split(',').map((x) => x.trim()) ?? []
-  const isCheckin = post.kind === 'route_update'
-  // Eigener Titel (beim Bearbeiten gesetzt) hat Vorrang; automatisch ist er bei Check-ins gleich dem Ortsnamen
+  // Eigener Titel hat Vorrang; ohne Titel ist der Ort der Titel (darunter das Land), sonst steht der ganze Ort darunter.
+  // Ältere Check-ins speicherten den Ortsnamen als Titel – das zählt nicht als eigener Titel.
   const ownTitle = post.title?.trim() && post.title.trim() !== post.place_name?.trim() && post.title.trim() !== placeParts[0] ? post.title.trim() : null
-  // Check-in ohne eigenen Titel: Ort als Titel, Land darunter; sonst Titel und darunter der ganze Ort (antippbar)
-  const title = ownTitle ?? (isCheckin ? (placeParts[0] ?? 'Check-in') : (post.title ?? placeParts[0] ?? 'Beitrag'))
-  const place = post.place_name
-    ? isCheckin && !ownTitle
-      ? placeParts.slice(1).join(', ') || placeParts[0]
-      : isCheckin
-        ? placeParts.join(', ')
-        : placeParts[0]
-    : null
+  const title = ownTitle ?? placeParts[0] ?? 'Beitrag'
+  const place = post.place_name ? (ownTitle ? placeParts.join(', ') : placeParts.slice(1).join(', ') || null) : null
 
   return (
     <IonCard className={`post post--${post.kind}`}>
@@ -233,12 +217,9 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props
             </span>
           ))}
         <div className="post__meta">
-          <IonIcon icon={label?.icon ?? documentTextOutline} aria-hidden="true" />
-          <span>
-          {[label?.label ?? 'Beitrag', day ? `Tag ${day}` : null, formatTime(post.published_at), mode === 'owner' ? post.author_name : null]
+          {[post.kind === 'poll' ? 'Entscheidung' : null, day ? `Tag ${day}` : null, formatTime(post.published_at), mode === 'owner' ? post.author_name : null]
             .filter(Boolean)
             .join(' · ')}
-          </span>
         </div>
       </IonCardHeader>
 

@@ -3,15 +3,15 @@ import { getOrCreatePostLink, getOrCreateShareLink } from './updates'
 
 /**
  * Text für WhatsApp & Co.: Einleitung, Ort bzw. Titel, Anfang des Textes und der Link direkt zum Beitrag.
- * Check-ins beginnen mit «Wir sind heute hier.», Beiträge mit «Wir haben ein Update für euch».
+ * Beiträge mit einem Ort von heute beginnen mit «Wir sind heute hier.», sonst mit «Wir haben ein Update für euch».
  */
 const shareText = (post: FeedPost, url: string) => {
-  const isCheckin = post.kind === 'route_update'
   const place = post.place_name?.split(',').map((x) => x.trim())
-  const intro = isCheckin ? 'Wir sind heute hier.' : 'Wir haben ein Update für euch'
-  const headline = isCheckin
-    ? `📍 ${place?.join(', ') ?? post.title ?? ''}`.trim()
-    : [post.title ? `✍️ ${post.title}` : '', place?.[0] ? `📍 ${place[0]}` : ''].filter(Boolean).join('\n')
+  // «Wir sind heute hier.» nur für einen Ort von heute, sonst ein allgemeines Update
+  const today = new Date(post.published_at).toDateString() === new Date().toDateString()
+  const intro = place && today ? 'Wir sind heute hier.' : 'Wir haben ein Update für euch'
+  const ownTitle = post.title && post.title !== post.place_name && post.title !== place?.[0] ? post.title : null
+  const headline = [ownTitle ? `✍️ ${ownTitle}` : '', place ? `📍 ${place.join(', ')}` : ''].filter(Boolean).join('\n')
   const body = post.blocks.find((b) => b.kind === 'text' && b.text)?.text?.trim()
   const teaser = body ? (body.length > 180 ? `${body.slice(0, 177).trimEnd()} …` : body) : ''
   return [intro, headline, teaser, url].filter(Boolean).join('\n\n')

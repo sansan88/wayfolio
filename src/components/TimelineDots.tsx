@@ -22,15 +22,15 @@ const startOfDay = (d: Date) => new Date(`${dayKey(d)}T00:00`)
 /** Vorschau eines Events: erstes Foto, sonst ein passendes Symbol. */
 const preview = (p: FeedPost) => p.blocks.find((b) => b.kind === 'photo' && !b.route && (b.thumbUrl || b.mediaUrl))
 const iconFor = (p: FeedPost) =>
-  p.kind === 'route_update'
-    ? location
-    : p.kind === 'poll'
+  p.kind === 'poll'
       ? barChart
       : p.blocks.some((b) => b.kind === 'video')
         ? videocam
         : p.blocks.some((b) => b.kind === 'audio')
           ? mic
-          : documentText
+          : p.place_name
+            ? location
+            : documentText
 
 /**
  * Ein Punkt pro Event der ganzen Reise (gleiche Reihenfolge wie der Feed).

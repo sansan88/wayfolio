@@ -40,7 +40,7 @@ So schreibst du:
 Antworte ausschliesslich mit JSON in dieser Form, ohne weiteren Text:
 {"title": "…", "text": "…"}`
 
-const RECAP = `Aufgabe: Fasse die Updates seit dem letzten Beitrag zu EINEM neuen Beitrag zusammen – ein Rückblick auf diese Tage, chronologisch erzählt, als Vorlage, die die Reisenden danach selbst bearbeiten.
+const RECAP = `Aufgabe: Fasse die Beiträge der letzten Tage zu EINEM neuen Beitrag zusammen – ein Rückblick auf diese Tage, chronologisch erzählt, als Vorlage, die die Reisenden danach selbst bearbeiten.
 - Nutze nur, was in den Updates steht (Orte, Daten, Texte) und was auf den mitgeschickten Fotos zu sehen ist.
 - Verbinde die Stationen zu einer kleinen Geschichte statt einer Liste. Nenne die Orte, aber zähle nicht jedes Datum auf.
 - Länge: etwa 100 bis 220 Wörter, 2 bis 4 kurze Absätze.`
@@ -129,12 +129,12 @@ Deno.serve(async (req) => {
   if ((count ?? 0) >= DAILY_LIMIT) return json({ error: 'Für heute sind genug Entwürfe erstellt. Morgen geht es weiter.' }, 429)
 
   // Frühere Beiträge als Stilvorlage (nur Titel und Textanfang)
-  // Im Rückblick nur klassische Beiträge, damit die Check-ins nicht doppelt vorkommen
+  // Im Rückblick nur frühere Rückblicke als Stilvorlage, damit die Beiträge nicht doppelt vorkommen
   const { data: recent } = await userClient
     .from('posts')
     .select('title, published_at, post_blocks!post_blocks_post_id_fkey(kind, text_content, position)')
     .eq('trip_id', tripId)
-    .in('kind', mode === 'recap' ? ['feed', 'background'] : ['feed', 'background', 'route_update', 'story'])
+    .in('kind', mode === 'recap' ? ['background'] : ['feed', 'background', 'route_update', 'story'])
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
     .limit(5)
@@ -149,14 +149,14 @@ Deno.serve(async (req) => {
     .filter(Boolean)
     .slice(0, 3)
 
-  // Rückblick: alle Updates seit dem letzten klassischen Beitrag
+  // Rückblick: alle Beiträge seit dem letzten Rückblick (Beitragsart «background»)
   let recap = ''
   if (mode === 'recap') {
     const { data: last } = await userClient
       .from('posts')
       .select('published_at')
       .eq('trip_id', tripId)
-      .in('kind', ['feed', 'background'])
+      .eq('kind', 'background')
       .not('published_at', 'is', null)
       .order('published_at', { ascending: false })
       .limit(1)
@@ -165,14 +165,16 @@ Deno.serve(async (req) => {
       .from('posts')
       .select('title, kind, published_at, checkins(place_name), post_blocks!post_blocks_post_id_fkey(kind, text_content, position, media(storage_path, variants))')
       .eq('trip_id', tripId)
-      .in('kind', ['route_update', 'story'])
+      .in('kind', ['feed', 'route_update', 'story'])
       .not('published_at', 'is', null)
       .order('published_at', { ascending: true })
       .limit(40)
-    if (last?.published_at) q = q.gt('published_at', last.published_at)
+    // seit dem letzten Rückblick, höchstens 14 Tage zurück
+    const floor = new Date(Date.now() - 14 * 86400_000).toISOString()
+    q = q.gt('published_at', last?.published_at && Date.parse(last.published_at) > Date.parse(floor) ? last.published_at : floor)
     const { data: updates } = await q
     if (!updates?.length)
-      return json({ error: 'Seit dem letzten Beitrag gibt es keine neuen Check-ins. Erfasse zuerst ein paar Updates.' }, 400)
+      return json({ error: 'In den letzten Tagen gibt es keine neuen Beiträge seit dem letzten Rückblick.' }, 400)
 
     type Blk = { kind: string; text_content: string | null; position: number; media: { storage_path: string; variants: Record<string, unknown> | null } | null }
     const photoPaths: string[] = []
@@ -208,7 +210,7 @@ Deno.serve(async (req) => {
     action
       ? `Vorhandener Titel: ${title || '(keiner)'}\n\nVorhandener Text:\n${notes}${action === 'rewrite' ? `\n\nÄnderungswunsch: ${instruction}` : ''}`
       : mode === 'recap'
-      ? `Updates seit dem letzten Beitrag (chronologisch):\n${recap}${notes ? `\n\nZusätzliche Stichworte:\n${notes}` : ''}`
+      ? `Beiträge der letzten Tage (chronologisch):\n${recap}${notes ? `\n\nZusätzliche Stichworte:\n${notes}` : ''}`
       : notes
         ? `Stichworte der Reisenden:\n${notes}`
         : 'Keine Stichworte – schreibe anhand der Fotos.',

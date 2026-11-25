@@ -18,7 +18,6 @@ import {
   IonButtons,
   useIonActionSheet,
   useIonAlert,
-  useIonLoading,
   useIonToast,
   useIonRouter,
   useIonViewWillEnter,
@@ -27,15 +26,14 @@ import { add, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import CamperRefresher from '../components/CamperRefresher'
-import CheckinModal from '../components/CheckinModal'
 import ComposeModal from '../components/ComposeModal'
 import FeedSkeleton from '../components/FeedSkeleton'
 import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import PostCard, { dayNumber } from '../components/PostCard'
 import TimelineDots from '../components/TimelineDots'
 import { useAuth } from '../lib/auth'
-import { useAiConsent } from '../lib/aiConsent'
-import { draftRecap } from '../lib/aiDraft'
+import { useLocation, useNavigate } from 'react-router-dom'
+
 import { useCapture } from '../lib/capture'
 import { peekCache } from '../lib/offline'
 import { sharePost } from '../lib/share'
@@ -45,7 +43,7 @@ import { loadRoute, type RoutePoint } from '../lib/route'
 import { useTrip } from '../lib/trip'
 import {
   addOwnerReply,
-  createFeedPost,
+  createPost,
   deletePost,
   hideReply,
   loadUpdates,
@@ -71,17 +69,23 @@ const FeedPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [points, setPoints] = useState<RoutePoint[]>([])
   const [editing, setEditing] = useState<FeedPost | null>(null)
-  const [checkingIn, setCheckingIn] = useState(false)
   const [writing, setWriting] = useState(false)
-  /** Vorlage von Claude für den nächsten Beitrag */
-  const [prefill, setPrefill] = useState<{ title: string; text: string } | null>(null)
-  const [presentLoading, dismissLoading] = useIonLoading()
-  const ai = useAiConsent()
   const [busy, setBusy] = useState(false)
   const capture = useCapture()
+  // «+» auf der Karte: dort gibt es keinen eigenen Dialog mehr, sondern denselben Beitrag hier
+  const routerLocation = useLocation()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if ((routerLocation.state as { compose?: boolean } | null)?.compose) {
+      capture.setAt(null)
+      setWriting(true)
+      navigate(routerLocation.pathname, { replace: true, state: null })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routerLocation.state])
   const composeInitial = useMemo(
-    () => ({ at: capture.at, place: capture.place, position: capture.position, title: prefill?.title, text: prefill?.text }),
-    [capture.at, capture.place, capture.position, prefill],
+    () => ({ at: capture.at, place: capture.place, position: capture.position }),
+    [capture.at, capture.place, capture.position],
   )
   const timeline = useTimeline(posts.map((p) => p.id))
   const [regen, setRegen] = useState<{ done: number; total: number } | null>(null)
@@ -218,44 +222,16 @@ const FeedPage = () => {
         const noon = new Date(day)
         noon.setHours(12, 0, 0, 0)
         capture.setAt(noon > new Date() ? null : noon)
-        void openCreate(`Update für ${day.toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long' })}`)
+        openCreate()
       },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip?.ends_on, posts.length])
 
-  /** Claude fasst alles seit dem letzten Beitrag zusammen; das Ergebnis öffnet sich als normaler Beitrag zum Bearbeiten. */
-  const startRecap = async () => {
-    if (!trip || !(await ai.ensure())) return
-    await presentLoading({ message: 'Claude liest eure letzten Updates …' })
-    try {
-      const d = await draftRecap(trip.id)
-      setPrefill(d)
-      setWriting(true)
-    } catch (e) {
-      void presentToast({ message: (e as Error).message, duration: 4500, position: 'top', color: 'warning' })
-    } finally {
-      void dismissLoading()
-    }
+  /** «+»: eine Art, Neues zu erfassen – der Beitrag (Ort, Fotos, Text, Links; Rückblick über Claude im Dialog) */
+  const openCreate = () => {
+    setWriting(true)
   }
-
-  /** «+»: Check-in, Beitrag oder Rückblick mit Claude */
-  const openCreate = (header = 'Neues Update') =>
-    presentSheet({
-      header,
-      buttons: [
-        { text: 'Check-in – ich bin hier (mit Fotos)', handler: () => setCheckingIn(true) },
-        {
-          text: 'Beitrag – Text mit Fotos',
-          handler: () => {
-            setPrefill(null)
-            setWriting(true)
-          },
-        },
-        { text: 'Rückblick mit Claude – Vorlage aus den letzten Check-ins', handler: () => void startRecap() },
-        { text: 'Abbrechen', role: 'cancel' },
-      ],
-    })
 
   // Reisetag ab Reisebeginn, sonst ab dem ältesten Update
   const tripStart = trip?.starts_on ?? posts.at(-1)?.published_at ?? null
@@ -368,36 +344,28 @@ const FeedPage = () => {
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
-        <CheckinModal isOpen={checkingIn} onClose={() => setCheckingIn(false)} onPosted={() => void refresh()} />
         <ComposeModal
           kind={writing ? 'post' : null}
           tripId={trip?.id}
           initial={composeInitial}
-          onCancel={() => {
-            setWriting(false)
-            setPrefill(null)
-          }}
+          onCancel={() => setWriting(false)}
           onSubmit={(_k, r) => {
             setBusy(true)
             return (
-              createFeedPost(
+              createPost(
                 {
                   tripId: trip!.id,
                   userId: session!.user.id,
-                  position: r.location?.position ?? capture.position,
-                  place: r.location?.place ?? capture.place,
+                  position: r.location?.position ?? r.autoLocation?.position ?? capture.position,
+                  place: r.location?.place ?? r.autoLocation?.place ?? capture.place,
                   at: r.at,
-                  source: r.location ? 'manual' : capture.source,
+                  source: r.location ? 'manual' : 'gps',
                   lockPlace: !!r.location,
                 },
-                r.title,
-                r.text,
-                r.files,
-                r.links,
+                { title: r.title, text: r.text, files: r.files, links: r.links, recap: r.recap },
               )
                 .then(() => {
                   setWriting(false)
-                  setPrefill(null)
                   toast('Beitrag veröffentlicht')
                   void refresh()
                 })

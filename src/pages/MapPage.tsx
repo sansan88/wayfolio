@@ -1,9 +1,8 @@
 import { IonContent, IonFab, IonFabButton, IonIcon, IonPage, IonText, useIonViewWillEnter } from '@ionic/react'
-import { locate } from 'ionicons/icons'
+import { add } from 'ionicons/icons'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import CheckinModal from '../components/CheckinModal'
 import LocationSheet from '../components/LocationSheet'
 import { PageHeader } from '../components/PageHeader'
 import { loadRoute, type RoutePoint } from '../lib/route'
@@ -16,7 +15,6 @@ const MapPage = () => {
   const { trip } = useTrip()
   const [points, setPoints] = useState<RoutePoint[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [picking, setPicking] = useState(false)
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [selected, setSelected] = useState<RoutePoint | null>(null)
 
@@ -74,18 +72,17 @@ const MapPage = () => {
         {points?.length === 0 && (
           <IonText color="medium">
             <p className="ion-padding" style={{ position: 'absolute', top: 0, background: 'var(--ion-background-color)' }}>
-              Noch keine Standorte. Tippt unten rechts, um euren ersten Standort zu setzen.
+              Noch keine Standorte. Tippt unten rechts auf «+», um euren ersten Beitrag mit Ort zu erfassen.
             </p>
           </IonText>
         )}
 
         <IonFab slot="fixed" vertical="bottom" horizontal="end" className="map__fab">
-          <IonFabButton aria-label="Check-in" onClick={() => setPicking(true)}>
-            <IonIcon icon={locate} />
+          <IonFabButton aria-label="Neuer Beitrag" onClick={() => navigate('/feed', { state: { compose: true } })}>
+            <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
 
-        <CheckinModal isOpen={picking} onClose={() => setPicking(false)} onPosted={refresh} />
         <LocationSheet
           point={selected}
           points={points ?? []}

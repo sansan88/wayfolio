@@ -113,9 +113,13 @@ const feed = async (link: Link, device: unknown, onlyPost?: string) => {
   ])
   if (error) throw new HttpError(500, error.message)
 
-  // Route-Updates innerhalb der Verzögerung ganz ausblenden
+  // Innerhalb der Standort-Verzögerung: Routenbilder weglassen; Beiträge, die nur aus dem Routenbild bestehen, ganz
   // deno-lint-ignore no-explicit-any
-  const rows = ((posts ?? []) as any[]).filter((p) => p.kind !== 'route_update' || Date.parse(p.published_at) <= cutoff)
+  const isRoute = (b: any) => !!b.media?.variants?.route
+  // deno-lint-ignore no-explicit-any
+  const rows = ((posts ?? []) as any[])
+    .map((p) => (Date.parse(p.published_at) <= cutoff ? p : { ...p, post_blocks: p.post_blocks.filter((b: unknown) => !isRoute(b)) }))
+    .filter((p) => p.post_blocks.length > 0 || p.title || p.kind === 'poll')
   const paths = rows.flatMap((p) =>
     p.post_blocks
       .flatMap((b: { media: { storage_path: string; variants: { thumb?: string } | null } | null }) => [b.media?.storage_path, b.media?.variants?.thumb])

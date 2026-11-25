@@ -49,7 +49,7 @@ const LinksEditor = ({ links, onChange }: Props) => {
           </IonItem>
         )}
       </IonList>
-      {rows.some(invalid) && <IonNote className="compose__note checkin__error">Ein Link ist keine gültige Web-Adresse.</IonNote>}
+      {rows.some(invalid) && <IonNote className="compose__note compose__error">Ein Link ist keine gültige Web-Adresse.</IonNote>}
     </>
   )
 }

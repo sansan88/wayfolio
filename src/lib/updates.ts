@@ -365,41 +365,39 @@ const linkBlocks = async (links: string[]): Promise<NewBlock[]> => {
   return urls.map((url, i) => ({ kind: 'link', url, text: titles[i] ?? undefined }))
 }
 
-/**
- * Check-in («Ich bin jetzt hier»): Ort + optional Fotos + Bildtext, wie ein Instagram-Post.
- * Der gewählte Ort zählt; nur wenn keiner da ist, kommt er aus den Fotos. Ohne Fotos zeigt
- * der Check-in das Routenbild.
- */
-export const createCheckin = async (base: Context, files: File[], caption: string, links: string[] = []) => {
-  const ctx = base.position ? base : await withPhotoMeta(base, files)
-  if (!ctx.position) fail('Bitte zuerst einen Ort wählen.')
-  const checkin = await checkinFor(ctx)
-  const blocks: NewBlock[] = await mediaBlocks(ctx, files)
-  if (caption.trim()) blocks.push({ kind: 'text', text: caption.trim() })
-  blocks.push(...(await linkBlocks(links)))
-  // ohne Fotos: Routenbild als Bild (die Distanzzeile gehört nicht in den Bildtext)
-  if (!files.length && checkin) blocks.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
-  await publish(ctx, { kind: 'route_update', title: ctx.place?.name.split(',')[0] ?? null, checkinId: checkin?.id ?? null, blocks })
-}
-
 /** Standort setzen: immer ein neuer Routenpunkt mit Routenbild im Feed. */
 export const createLocationUpdate = async (ctx: Context) => {
-  if (!ctx.position) fail('Ohne Standort kein Check-in.')
+  if (!ctx.position) fail('Ohne Standort kein Update.')
   const checkin = await checkinFor(ctx, true)
   const blocks = await routeBlocks(ctx, checkin!.id)
-  await publish(ctx, { kind: 'route_update', checkinId: checkin!.id, blocks })
+  await publish(ctx, { kind: 'feed', checkinId: checkin!.id, blocks })
 }
 
-/** Beitrag: Ort/Zeit aus den Fotos; an einem neuen Ort kommt das Routenbild dazu. */
-export const createFeedPost = async (base: Context, title: string, text: string, files: File[], links: string[] = []) => {
-  const ctx = await withPhotoMeta(base, files)
+/**
+ * Ein Beitrag – die einzige Art, Neues zu erfassen: optional Titel, Text, Ort, Zeit, Fotos/Medien, Links.
+ * Ort: manuell gewählt (fix) > aus dem ersten Foto > GPS. An einem neuen Ort oder ohne Fotos kommt
+ * das Routenbild dazu. Ohne Titel zeigt die App den Ort als Titel.
+ * `recap`: Vorlage aus «Rückblick mit Claude» – markiert als Beitragsart «background», damit der
+ * nächste Rückblick erst danach beginnt.
+ */
+export const createPost = async (
+  base: Context,
+  post: { title: string; text: string; files: File[]; links?: string[]; recap?: boolean },
+) => {
+  const ctx = await withPhotoMeta(base, post.files)
   const checkin = await checkinFor(ctx)
   const blocks: NewBlock[] = []
-  if (text.trim()) blocks.push({ kind: 'text', text: text.trim() })
-  blocks.push(...(await mediaBlocks(ctx, files)))
-  blocks.push(...(await linkBlocks(links)))
-  if (checkin?.isNew) blocks.push(...(await routeBlocks(ctx, checkin.id)))
-  await publish(ctx, { kind: 'feed', title: title.trim() || null, blocks, checkinId: checkin?.id ?? null })
+  if (post.text.trim()) blocks.push({ kind: 'text', text: post.text.trim() })
+  blocks.push(...(await mediaBlocks(ctx, post.files)))
+  blocks.push(...(await linkBlocks(post.links ?? [])))
+  const hasPhoto = post.files.some((f) => f.type.startsWith('image') || f.type.startsWith('video'))
+  if (checkin && (checkin.isNew || !hasPhoto)) blocks.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
+  await publish(ctx, {
+    kind: post.recap ? 'background' : 'feed',
+    title: post.title.trim() || null,
+    blocks,
+    checkinId: checkin?.id ?? null,
+  })
 }
 
 export const createBackground = async (base: Context, title: string, text: string, files: File[]) => {
@@ -480,7 +478,7 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
   if (c.location) {
     const checkin = await checkinFor(ctx)
     checkinId = checkin?.id ?? null
-    if (checkin?.isNew && post.kind !== 'route_update') extra.push(...(await routeBlocks(ctx, checkin.id)))
+    if (checkin?.isNew && !post.blocks.some((b) => b.route)) extra.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
   } else if (c.at && post.checkin_id) {
     // Zeitpunkt auch am Ort nachführen, damit die Route in der richtigen Reihenfolge bleibt
     const { error: e } = await supabase.from('checkins').update({ recorded_at: at.toISOString() }).eq('id', post.checkin_id)
@@ -490,7 +488,7 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
   const { error } = await supabase
     .from('posts')
     .update({
-      title: c.title.trim() || (c.location && post.kind === 'route_update' ? c.location.place.name : null),
+      title: c.title.trim() || null,
       published_at: at.toISOString(),
       checkin_id: checkinId,
     })

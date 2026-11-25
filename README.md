@@ -10,14 +10,13 @@ Live: **https://littlefootnotes.app**
 
 **Für Reisende (mit Konto, Anmeldung per E-Mail-Link)**
 
-- **Check-in:** Ort per GPS, Suche oder Pin auf der Karte, dazu ein oder mehrere Fotos und ein Satz – «Wir sind heute hier».
-- **Beitrag:** längerer Text mit optionalen Fotos, Link und Ort.
+- **Beitrag:** eine einzige Art, Inhalte zu erfassen – Titel (optional, sonst der Ort), Text, Fotos/Videos, Links, Ort und Zeitpunkt. Der Ort kommt automatisch per GPS oder aus den Fotodaten und lässt sich per Suche oder Pin ändern; die Uhrzeit wählt man in 5-Minuten-Schritten.
 - **Newsletter-Abos sehen:** Im Reise-Editor (Reisen › Reise antippen) stehen alle Abonnent:innen mit Name, E-Mail, Häufigkeit und Status; einzelne lassen sich entfernen. Ältere, nie bestätigte Anmeldungen erscheinen als «E-Mail nicht bestätigt».
-- **Links:** Check-ins und Beiträge können mehrere Links haben (Unterkunft, Museum, Google-Maps-Ort, Instagram-Profil …). Angezeigt wird nie die ganze Adresse, sondern ein Symbol, darunter der Dienst: bei Google Maps der Ortsname, bei Airbnb/Booking die Unterkunft (z. B. «Apartment · Kerikeri»), bei Instagram «@profil», sonst der Seitentitel. Titel liest die Edge Function `link-title` beim Speichern; ältere Links ohne Titel ergänzt die App einmalig im Hintergrund.
+- **Links:** Beiträge können mehrere Links haben (Unterkunft, Museum, Google-Maps-Ort, Instagram-Profil …). Angezeigt wird nie die ganze Adresse, sondern ein Symbol, darunter der Dienst: bei Google Maps der Ortsname, bei Airbnb/Booking die Unterkunft (z. B. «Apartment · Kerikeri»), bei Instagram «@profil», sonst der Seitentitel. Titel liest die Edge Function `link-title` beim Speichern; ältere Links ohne Titel ergänzt die App einmalig im Hintergrund.
 - **Mit Claude schreiben:** Im Beitrags-Dialog machen ein paar Stichworte und/oder Fotos auf Knopfdruck einen ausformulierten Entwurf (Titel + Text, Schweizer Rechtschreibung, Stil der bisherigen Beiträge). Der Entwurf lässt sich anpassen oder rückgängig machen; gespeichert wird erst beim Posten.
 - **Mit Claude überarbeiten:** Steht schon Text im Beitrag, öffnet der Claude-Knopf eine Auswahl: Korrekturlesen, Kürzen, Länger, Umformulieren (mit eigenem Änderungswunsch) oder aus Stichworten neu schreiben.
 - **Einwilligung:** Beim ersten Gebrauch erklärt ein Dialog, welche Daten an Anthropic gehen; erst nach «Ja, aktivieren» wird `profiles.ai_enabled_at` gesetzt (auch serverseitig geprüft). Ein- und ausschalten unter Reisen › Dein Profil.
-- **Rückblick mit Claude:** dritte Option im «+»-Menü. Claude fasst alle Check-ins seit dem letzten Beitrag (Orte, Texte, bis zu vier Fotos) zu einer Vorlage zusammen; sie öffnet sich als normaler Beitrag zum Bearbeiten und lässt sich danach nochmals mit Claude überarbeiten.
+- **Rückblick mit Claude:** im Claude-Menü eines leeren Beitrags. Claude fasst alle Beiträge seit dem letzten Rückblick (höchstens 14 Tage) (Orte, Texte, bis zu vier Fotos) zu einer Vorlage zusammen; sie öffnet sich als normaler Beitrag zum Bearbeiten und lässt sich danach nochmals mit Claude überarbeiten.
 - **Ort und Zeit frei wählbar:** Beiträge lassen sich rückwirkend erfassen; Ort und Aufnahmezeit werden wenn möglich aus den Foto-Metadaten (EXIF) übernommen. Beiträge sind nachträglich bearbeitbar.
 - **Feed mit Zeitleiste:** einheitliche Karten (Bild oben, Titel, Ort, Metazeile). Im Kopf eine Zeitleiste mit **einem Punkt pro Tag** (erstes Foto des Tages, Zähler bei mehreren Beiträgen); fehlende Tage erscheinen als gestrichelter Punkt mit «+» zum Nachtragen. Feed und Zeitleiste scrollen synchron.
 - **Karte:** Route aller Orte (MapLibre + OpenFreeMap), Fotos als Marker, Tipp auf einen Ort öffnet ein Sheet mit allen Beiträgen von dort. Routenbilder werden automatisch erzeugt.
@@ -84,7 +83,7 @@ src/
   App.tsx                Routen: Startseite, /login, /impressum, /datenschutz, /t/, /p/, /g/ und Tabs (feed, karte, galerie, reise)
   pages/                 LandingPage (+ landingI18n.ts), FeedPage, MapPage, GalleryPage, TripSettingsPage,
                          FollowerPage (/t/), SharedPostPage (/p/), PublicGalleryPage (/g/, alt), LegalPage, LoginPage
-  components/            PostCard, CheckinModal, ComposeModal, LocationPicker, DateTimeSheet, LocationSheet,
+  components/            PostCard, ComposeModal, LocationPicker, DateTimeSheet, LocationSheet,
                          RouteMap, TimelineDots, GalleryGrid, PageSpinner (Camper-Ladeanimation), UpdateBanner …
   lib/                   updates.ts (Beiträge, Medien, Links), share.ts, follower.ts, map.ts, geo.ts, offline.ts,
                          pwaUpdate.ts, location.ts, waitlist.ts …

@@ -36,7 +36,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAiConsent } from '../lib/aiConsent'
-import { draftPost, type DraftAction } from '../lib/aiDraft'
+import { draftPost, draftRecap, type DraftAction } from '../lib/aiDraft'
+import { readPhotoMeta } from '../lib/exif'
+import { useGeoPermission } from '../lib/geoPermission'
+import { getPosition, reverseGeocode } from '../lib/location'
 import { formatWhen } from '../lib/datetime'
 import { cleanLinks, normalizeUrl } from '../lib/links'
 import type { Place, Position } from '../lib/location'
@@ -60,6 +63,10 @@ export interface ComposeResult {
   location: { position: Position; place: Place } | null
   /** Bearbeiten: entfernte Medien-Bausteine */
   removedBlockIds: string[]
+  /** neuer Beitrag: Ort aus GPS oder Foto (nicht fix – ein Foto mit Ortsdaten darf ihn ersetzen) */
+  autoLocation: { position: Position; place: Place } | null
+  /** Text stammt aus «Rückblick mit Claude» */
+  recap: boolean
 }
 
 export interface ExistingMedia {
@@ -88,7 +95,7 @@ interface Props {
 }
 
 const heading: Record<ComposeKind, string> = {
-  post: 'Beitrag',
+  post: 'Neuer Beitrag',
   background: 'Hintergrund',
   poll: 'Entscheidung',
   edit: 'Bearbeiten',
@@ -116,6 +123,11 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const [at, setAt] = useState<Date | null>(null)
   const [choosingTime, setChoosingTime] = useState(false)
   const [location, setLocation] = useState<{ position: Position; place: Place } | null>(null)
+  /** neuer Beitrag: Ort automatisch (GPS beim Öffnen, Foto mit Ortsdaten) */
+  const [autoLoc, setAutoLoc] = useState<{ position: Position; place: Place; source: 'gps' | 'photo' } | null>(null)
+  const [locating, setLocating] = useState(false)
+  const [recap, setRecap] = useState(false)
+  const geo = useGeoPermission()
   const [picking, setPicking] = useState(false)
   const [removed, setRemoved] = useState<string[]>([])
   const [drafting, setDrafting] = useState(false)
@@ -147,10 +159,42 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     setClosesInHours(48)
     setAt(initial?.at ?? null)
     setLocation(null)
+    setAutoLoc(initial?.position && initial.place ? { position: initial.position, place: initial.place, source: 'gps' } : null)
+    setRecap(false)
     setRemoved([])
+    // neuer Beitrag: aktuellen Ort holen, wenn erlaubt (wie früher beim Check-in)
+    if (kind === 'post' && geo.state === 'granted') {
+      setLocating(true)
+      void getPosition()
+        .then(async (pos) => {
+          const place = await reverseGeocode(pos)
+          setAutoLoc((cur) => (cur?.source === 'photo' ? cur : { position: pos, place, source: 'gps' }))
+        })
+        .catch(() => undefined)
+        .finally(() => setLocating(false))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, initial])
 
-  const placeName = location?.place.name ?? initial?.place?.name ?? null
+  /** Fotos mit Ortsdaten: Ort und Aufnahmezeit gleich im Formular zeigen (ausser Ort/Zeit sind gewählt) */
+  const addFiles = async (added: File[]) => {
+    setFiles((cur) => [...cur, ...added])
+    if (kind !== 'post') return
+    for (const f of added) {
+      if (!f.type.startsWith('image')) continue
+      const meta = await readPhotoMeta(f).catch(() => null)
+      if (!meta) continue
+      if (meta.takenAt) setAt((cur) => cur ?? meta.takenAt!)
+      if (meta.position && !location) {
+        const place = await reverseGeocode(meta.position).catch(() => null)
+        if (place) setAutoLoc({ position: meta.position, place, source: 'photo' })
+      }
+      if (meta.position || meta.takenAt) break
+    }
+  }
+
+  const placeName = location?.place.name ?? autoLoc?.place.name ?? initial?.place?.name ?? null
+  const placeSource = location ? null : autoLoc?.source === 'photo' ? 'aus Foto' : autoLoc ? 'GPS' : null
   const existing = (initial?.media ?? []).filter((m) => !removed.includes(m.blockId))
 
   const filledOptions = options.map((o) => o.trim()).filter(Boolean)
@@ -273,11 +317,53 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
       ],
     })
 
-  /** Mit Text: Auswahl, was Claude tun soll. Ohne Text: direkt aus Stichworten/Fotos schreiben. */
+  /** Rückblick: Claude fasst die Beiträge seit dem letzten Rückblick zusammen und füllt Titel und Text. */
+  const draftRecapHere = async () => {
+    if (!tripId || drafting) return
+    const before = { title, text }
+    setDrafting(true)
+    try {
+      const d = await draftRecap(tripId)
+      if (d.title) setTitle(d.title)
+      setText(d.text)
+      setRecap(true)
+      void presentToast({
+        message: 'Rückblick von Claude – passe ihn ruhig an.',
+        duration: 6000,
+        position: 'top',
+        buttons: [
+          {
+            text: 'Rückgängig',
+            handler: () => {
+              setTitle(before.title)
+              setText(before.text)
+              setRecap(false)
+            },
+          },
+        ],
+      })
+    } catch (e) {
+      void presentToast({ message: (e as Error).message, duration: 4500, position: 'top', color: 'warning' })
+    } finally {
+      setDrafting(false)
+    }
+  }
+
+  /** Mit Text: Auswahl, was Claude tun soll. Ohne Text: neu schreiben oder Rückblick. */
   const openClaude = async () => {
     // Beim ersten Mal: Hinweis zum Datenschutz, aktiv mit «Ja» bestätigen
     if (!(await ai.ensure())) return
-    if (!text.trim()) return void draftWithClaude()
+    if (!text.trim()) {
+      if (kind !== 'post') return void draftWithClaude()
+      return void presentSheet({
+        header: 'Mit Claude schreiben',
+        buttons: [
+          { text: 'Aus Stichworten und Fotos', handler: () => void draftWithClaude() },
+          { text: 'Rückblick der letzten Tage', handler: () => void draftRecapHere() },
+          { text: 'Abbrechen', role: 'cancel' },
+        ],
+      })
+    }
     void presentSheet({
       header: 'Mit Claude überarbeiten',
       buttons: [
@@ -294,7 +380,19 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const submit = async () => {
     if (!kind || !valid || saving) return
     submitted.current = true
-    const result = onSubmit(kind, { title, text, files, links: cleanLinks(links), options: filledOptions, closesInHours, at, location, removedBlockIds: removed })
+    const result = onSubmit(kind, {
+      title,
+      text,
+      files,
+      links: cleanLinks(links),
+      options: filledOptions,
+      closesInHours,
+      at,
+      location,
+      removedBlockIds: removed,
+      autoLocation: autoLoc ? { position: autoLoc.position, place: autoLoc.place } : null,
+      recap,
+    })
     if (!(result instanceof Promise)) return
     setSaving(true)
     try {
@@ -335,7 +433,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
           <IonItem>
             <IonInput
               aria-label={kind === 'poll' ? 'Frage' : 'Titel'}
-              placeholder={kind === 'poll' ? 'Welches Auto sollen wir kaufen?' : kind === 'background' ? 'Titel, z.B. Wie wir das Auto fanden' : 'Titel (optional)'}
+              placeholder={kind === 'poll' ? 'Welches Auto sollen wir kaufen?' : kind === 'background' ? 'Titel, z.B. Wie wir das Auto fanden' : 'Titel (optional – sonst der Ort)'}
               value={title}
               onIonInput={(e) => setTitle(String(e.detail.value ?? ''))}
             />
@@ -351,7 +449,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
             />
           </IonItem>
           {canDraft && (
-            <IonItem button detail={false} disabled={drafting || !draftInput} onClick={() => void openClaude()}>
+            <IonItem button detail={false} disabled={drafting || (!draftInput && kind !== 'post')} onClick={() => void openClaude()}>
               {drafting ? (
                 <IonSpinner slot="start" name="crescent" color="primary" />
               ) : (
@@ -365,8 +463,8 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
         </IonList>
         {canDraft && !text.trim() && (
           <IonNote className="compose__note">
-            Ein paar Stichworte oder Fotos genügen – Claude macht daraus einen Beitrag. Stichworte und Fotos gehen dafür
-            an Anthropic.
+            Ein paar Stichworte oder Fotos genügen – oder ein Rückblick auf die letzten Tage. Claude macht daraus einen
+            Beitrag; Stichworte und Fotos gehen dafür an Anthropic.
           </IonNote>
         )}
 
@@ -375,7 +473,13 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
             <IonIcon slot="start" icon={locationOutline} color="primary" />
             <IonLabel>Ort</IonLabel>
             <IonNote slot="end" className="compose__value">
-              {placeName?.split(',')[0] ?? (kind === 'edit' ? 'Ohne Ort' : 'Aus Fotos oder GPS')}
+              {locating && !placeName
+                ? 'Wird ermittelt …'
+                : placeName
+                  ? `${placeName.split(',')[0]}${placeSource ? ` (${placeSource})` : ''}`
+                  : kind === 'edit'
+                    ? 'Ohne Ort'
+                    : 'Ort wählen'}
             </IonNote>
           </IonItem>
           <IonItem button detail onClick={() => setChoosingTime(true)}>
@@ -398,7 +502,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
         />
         <LocationPicker
           isOpen={picking}
-          initial={location?.position ?? initial?.position ?? null}
+          initial={location?.position ?? autoLoc?.position ?? initial?.position ?? null}
           onClose={() => setPicking(false)}
           onPick={(position, place) => setLocation({ position, place })}
         />
@@ -487,7 +591,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
               hidden
               accept={kind === 'background' ? 'image/*' : 'image/*,video/*,audio/*'}
               onChange={(e) => {
-                setFiles([...files, ...Array.from(e.target.files ?? [])])
+                void addFiles(Array.from(e.target.files ?? []))
                 e.target.value = ''
               }}
             />
