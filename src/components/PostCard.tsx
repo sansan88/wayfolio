@@ -197,12 +197,18 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props
   ]
   const others = post.blocks.some((b) => (b.kind === 'video' || b.kind === 'audio') && b.mediaUrl)
   const placeParts = post.place_name?.split(',').map((x) => x.trim()) ?? []
-  // Check-in: Ort als Titel, Land darunter; Beitrag: eigener Titel, Ort darunter
   const isCheckin = post.kind === 'route_update'
-  const title = isCheckin ? (placeParts[0] ?? post.title ?? 'Check-in') : (post.title ?? placeParts[0] ?? 'Beitrag')
-  // Check-in: Titel ist der Ort, darunter das Land (antippbar); Beitrag: Ort unter dem Titel
-  const place = post.place_name ? (isCheckin ? placeParts.slice(1).join(', ') || placeParts[0] : placeParts[0]) : null
-
+  // Eigener Titel (beim Bearbeiten gesetzt) hat Vorrang; automatisch ist er bei Check-ins gleich dem Ortsnamen
+  const ownTitle = post.title?.trim() && post.title.trim() !== post.place_name?.trim() && post.title.trim() !== placeParts[0] ? post.title.trim() : null
+  // Check-in ohne eigenen Titel: Ort als Titel, Land darunter; sonst Titel und darunter der ganze Ort (antippbar)
+  const title = ownTitle ?? (isCheckin ? (placeParts[0] ?? 'Check-in') : (post.title ?? placeParts[0] ?? 'Beitrag'))
+  const place = post.place_name
+    ? isCheckin && !ownTitle
+      ? placeParts.slice(1).join(', ') || placeParts[0]
+      : isCheckin
+        ? placeParts.join(', ')
+        : placeParts[0]
+    : null
 
   return (
     <IonCard className={`post post--${post.kind}`}>
