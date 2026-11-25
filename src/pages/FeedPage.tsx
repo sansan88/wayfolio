@@ -335,19 +335,26 @@ const FeedPage = () => {
           initial={editInitial}
           onCancel={() => setEditing(null)}
           onSubmit={(_k, r) => {
+            // Dialog bleibt offen, bis gespeichert ist – bei einem Fehler gehen keine Eingaben verloren
             const post = editing!
-            setEditing(null)
-            void act(() =>
-              updatePost(post, trip!.id, session!.user.id, {
-                title: r.title,
-                text: r.text,
-                links: r.links,
-                at: r.at,
-                location: r.location,
-                files: r.files,
-                removedBlockIds: r.removedBlockIds,
-              }),
-            ).then(() => toast('Beitrag aktualisiert'))
+            return updatePost(post, trip!.id, session!.user.id, {
+              title: r.title,
+              text: r.text,
+              links: r.links,
+              at: r.at,
+              location: r.location,
+              files: r.files,
+              removedBlockIds: r.removedBlockIds,
+            })
+              .then(() => {
+                setEditing(null)
+                toast('Beitrag aktualisiert')
+                void refresh()
+              })
+              .catch((e: Error) => {
+                toast(`Nicht gespeichert: ${e.message}`, 'danger')
+                throw e
+              })
           }}
         />
         <IonFab slot="fixed" vertical="bottom" horizontal="end">
@@ -371,10 +378,8 @@ const FeedPage = () => {
             setPrefill(null)
           }}
           onSubmit={(_k, r) => {
-            setWriting(false)
-            setPrefill(null)
             setBusy(true)
-            void act(() =>
+            return (
               createFeedPost(
                 {
                   tripId: trip!.id,
@@ -389,10 +394,19 @@ const FeedPage = () => {
                 r.text,
                 r.files,
                 r.links,
-              ),
+              )
+                .then(() => {
+                  setWriting(false)
+                  setPrefill(null)
+                  toast('Beitrag veröffentlicht')
+                  void refresh()
+                })
+                .catch((e: Error) => {
+                  toast(`Nicht veröffentlicht: ${e.message}`, 'danger')
+                  throw e
+                })
+                .finally(() => setBusy(false))
             )
-              .then(() => toast('Beitrag veröffentlicht'))
-              .finally(() => setBusy(false))
           }}
         />
         <IonLoading isOpen={busy} message="Beitrag wird veröffentlicht …" />

@@ -83,7 +83,8 @@ interface Props {
     media?: ExistingMedia[]
   }
   onCancel: () => void
-  onSubmit: (kind: ComposeKind, result: ComposeResult) => void
+  /** Gibt es ein Promise zurück, bleibt der Dialog bis zum erfolgreichen Speichern offen (bei Fehlern bleibt alles erhalten). */
+  onSubmit: (kind: ComposeKind, result: ComposeResult) => void | Promise<unknown>
 }
 
 const heading: Record<ComposeKind, string> = {
@@ -118,6 +119,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const [picking, setPicking] = useState(false)
   const [removed, setRemoved] = useState<string[]>([])
   const [drafting, setDrafting] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [presentToast] = useIonToast()
   const [presentAlert] = useIonAlert()
   const ai = useAiConsent()
@@ -176,6 +178,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
 
   /** iOS-Muster (Ionic-Doku «canDismiss»): bei ungespeicherten Eingaben per Action Sheet nachfragen. */
   const canDismiss = async () => {
+    if (saving) return false
     if (closing.current || submitted.current || !dirty || !kind) {
       closing.current = true
       return true
@@ -288,10 +291,20 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     })
   }
 
-  const submit = () => {
-    if (!kind || !valid) return
+  const submit = async () => {
+    if (!kind || !valid || saving) return
     submitted.current = true
-    onSubmit(kind, { title, text, files, links: cleanLinks(links), options: filledOptions, closesInHours, at, location, removedBlockIds: removed })
+    const result = onSubmit(kind, { title, text, files, links: cleanLinks(links), options: filledOptions, closesInHours, at, location, removedBlockIds: removed })
+    if (!(result instanceof Promise)) return
+    setSaving(true)
+    try {
+      await result
+    } catch {
+      // Fehler meldet die Eltern-Seite; Eingaben bleiben im offenen Dialog
+      submitted.current = false
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -305,12 +318,14 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={() => void modal.current?.dismiss()}>Abbrechen</IonButton>
+            <IonButton disabled={saving} onClick={() => void modal.current?.dismiss()}>
+              Abbrechen
+            </IonButton>
           </IonButtons>
           <IonTitle>{kind ? heading[kind] : ''}</IonTitle>
           <IonButtons slot="end">
-            <IonButton strong disabled={!valid} onClick={submit}>
-              {kind === 'edit' ? 'Sichern' : 'Posten'}
+            <IonButton strong disabled={!valid || saving} onClick={() => void submit()}>
+              {saving ? <IonSpinner name="crescent" /> : kind === 'edit' ? 'Sichern' : 'Posten'}
             </IonButton>
           </IonButtons>
         </IonToolbar>
