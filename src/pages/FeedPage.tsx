@@ -94,7 +94,8 @@ const FeedPage = () => {
     if (!editing) return undefined
     const point = points.find((p) => p.id === editing.checkin_id)
     return {
-      title: editing.title ?? '',
+      // Titel, der nur den Ort wiederholt, nicht als eigenen Titel vorschlagen
+      title: editing.title && editing.title !== editing.place_name && editing.title !== editing.place_name?.split(',')[0].trim() ? editing.title : '',
       text: editing.blocks.find((b) => b.kind === 'text')?.text ?? '',
       links: editing.blocks.filter((b) => b.kind === 'link' && b.url).map((b) => b.url!),
       at: new Date(editing.published_at),
@@ -321,6 +322,7 @@ const FeedPage = () => {
               location: r.location,
               files: r.files,
               removedBlockIds: r.removedBlockIds,
+              mediaOrder: r.mediaOrder,
             })
               .then(() => {
                 setEditing(null)

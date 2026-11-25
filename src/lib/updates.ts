@@ -144,7 +144,7 @@ const publish = async (ctx: Context, post: NewPost): Promise<string> => {
       trip_id: ctx.tripId,
       author_id: ctx.userId,
       kind: post.kind,
-      title: post.title ?? ctx.place?.name ?? null,
+      title: post.title ?? null,
       checkin_id: checkinId,
       published_at: when(ctx),
       // Story-Kreis immer 24 h ab Veröffentlichung, auch wenn rückdatiert
@@ -465,6 +465,8 @@ export interface PostChanges {
   location: { position: Position; place: Place } | null
   files: File[]
   removedBlockIds: string[]
+  /** Reihenfolge der Medien: Block-ID oder «new:<Index in files>» */
+  mediaOrder?: string[]
 }
 
 /** Beitrag bearbeiten: Titel, Text, Link, Zeitpunkt, Ort, Medien hinzufügen/entfernen. */
@@ -526,7 +528,8 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
   // neue Bausteine anhängen
   const added: NewBlock[] = []
   if (!textBlock && c.text.trim()) added.push({ kind: 'text', text: c.text.trim() })
-  added.push(...(await mediaBlocks(ctx, c.files)))
+  const newMedia = await mediaBlocks(ctx, c.files)
+  added.push(...newMedia)
   added.push(...(await linkBlocks(c.links)))
   added.push(...extra)
   if (added.length) {
@@ -543,6 +546,35 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
         url: b.url ?? null,
       })),
     )
+    if (e) fail(e.message)
+  }
+
+  if (c.mediaOrder?.length) await reorderMedia(post.id, c.mediaOrder, newMedia.map((b) => b.mediaId!))
+}
+
+/**
+ * Medien in die gewünschte Reihenfolge bringen. Die Plätze (Positionen) der Medien bleiben,
+ * nur ihre Belegung wechselt – Text, Links und Routenbild bleiben, wo sie sind.
+ */
+const reorderMedia = async (postId: string, order: string[], newMediaIds: string[]) => {
+  const { data, error } = await supabase.from('post_blocks').select('id, position, media_id').eq('post_id', postId)
+  if (error) fail(error.message)
+  const rows = (data ?? []) as { id: string; position: number; media_id: string | null }[]
+  const idFor = (key: string) =>
+    key.startsWith('new:') ? rows.find((r) => r.media_id === newMediaIds[Number(key.slice(4))])?.id : rows.find((r) => r.id === key)?.id
+  const ids = order.map(idFor).filter((id): id is string => !!id)
+  const slots = rows.filter((r) => ids.includes(r.id)).map((r) => r.position).sort((a, b) => a - b)
+  const target = new Map(ids.map((id, i) => [id, slots[i]]))
+  const moves = rows.filter((r) => target.has(r.id) && target.get(r.id) !== r.position)
+  if (!moves.length) return
+  // zweistufig wegen der Eindeutigkeit von (post_id, position)
+  const temp = Math.max(...rows.map((r) => r.position)) + 1000
+  for (const [i, r] of moves.entries()) {
+    const { error: e } = await supabase.from('post_blocks').update({ position: temp + i }).eq('id', r.id)
+    if (e) fail(e.message)
+  }
+  for (const r of moves) {
+    const { error: e } = await supabase.from('post_blocks').update({ position: target.get(r.id)! }).eq('id', r.id)
     if (e) fail(e.message)
   }
 }

@@ -11,6 +11,8 @@ import {
   IonListHeader,
   IonModal,
   IonNote,
+  IonReorder,
+  IonReorderGroup,
   IonSelect,
   IonSelectOption,
   IonTextarea,
@@ -48,6 +50,24 @@ import DateTimeSheet from './DateTimeSheet'
 import LinksEditor from './LinksEditor'
 import LocationPicker from './LocationPicker'
 
+interface MediaItem {
+  key: string
+  existing?: ExistingMedia
+  file?: File
+}
+
+const fileKeys = new WeakMap<File, string>()
+let fileCounter = 0
+/** stabiler Schlüssel pro gewählter Datei (für Reihenfolge und React-Keys) */
+const fileKey = (f: File) => {
+  let k = fileKeys.get(f)
+  if (!k) {
+    k = `file:${fileCounter++}`
+    fileKeys.set(f, k)
+  }
+  return k
+}
+
 export type ComposeKind = 'post' | 'background' | 'poll' | 'edit'
 
 export interface ComposeResult {
@@ -63,6 +83,8 @@ export interface ComposeResult {
   location: { position: Position; place: Place } | null
   /** Bearbeiten: entfernte Medien-Bausteine */
   removedBlockIds: string[]
+  /** Reihenfolge der Medien: Block-ID (vorhanden) oder «new:<Index in files>» */
+  mediaOrder: string[]
   /** neuer Beitrag: Ort aus GPS oder Foto (nicht fix – ein Foto mit Ortsdaten darf ihn ersetzen) */
   autoLocation: { position: Position; place: Place } | null
   /** Text stammt aus «Rückblick mit Claude» */
@@ -130,6 +152,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const geo = useGeoPermission()
   const [picking, setPicking] = useState(false)
   const [removed, setRemoved] = useState<string[]>([])
+  const [order, setOrder] = useState<string[]>([])
   const [drafting, setDrafting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [presentToast] = useIonToast()
@@ -162,6 +185,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     setAutoLoc(initial?.position && initial.place ? { position: initial.position, place: initial.place, source: 'gps' } : null)
     setRecap(false)
     setRemoved([])
+    setOrder([])
     // neuer Beitrag: aktuellen Ort holen, wenn erlaubt (wie früher beim Check-in)
     if (kind === 'post' && geo.state === 'granted') {
       setLocating(true)
@@ -196,6 +220,19 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const placeName = location?.place.name ?? autoLoc?.place.name ?? initial?.place?.name ?? null
   const placeSource = location ? null : autoLoc?.source === 'photo' ? 'aus Foto' : autoLoc ? 'GPS' : null
   const existing = (initial?.media ?? []).filter((m) => !removed.includes(m.blockId))
+  // Fotos, Videos und Audio in einer gemeinsamen, sortierbaren Liste
+  const mediaItems = useMemo(() => {
+    const all: MediaItem[] = [...existing.map((m) => ({ key: m.blockId, existing: m })), ...files.map((f) => ({ key: fileKey(f), file: f }))]
+    const rank = (k: string) => {
+      const i = order.indexOf(k)
+      return i < 0 ? Number.MAX_SAFE_INTEGER : i
+    }
+    return all.map((it, i) => ({ it, i })).sort((a, b) => rank(a.it.key) - rank(b.it.key) || a.i - b.i).map((x) => x.it)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial?.media, removed, files, order])
+  const orderChanged = existing.some((m, i) => mediaItems[i]?.key !== m.blockId)
+  const sortedFiles = mediaItems.filter((m) => m.file).map((m) => m.file!)
+  const mediaOrder = mediaItems.map((m) => (m.file ? `new:${sortedFiles.indexOf(m.file)}` : m.key))
 
   const filledOptions = options.map((o) => o.trim()).filter(Boolean)
   const dirty =
@@ -206,7 +243,8 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
         at?.getTime() !== initial?.at?.getTime() ||
         !!location ||
         files.length > 0 ||
-        removed.length > 0
+        removed.length > 0 ||
+        orderChanged
       : !!(title || text || cleanLinks(links).length || files.length || filledOptions.length)
   const linksOk = links.every((l) => !l.trim() || normalizeUrl(l))
   const valid =
@@ -383,13 +421,14 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     const result = onSubmit(kind, {
       title,
       text,
-      files,
+      files: sortedFiles,
       links: cleanLinks(links),
       options: filledOptions,
       closesInHours,
       at,
       location,
       removedBlockIds: removed,
+      mediaOrder,
       autoLocation: autoLoc ? { position: autoLoc.position, place: autoLoc.place } : null,
       recap,
     })
@@ -558,28 +597,37 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
 
         {(kind === 'post' || kind === 'background' || kind === 'edit') && (
           <IonList inset>
-            {existing.map((m) => (
-              <IonItem key={m.blockId}>
-                <IonThumbnail slot="start" className="compose__thumb">
-                  {m.kind === 'photo' ? <img src={m.url} alt="" /> : <IonIcon icon={m.kind === 'video' ? videocamOutline : micOutline} />}
-                </IonThumbnail>
-                <IonLabel>{m.kind === 'photo' ? 'Foto' : m.kind === 'video' ? 'Video' : 'Sprachnachricht'}</IonLabel>
-                <IonButton slot="end" fill="clear" color="danger" aria-label="Entfernen" onClick={() => setRemoved([...removed, m.blockId])}>
-                  <IonIcon slot="icon-only" icon={removeCircle} />
-                </IonButton>
-              </IonItem>
-            ))}
-            {files.map((f, i) => (
-              <IonItem key={`${f.name}-${i}`}>
-                <IonThumbnail slot="start" className="compose__thumb">
-                  <FilePreview file={f} />
-                </IonThumbnail>
-                <IonLabel className="ion-text-nowrap">{f.name}</IonLabel>
-                <IonButton slot="end" fill="clear" color="danger" aria-label="Entfernen" onClick={() => setFiles(files.filter((_, j) => j !== i))}>
-                  <IonIcon slot="icon-only" icon={removeCircle} />
-                </IonButton>
-              </IonItem>
-            ))}
+            <IonReorderGroup
+              disabled={mediaItems.length < 2}
+              onIonReorderEnd={(e) => setOrder(e.detail.complete(mediaItems.map((m) => m.key)) as string[])}
+            >
+              {mediaItems.map((m) => (
+                <IonItem key={m.key}>
+                  <IonThumbnail slot="start" className="compose__thumb">
+                    {m.file ? (
+                      <FilePreview file={m.file} />
+                    ) : m.existing!.kind === 'photo' ? (
+                      <img src={m.existing!.url} alt="" />
+                    ) : (
+                      <IonIcon icon={m.existing!.kind === 'video' ? videocamOutline : micOutline} />
+                    )}
+                  </IonThumbnail>
+                  <IonLabel className="ion-text-nowrap">
+                    {m.file ? m.file.name : m.existing!.kind === 'photo' ? 'Foto' : m.existing!.kind === 'video' ? 'Video' : 'Sprachnachricht'}
+                  </IonLabel>
+                  <IonButton
+                    slot="end"
+                    fill="clear"
+                    color="danger"
+                    aria-label="Entfernen"
+                    onClick={() => (m.file ? setFiles(files.filter((f) => f !== m.file)) : setRemoved([...removed, m.key]))}
+                  >
+                    <IonIcon slot="icon-only" icon={removeCircle} />
+                  </IonButton>
+                  {mediaItems.length > 1 && <IonReorder slot="end" aria-label="Verschieben" />}
+                </IonItem>
+              ))}
+            </IonReorderGroup>
             <IonItem button detail={false} onClick={() => fileInput.current?.click()}>
               <IonIcon slot="start" icon={images} color="primary" />
               <IonLabel color="primary">{kind === 'background' ? 'Fotos hinzufügen' : 'Fotos, Videos, Audio hinzufügen'}</IonLabel>
