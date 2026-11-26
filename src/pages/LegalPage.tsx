@@ -1,5 +1,6 @@
 import { IonContent, IonPage } from '@ionic/react'
 
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/social'
 import { savedTheme } from './landingI18n'
 import './LandingPage.css'
 import './LegalPage.css'
@@ -18,6 +19,8 @@ const Impressum = () => (
       Neuseeland
       <br />
       E-Mail: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>
+      <br />
+      Instagram: <a href={INSTAGRAM_URL}>@{INSTAGRAM_HANDLE}</a>
     </p>
     <p>Little Footnotes ist ein privates Projekt und wird nicht von einem Unternehmen betrieben.</p>
 
@@ -232,6 +235,9 @@ export const LegalFooter = () => (
     <span className="legal-links">
       <a href="https://github.com/sansan88/wayfolio" target="_blank" rel="noreferrer">
         Quellcode
+      </a>
+      <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer">
+        Instagram
       </a>
       <a href={`${home}impressum`}>Impressum</a>
       <a href={`${home}datenschutz`}>Datenschutz</a>

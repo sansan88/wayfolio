@@ -740,6 +740,26 @@
   margin-bottom: 24px;
 }
 
+.lp-follow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 22px auto 0;
+  color: var(--lp-highlight);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lp-follow ion-icon {
+  font-size: 20px;
+}
+
+.lp-follow:hover span {
+  text-decoration: underline;
+}
+
 .lp-final .lp-doodle--sun {
   top: auto;
   right: auto;

@@ -8,6 +8,7 @@ import {
   locationOutline,
   lockClosedOutline,
   logoGithub,
+  logoInstagram,
   logoWhatsapp,
   mapOutline,
   moonOutline,
@@ -16,6 +17,7 @@ import {
 
 import { joinWaitlist } from '../lib/waitlist'
 import { LegalFooter } from './LegalPage'
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../lib/social'
 import {
   initialLang,
   LANGS,
@@ -201,6 +203,9 @@ const LandingPage = ({ signedIn = false }: { signedIn?: boolean }) => {
                 >
                   <IonIcon icon={theme === 'dark' ? sunnyOutline : moonOutline} />
                 </button>
+                <a className="lp-icon-btn lp-hide-xs" href={INSTAGRAM_URL} target="_blank" rel="noreferrer" aria-label={t.instagramAria}>
+                  <IonIcon icon={logoInstagram} />
+                </a>
                 <a className="lp-icon-btn lp-hide-xs" href={REPO} target="_blank" rel="noreferrer" aria-label={t.sourceAria}>
                   <IonIcon icon={logoGithub} />
                 </a>
@@ -350,6 +355,12 @@ const LandingPage = ({ signedIn = false }: { signedIn?: boolean }) => {
             <button type="button" className="lp-btn lp-btn--primary" onClick={start}>
               {startLabel}
             </button>
+            <a className="lp-follow" href={INSTAGRAM_URL} target="_blank" rel="noreferrer">
+              <IonIcon icon={logoInstagram} aria-hidden="true" />
+              <span>
+                {t.followUs} · @{INSTAGRAM_HANDLE}
+              </span>
+            </a>
           </section>
 
           <LegalFooter />

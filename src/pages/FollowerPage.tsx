@@ -35,6 +35,7 @@ import './LoginPage.css'
 import PageSpinner from '../components/PageSpinner'
 import LocationSheet from '../components/LocationSheet'
 import type { RoutePoint } from '../lib/route'
+import { INSTAGRAM_URL } from '../lib/social'
 
 const RouteMap = lazy(() => import('../components/RouteMap'))
 
@@ -225,7 +226,10 @@ const FollowerPage = ({ token }: { token: string }) => {
               <IonNote>
                 Mit Little Footnotes geteilt · privat per Link ·{' '}
                 <a href={`${import.meta.env.BASE_URL}datenschutz`}>Datenschutz</a> ·{' '}
-                <a href={`${import.meta.env.BASE_URL}impressum`}>Impressum</a>
+                <a href={`${import.meta.env.BASE_URL}impressum`}>Impressum</a> ·{' '}
+                <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer">
+                  Instagram
+                </a>
               </IonNote>
             </p>
           </>

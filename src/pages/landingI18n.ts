@@ -18,6 +18,8 @@ export type LandingText = {
   toDiary: string
   howLink: string
   sourceAria: string
+  instagramAria: string
+  followUs: string
   themeLight: string
   themeDark: string
   langLabel: string
@@ -70,6 +72,8 @@ const de: LandingText = {
   toDiary: 'Zu meinem Tagebuch',
   howLink: 'So funktioniert’s',
   sourceAria: 'Quellcode auf GitHub',
+  instagramAria: 'Little Footnotes auf Instagram',
+  followUs: 'Folgt uns auf Instagram',
   themeLight: 'Helles Design',
   themeDark: 'Dunkles Design',
   langLabel: 'Sprache',
@@ -155,6 +159,8 @@ const en: LandingText = {
   toDiary: 'Go to my journal',
   howLink: 'How it works',
   sourceAria: 'Source code on GitHub',
+  instagramAria: 'Little Footnotes on Instagram',
+  followUs: 'Follow us on Instagram',
   themeLight: 'Light theme',
   themeDark: 'Dark theme',
   langLabel: 'Language',
@@ -240,6 +246,8 @@ const fr: LandingText = {
   toDiary: 'Vers mon carnet',
   howLink: 'Comment ça marche',
   sourceAria: 'Code source sur GitHub',
+  instagramAria: 'Little Footnotes sur Instagram',
+  followUs: 'Suivez-nous sur Instagram',
   themeLight: 'Thème clair',
   themeDark: 'Thème sombre',
   langLabel: 'Langue',
@@ -325,6 +333,8 @@ const es: LandingText = {
   toDiary: 'Ir a mi diario',
   howLink: 'Cómo funciona',
   sourceAria: 'Código fuente en GitHub',
+  instagramAria: 'Little Footnotes en Instagram',
+  followUs: 'Síguenos en Instagram',
   themeLight: 'Tema claro',
   themeDark: 'Tema oscuro',
   langLabel: 'Idioma',

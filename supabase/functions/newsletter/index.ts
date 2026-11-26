@@ -11,6 +11,7 @@ const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE
 })
 
 const APP = 'https://littlefootnotes.app'
+const INSTAGRAM = 'https://www.instagram.com/littefootnotes'
 const FROM = Deno.env.get('NEWSLETTER_FROM') ?? 'Little Footnotes <team@littlefootnotes.app>'
 const MAX_POSTS = 20
 const IMAGE_DAYS = 30
@@ -214,7 +215,7 @@ const renderMail = (d: Due, posts: MailPost[]) => {
     <tr><td style="padding:18px 4px 0;border-top:1.5px dashed ${C.line};font:13px/1.7 ${SANS};color:${C.muted};">
       Du bekommst diese Mail, weil du «${esc(d.trip_title)}» ${d.frequency === 'weekly' ? 'wöchentlich' : 'bei jedem Beitrag'} abonniert hast.<br>
       <a href="${settings}" style="color:${C.mintText};">Abo-Einstellungen</a> · <a href="${unsubscribe}" style="color:${C.mintText};">Abmelden</a><br>
-      Made with ❤️ and some ☕️ · <a href="${APP}" style="color:${C.muted};">littlefootnotes.app</a>
+      Made with ❤️ and some ☕️ · <a href="${APP}" style="color:${C.muted};">littlefootnotes.app</a> · <a href="${INSTAGRAM}" style="color:${C.muted};">Instagram @littefootnotes</a>
     </td></tr>
   </table>
 </td></tr></table>
@@ -229,6 +230,8 @@ const renderMail = (d: Due, posts: MailPost[]) => {
     `Ganze Reise: ${tripUrl}`,
     `Einstellungen: ${settings}`,
     `Abmelden: ${unsubscribe}`,
+    '',
+    `Little Footnotes auf Instagram: ${INSTAGRAM}`,
   ].join('\n')
 
   const subject =
