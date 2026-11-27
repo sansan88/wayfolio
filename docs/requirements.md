@@ -1,8 +1,8 @@
 # Anforderungskatalog: Little Footnotes
 
 Abgeleitet aus [docs/vision.md](vision.md) (Stand 2026-11-27). Status «Implemented» heisst: umgesetzt und live,
-aber noch nicht mit einem Test oder Testplan bestätigt. Schwellenwerte, die mit «(Vorschlag)» markiert sind,
-muss der Product Owner bestätigen.
+aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sind vom Product Owner bestätigt
+(2026-11-27).
 
 **Rollen**
 
@@ -69,6 +69,7 @@ muss der Product Owner bestätigen.
 | FR-043 | Ort im Detail       | Als Reisende:r möchte ich auf einen Ort tippen und alle Beiträge von dort sehen, damit ich Erlebnisse am selben Ort finde.         | Medium   | Implemented |
 | FR-044 | Galerie             | Als Reisende:r möchte ich alle Fotos der Reise in einer Galerie sehen, damit ich Bilder ohne Text durchblättern kann.             | Medium   | Implemented |
 | FR-045 | Routenbilder        | Als System möchte ich zu Beiträgen automatisch ein Routenbild erzeugen, damit der Weg zwischen zwei Orten sichtbar wird.           | Low      | Implemented |
+| FR-047 | Aktionen am Beitrag     | Als Reisende:r möchte ich Teilen und «…» (Bearbeiten, Links sperren, Löschen) als sichtbare Knöpfe direkt am Beitrag finden, damit ich nicht nach dem Menü suchen muss. | High | Implemented |
 | FR-046 | Ziehen zum Aktualisieren | Als Reisende:r möchte ich den Feed durch Ziehen aktualisieren, damit ich neue Beiträge von Mitreisenden sehe.                  | Medium   | Implemented |
 
 ### Teilen und Mitlesen
@@ -81,6 +82,9 @@ muss der Product Owner bestätigen.
 | FR-053 | Tagebuch ohne Konto lesen | Als Follower möchte ich das Tagebuch über den Link im Browser lesen, damit ich weder App noch Konto brauche.                                  | High     | Implemented |
 | FR-054 | Route als Follower        | Als Follower möchte ich die Route auf der Karte sehen und von einem Ort zurück ins Tagebuch springen, damit ich weiss, wo die Reisenden sind. | High     | Implemented |
 | FR-055 | Einzelbeitrag lesen       | Als Follower möchte ich einen geteilten Einzelbeitrag öffnen, damit ich genau diesen Moment sehe.                                             | Medium   | Implemented |
+| FR-057 | Bild für Instagram        | Als Reisende:r möchte ich aus einem Beitrag ein Bild im Stil der Produktseite mit Datum, Reisetag und Ort erzeugen, damit ich einmal Erfasstes auch auf Instagram teilen kann. | High | Implemented |
+| FR-058 | Story oder Beitrag        | Als Reisende:r möchte ich zwischen Story (9:16) und Feed-Beitrag (4:5) wählen, damit das Bild ohne Zuschneiden passt.                          | High     | Implemented |
+| FR-059 | Foto für das Bild wählen  | Als Reisende:r möchte ich bei mehreren Fotos das Motiv wählen, damit das beste Bild auf Instagram landet.                                     | Medium   | Implemented |
 | FR-056 | Abstimmen als Follower    | Als Follower möchte ich an einer Entscheidung der Reisenden teilnehmen, damit ich mitreden kann.                                              | Low      | Implemented |
 
 ### Newsletter
@@ -111,8 +115,23 @@ muss der Product Owner bestätigen.
 | ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ |
 | FR-080 | Messgrösse Reisetage         | Als Betreiber möchte ich pro Reise den Anteil Reisetage mit mindestens einem Beitrag sehen (Zeitzone der Reise), damit ich das Produkt-Ziel messe. | High     | Open   |
 | FR-081 | Messgrösse letzte Reisewoche | Als Betreiber möchte ich sehen, wie viele abgeschlossene Reisen in ihrer letzten Woche noch Beiträge haben, damit ich erkenne, ob Reisen verstummen. | High   | Open   |
-| FR-082 | Reiseende festlegen          | Als Reisende:r möchte ich das Enddatum meiner Reise setzen, damit Zeitleiste und Messung wissen, wann die Reise vorbei ist.                       | Medium   | Open   |
+| FR-082 | Reiseende festlegen          | Als Reisende:r möchte ich das Enddatum meiner Reise setzen, damit Zeitleiste und Messung wissen, wann die Reise vorbei ist.                       | Medium   | Implemented |
 | FR-083 | Erfassungsdauer messen       | Als Betreiber möchte ich die Dauer vom Öffnen bis zum Posten eines Beitrags anonym erfassen, damit ich sehe, ob Festhalten wenig Zeit kostet.     | Medium   | Open   |
+
+### Zugangsschutz (Konzept: [konzept-zugangsschutz.md](konzept-zugangsschutz.md))
+
+| ID     | Title                       | User Story                                                                                                                                       | Priority | Status   |
+| ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | -------- |
+| FR-090 | Passwort festlegen          | Als Reisende:r möchte ich in den Reise-Einstellungen optional ein Passwort für den Reise-Link festlegen, damit ein öffentlich geposteter Link allein nicht genügt. | High | Open |
+| FR-091 | Passwort ändern/entfernen   | Als Reisende:r möchte ich das Passwort ändern oder entfernen, damit ich den Zugang anpassen kann; nach einer Änderung müssen alle Geräte es neu eingeben. | High | Open |
+| FR-092 | Passwort beim Teilen        | Als Reisende:r möchte ich beim Teilen sehen, dass ein Passwort gilt, und es getrennt vom Link kopieren können, damit ich es auf einem anderen Weg schicke. | High | Open |
+| FR-093 | Passwort eingeben           | Als Follower möchte ich beim ersten Öffnen eines geschützten Links das Passwort eingeben und danach auf diesem Gerät direkt lesen, damit ich es nur einmal brauche. | High | Open |
+| FR-094 | Schutz vor Durchprobieren   | Als Reisende:r möchte ich, dass nach 5 Fehlversuchen in 15 Minuten keine weiteren Versuche möglich sind, damit das Passwort nicht erraten wird.   | High     | Open     |
+| FR-095 | Newsletter nur freigeschaltet | Als Reisende:r möchte ich, dass nur freigeschaltete Geräte den Newsletter einer geschützten Reise abonnieren, damit das Passwort nicht über die Mail umgangen wird. | Medium | Open |
+| FR-096 | Zugang anfragen             | Als Follower möchte ich mit meinem Namen Zugang zu einer Reise anfragen, damit die Reisenden mich freischalten können.                         | Low      | Deferred |
+| FR-097 | Anfragen freigeben          | Als Reisende:r möchte ich offene Zugangsanfragen sehen und annehmen oder ablehnen, damit nur Menschen mitlesen, die ich kenne.                | Low      | Deferred |
+| FR-098 | Geräte sperren              | Als Reisende:r möchte ich einzelne freigeschaltete Geräte sperren, damit ich einen Zugang zurückziehen kann, ohne den Link für alle zu erneuern. | Low   | Deferred |
+| FR-099 | Zugangsstufe wählen         | Als Reisende:r möchte ich pro Reise zwischen «Link genügt», «Link + Passwort» und «Link + Freigabe» wählen, damit der Schutz zur Reise passt.  | Low      | Deferred |
 
 ---
 
@@ -120,8 +139,8 @@ muss der Product Owner bestätigen.
 
 | ID      | Title                      | Requirement                                                                                                                                  | Category        | Priority | Status      |
 | ------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------- | ----------- |
-| NFR-001 | Schnell gepostet           | Ein Beitrag mit einem Foto und einem Satz lässt sich in höchstens 60 Sekunden vom Öffnen bis zum Posten erfassen (Vorschlag).               | Usability       | High     | Open        |
-| NFR-002 | Ladezeit Follower-Ansicht  | Die Follower-Ansicht zeigt die ersten Beiträge über 4G innerhalb von 3 Sekunden (Largest Contentful Paint, Vorschlag).                      | Performance     | High     | Open        |
+| NFR-001 | Schnell gepostet           | Ein Beitrag mit einem Foto und einem Satz lässt sich in höchstens 60 Sekunden vom Öffnen bis zum Posten erfassen.               | Usability       | High     | Open        |
+| NFR-002 | Ladezeit Follower-Ansicht  | Die Follower-Ansicht zeigt die ersten Beiträge über 4G innerhalb von 3 Sekunden (Largest Contentful Paint).                      | Performance     | High     | Open        |
 | NFR-003 | Bildgrösse                 | Fotos werden vor dem Hochladen im Browser auf höchstens 1600 px lange Kante verkleinert (JPEG ca. 82 %).                                    | Performance     | High     | Implemented |
 | NFR-004 | KI-Bildgrösse              | An Claude gehen höchstens 4 Bilder pro Anfrage, verkleinert auf 1024 px.                                                                    | Security        | High     | Implemented |
 | NFR-005 | KI-Tageslimit              | Pro Person sind höchstens 40 KI-Anfragen pro Tag möglich (konfigurierbar über `AI_DAILY_LIMIT`).                                            | Scalability     | Medium   | Implemented |
@@ -133,9 +152,9 @@ muss der Product Owner bestätigen.
 | NFR-011 | Offline-Cache              | Der Service Worker hält bis zu 600 Medien für 120 Tage und bis zu 3000 Kartenkacheln für 60 Tage vor.                                       | Availability    | Medium   | Implemented |
 | NFR-012 | Newsletter-Takt            | Neue Beiträge erreichen Abonnent:innen mit Häufigkeit «jeder Beitrag» spätestens 30 Minuten nach dem Posten (Cron alle 15 Minuten).         | Performance     | Medium   | Implemented |
 | NFR-013 | Mobile Darstellung         | Alle Ansichten sind bei 390 × 844 px ohne horizontales Scrollen bedienbar, im hellen und dunklen Design.                                    | Usability       | High     | Implemented |
-| NFR-014 | Barrierefreiheit           | Die App erfüllt WCAG 2.1 AA für Kontrast und Bedienelemente mit zugänglichem Namen (Vorschlag).                                             | Usability       | Medium   | Open        |
+| NFR-014 | Barrierefreiheit           | Die App erfüllt WCAG 2.1 AA für Kontrast und Bedienelemente mit zugänglichem Namen.                                             | Usability       | Medium   | Open        |
 | NFR-015 | Reduzierte Bewegung        | Animationen (Camper-Ladeanimation, Aktualisieren) entfallen, wenn `prefers-reduced-motion` gesetzt ist.                                     | Usability       | Low      | Implemented |
-| NFR-016 | Verfügbarkeit              | Die App ist über 30 Tage zu mindestens 99,5 % erreichbar (Vorschlag; abhängig von GitHub Pages und Supabase).                               | Availability    | Medium   | Open        |
+| NFR-016 | Verfügbarkeit              | Die App ist über 30 Tage zu mindestens 99,5 % erreichbar; abhängig von GitHub Pages und Supabase).                               | Availability    | Medium   | Open        |
 | NFR-017 | Build vor Commit           | Jeder Commit auf `main` baut fehlerfrei (`BASE_PATH=/ npm run build`, `tsc --noEmit` ohne Fehler).                                           | Maintainability | High     | Implemented |
 | NFR-018 | Messgrössen ohne Tracking  | Die Messung des Produkt-Ziels kommt ohne Drittanbieter-Tracking und ohne Cookies für Follower aus.                                          | Security        | High     | Open        |
 
@@ -166,8 +185,6 @@ muss der Product Owner bestätigen.
 
 ## Offene Punkte
 
-- NFR-001, NFR-002, NFR-014, NFR-016: Schwellenwerte sind Vorschläge – vom Product Owner zu bestätigen.
-- FR-080/FR-081: Zielwerte siehe offene Frage 1 in [vision.md](vision.md).
+- Zugangsschutz: Beitrags-Links mit oder ohne Passwort? Empfehlung ohne (siehe Konzept).
 - `follower-api` kennt noch die Aktionen `react` (Emoji-Reaktionen) und `reply` (Antworten), die App zeigt sie
-  nicht. Entscheiden: als Anforderung aufnehmen (vereinbar mit NFR-010, solange keine Zahlen erscheinen) oder
-  entfernen.
+  nicht. Entscheid 2026-11-27: werden nicht gebaut und aus dem Backend entfernt (Backlog Rang 7).

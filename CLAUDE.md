@@ -27,7 +27,8 @@ Vor jedem Commit bauen. UI-Änderungen mit Playwright prüfen (Chrome: `/usr/bin
 - Zeitleiste: ein Punkt **pro Tag** (`TimelineDots.tsx`), Lücken nur für Besitzer als «+».
 - Links: beliebig viele pro Beitrag (`LinksEditor.tsx`, `src/lib/links.ts`). Link-Baustein = `url` + Seitentitel in `text_content` (Edge Function `link-title`). Anzeige über `describeLink()`: bekannte Dienste mit Namen/Symbol, nie die ganze URL.
 - Newsletter: Community-Konten abonnieren über den Follower-Link (`NewsletterCard.tsx` → Magic Link → `/abos`, `SubscriptionsPage.tsx`). Tabelle `trip_subscriptions`, Versand `supabase/functions/newsletter` (Cron alle 15 Min., Vorschau mit `{"dryRun": true}` + Header `x-newsletter-secret` aus dem Vault). Admin-Liste im `TripEditorModal`. Mail-Layout = Startseite (Sand, Serif, Mint).
-- Teilen: `src/lib/share.ts` – ganze Reise (`/t/<token>`) oder nur ein Beitrag (`/p/<token>`).
+- Teilen: `src/lib/share.ts` – ganze Reise (`/t/<token>`) oder nur ein Beitrag (`/p/<token>`). Instagram-Bild: `src/lib/shareImage.ts` (Canvas, Farben der Startseite) + `ShareImageModal.tsx`; Aktionen am Beitrag als `IonFabButton` in `PostCard.tsx`.
+- Produktdokumente: `docs/vision.md`, `docs/requirements.md`, `docs/use_cases.md` + `docs/use_cases/`, `docs/backlog.md`, Konzepte `docs/konzept-*.md`. Bei neuen Funktionen Anforderungen und Use Cases nachführen.
 - Routenbilder: `media.variants = {route: true, v: n}`; `ROUTE_IMAGE_VERSION` in `src/lib/geo.ts` erhöhen, um alle neu zu erzeugen.
 - Instagram: `src/lib/social.ts` (`@littefootnotes`) – Startseite (Kopfzeile, Schluss, Footer), Impressum, Follower-Ansicht; im Newsletter als Konstante `INSTAGRAM`.
 - Startseite `/` ist auch für Angemeldete sichtbar (ausser in der installierten PWA, die startet auf `/feed`).

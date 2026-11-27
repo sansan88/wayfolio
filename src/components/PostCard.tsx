@@ -5,6 +5,7 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonFabButton,
   IonIcon,
   IonNote,
   IonProgressBar,
@@ -12,7 +13,7 @@ import {
   IonRadioGroup,
   IonTextarea,
 } from '@ionic/react'
-import { checkmarkCircle, ellipsisHorizontal, location, openOutline } from 'ionicons/icons'
+import { checkmarkCircle, ellipsisHorizontal, location, openOutline, shareOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { describeLink } from '../lib/links'
@@ -32,6 +33,8 @@ interface Props {
   onHideReply?: (replyId: string) => void
   /** Menü «Bearbeiten / Löschen» (nur Reisende) */
   onMenu?: (post: FeedPost) => void
+  /** Teilen: Link für WhatsApp & Co. oder Bild für Instagram (nur Reisende) */
+  onShare?: (post: FeedPost) => void
   /** Reisetag für die Kopfzeile */
   day?: number | null
   /** Tipp auf den Ort: zur Karte an diesen Punkt */
@@ -178,7 +181,7 @@ const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode'
   )
 }
 
-const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props) => {
+const PostCard = ({ post, mode, onVote, onResolve, onMenu, onShare, day, onPlace }: Props) => {
   const texts = post.blocks.filter((b) => b.kind === 'text' && b.text)
   const links = post.blocks.filter((b) => b.kind === 'link' && b.url)
   // Bilder oben: Fotos, danach das Routenbild (bei Orten ohne Fotos ist es das einzige Bild)
@@ -195,15 +198,25 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, day, onPlace }: Props
   const place = post.place_name ? (ownTitle ? placeParts.join(', ') : placeParts.slice(1).join(', ') || null) : null
 
   return (
-    <IonCard className={`post post--${post.kind}`}>
+    <IonCard className={`post post--${post.kind}${onShare || onMenu ? (media.length > 0 ? ' post--actions-edge' : ' post--actions-top') : ''}`}>
       {/* Ionic-Card-Standard: Medien oben, dann Kopf (Titel + Untertitel), dann Inhalt */}
       {media.length > 0 && <PhotoCarousel photos={media} />}
 
       <IonCardHeader className="post__header">
-        {onMenu && (
-          <button type="button" className="post__menu" onClick={() => onMenu(post)} aria-label="Beitrag bearbeiten oder löschen">
-            <IonIcon icon={ellipsisHorizontal} />
-          </button>
+        {(onShare || onMenu) && (
+          // Aktionen als kleine FAB-Knöpfe am unteren Rand des Bildes (ohne Bild oben rechts)
+          <div className={`post__actions${media.length > 0 ? ' post__actions--edge' : ''}`}>
+            {onShare && post.kind !== 'poll' && (
+              <IonFabButton size="small" onClick={() => onShare(post)} aria-label="Beitrag teilen">
+                <IonIcon icon={shareOutline} />
+              </IonFabButton>
+            )}
+            {onMenu && (
+              <IonFabButton size="small" color="light" onClick={() => onMenu(post)} aria-label="Weitere Aktionen: bearbeiten, Links sperren, löschen">
+                <IonIcon icon={ellipsisHorizontal} />
+              </IonFabButton>
+            )}
+          </div>
         )}
         <IonCardTitle>{title}</IonCardTitle>
         {place &&

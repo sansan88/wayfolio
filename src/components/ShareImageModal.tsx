@@ -1,0 +1,144 @@
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonFooter,
+  IonHeader,
+  IonIcon,
+  IonLabel,
+  IonModal,
+  IonSegment,
+  IonSegmentButton,
+  IonSpinner,
+  IonTitle,
+  IonToolbar,
+  useIonToast,
+} from '@ionic/react'
+import { logoInstagram } from 'ionicons/icons'
+import { useEffect, useState } from 'react'
+
+import { useCardPresenter } from '../lib/modal'
+import { renderShareImage, SHARE_IMAGE_SIZE, shareImageFile, sharePhotos, type ShareImageFormat } from '../lib/shareImage'
+import type { FeedPost } from '../lib/updates'
+import './ShareImageModal.css'
+
+interface Props {
+  /** Beitrag, für den das Bild entsteht; null = geschlossen */
+  post: FeedPost | null
+  day?: number | null
+  onClose: () => void
+}
+
+/** Vorschau und Teilen des Instagram-Bildes zu einem Beitrag (Story 9:16 oder Beitrag 4:5). */
+const ShareImageModal = ({ post, day, onClose }: Props) => {
+  const isOpen = post !== null
+  const presenter = useCardPresenter(isOpen)
+  const [presentToast] = useIonToast()
+  const [format, setFormat] = useState<ShareImageFormat>('story')
+  const [photoIndex, setPhotoIndex] = useState(0)
+  const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [sharing, setSharing] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) setPhotoIndex(0)
+  }, [isOpen, post?.id])
+
+  // Bild neu zeichnen, wenn Format oder Foto wechselt
+  useEffect(() => {
+    if (!post) return
+    let cancelled = false
+    let url: string | null = null
+    setImage(null)
+    setError(null)
+    renderShareImage(post, { format, photoIndex, day })
+      .then((blob) => {
+        if (cancelled) return
+        url = URL.createObjectURL(blob)
+        setImage({ blob, url })
+      })
+      .catch((e: Error) => !cancelled && setError(e.message))
+    return () => {
+      cancelled = true
+      if (url) URL.revokeObjectURL(url)
+    }
+  }, [post, format, photoIndex, day])
+
+  const photos = post ? sharePhotos(post) : []
+  const { w, h } = SHARE_IMAGE_SIZE[format]
+
+  const share = async () => {
+    if (!image) return
+    setSharing(true)
+    try {
+      const r = await shareImageFile(image.blob, format)
+      if (r === 'saved') void presentToast({ message: 'Bild gespeichert – in Instagram auswählen', duration: 2400, position: 'top', color: 'success' })
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  return (
+    <IonModal isOpen={isOpen} presentingElement={presenter} onDidDismiss={onClose} className="share-image">
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={onClose}>Abbrechen</IonButton>
+          </IonButtons>
+          <IonTitle>Bild für Instagram</IonTitle>
+        </IonToolbar>
+        <IonToolbar>
+          <IonSegment value={format} onIonChange={(e) => setFormat((e.detail.value as ShareImageFormat) ?? 'story')}>
+            <IonSegmentButton value="story">
+              <IonLabel>Story</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="post">
+              <IonLabel>Beitrag</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent className="ion-padding" color="light">
+        <div className="share-image__preview" style={{ aspectRatio: `${w} / ${h}` }}>
+          {image ? (
+            <img src={image.url} alt={`Vorschau ${format === 'story' ? 'Story' : 'Beitrag'}`} />
+          ) : error ? (
+            <p className="share-image__error">{error}</p>
+          ) : (
+            <IonSpinner name="crescent" aria-label="Bild wird erstellt" />
+          )}
+        </div>
+        {photos.length > 1 && (
+          <div className="share-image__photos" role="radiogroup" aria-label="Foto wählen">
+            {photos.map((p, i) => (
+              <button
+                key={p.position}
+                type="button"
+                role="radio"
+                aria-checked={i === photoIndex}
+                aria-label={`Foto ${i + 1}`}
+                className={i === photoIndex ? 'active' : ''}
+                onClick={() => setPhotoIndex(i)}
+              >
+                <img src={p.mediaUrl!} alt="" />
+              </button>
+            ))}
+          </div>
+        )}
+        <p className="share-image__hint">
+          {format === 'story' ? '1080 × 1920 px für eure Story.' : '1080 × 1350 px für den Feed.'} Datum und Ort kommen aus dem Beitrag.
+        </p>
+      </IonContent>
+      <IonFooter>
+        <IonToolbar>
+          <IonButton expand="block" className="ion-margin-horizontal" disabled={!image || sharing} onClick={() => void share()}>
+            <IonIcon slot="start" icon={logoInstagram} />
+            Teilen
+          </IonButton>
+        </IonToolbar>
+      </IonFooter>
+    </IonModal>
+  )
+}
+
+export default ShareImageModal

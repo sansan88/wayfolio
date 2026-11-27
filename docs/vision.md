@@ -18,6 +18,12 @@ Eine Mutter öffnet am Morgen in Zürich den Link aus der Familiengruppe. Sie si
 waren, wie die Strecke weiterging und wie es ihnen geht – ohne App, ohne Konto, ohne Passwort. Wer lieber eine
 Mail bekommt, erhält die neuen Fussnoten einmal pro Woche im Posteingang.
 
+### Einmal erfassen, überall teilen
+
+Ein Moment wird nur einmal festgehalten. Daraus wird der Eintrag im Tagebuch, die Nachricht in der Familiengruppe
+und das Bild für die eigene Instagram-Story – mit Datum und Ort, im ruhigen Stil von Little Footnotes. Niemand
+tippt dasselbe dreimal.
+
 ### Unterwegs zu zweit
 
 Mitreisende schreiben in dieselbe Reise. Aus einzelnen Momenten verschiedener Hände entsteht eine Geschichte:
@@ -48,7 +54,7 @@ oder Little Footnotes selbst betreiben.
 |                  |                                                                                                                                                                                                                   |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Produkt-Ziel** | Reisende halten ihre Reise bis zum letzten Tag lebendig – Tag für Tag kommt eine kleine Fussnote dazu, ohne dass das Festhalten ihnen den Moment nimmt.                                                           |
-| **Messgrösse**   | 1. Anteil Reisetage mit mindestens einem Beitrag — heute: 78 % (21 von 27 Tagen, eine aktive Reise, Stand 27.11.2026), Ziel: siehe offene Frage 1. 2. Anteil Reisen mit Beiträgen in der letzten Reisewoche — heute: Baseline noch zu messen (noch keine abgeschlossene Reise), Ziel: siehe offene Frage 1. |
+| **Messgrösse**   | 1. Anteil Reisetage mit mindestens einem Beitrag — heute: 78 % (21 von 27 Tagen, eine aktive Reise, Stand 27.11.2026), Ziel: ≥ 80 %. 2. Anteil Reisen mit Beiträgen in der letzten Reisewoche — heute: Baseline noch zu messen (noch keine abgeschlossene Reise), Ziel: ≥ 80 %. |
 | **Horizont**     | 27.02.2027 (drei Monate, Angabe Product Owner)                                                                                                                                                                    |
 | **Warum zuerst** | Ein Tagebuch, das nach zwei Wochen verstummt, lässt auch die Daheimgebliebenen im Stich – Newsletter, Teilen und öffentliche Reisen bauen alle auf einer lebendigen Reise auf. Hier liegt der grösste ungenutzte Wert. |
 
@@ -81,7 +87,8 @@ hält das in den Revisionen fest.
 **Das Produkt umfasst**
 
 - Ein privates Reisetagebuch mit Beiträgen (Text, Fotos, Videos, Links, Ort, Zeitpunkt) und Rückblicken
-- Lesen per Secret Link für die ganze Reise oder einen einzelnen Beitrag, ohne Konto
+- Lesen per Secret Link für die ganze Reise oder einen einzelnen Beitrag, ohne Konto – optional mit Passwort
+- Teilen auf eigenen Kanälen: Link für Messenger, Bild für Instagram (Story und Beitrag)
 - Newsletter für Familie und Freunde
 - Route auf der Karte, Zeitleiste mit einem Punkt pro Tag, Galerie
 - Schreibhilfe mit Claude – nur mit Einwilligung
@@ -90,6 +97,8 @@ hält das in den Revisionen fest.
 **Das Produkt umfasst bewusst nicht**
 
 - Likes, Followerzahlen, Algorithmus oder einen sozialen Feed — kein Ziel; widerspricht dem Kern der Vision
+- Direktes Posten auf Instagram oder anderen Netzwerken — Little Footnotes erzeugt das Bild, gepostet wird in der jeweiligen App
+- Konten für Follower als Pflicht — widerspricht «ohne App, ohne Konto»; Zugangsschutz über Passwort (siehe Konzept)
 - Reiseplanung, Buchungen, Budgets — andere Systeme
 - Foto-Downloads für Follower — die Fotos bleiben bei den Reisenden
 - Öffentliche Reisen — aufgeschoben; Warteliste läuft, eigenes späteres Produkt-Ziel
@@ -136,10 +145,9 @@ hat statt durch den Bildschirm. Dafür lohnt sich jede Zeile Code.
 
 | #   | Frage                                                                                                                   | Verantwortlich | Bis        |
 | --- | ----------------------------------------------------------------------------------------------------------------------- | -------------- | ---------- |
-| 1   | Zielwerte der beiden Messgrössen festlegen (Vorschlag: ≥ 80 % der Reisetage, ≥ 80 % der Reisen mit Beiträgen in der letzten Woche) | Sandro Scalco  | 15.12.2026 |
-| 2   | Wie werden die Messgrössen laufend erhoben (SQL-Abfrage, Admin-Ansicht)? Zeitzone der Reise für «Reisetag» festlegen     | Sandro Scalco  | 15.12.2026 |
-| 3   | Wie wird der Aufwand pro Beitrag («ohne den Moment zu nehmen») sichtbar – z. B. Dauer vom Öffnen bis Posten?             | Sandro Scalco  | 31.01.2027 |
-| 4   | Woher kommen bis zum Horizont weitere Reisen, damit die Messung mehr als eine Reise umfasst?                            | Sandro Scalco  | 31.01.2027 |
+| 1   | Wie werden die Messgrössen laufend erhoben (SQL-Abfrage, Admin-Ansicht)? Zeitzone der Reise für «Reisetag» festlegen     | Sandro Scalco  | 15.12.2026 |
+| 2   | Wie wird der Aufwand pro Beitrag («ohne den Moment zu nehmen») sichtbar – z. B. Dauer vom Öffnen bis Posten?             | Sandro Scalco  | 31.01.2027 |
+| 3   | Woher kommen bis zum Horizont weitere Reisen, damit die Messung mehr als eine Reise umfasst?                            | Sandro Scalco  | 31.01.2027 |
 
 ---
 
@@ -147,4 +155,5 @@ hat statt durch den Bildschirm. Dafür lohnt sich jede Zeile Code.
 
 | Datum      | Änderung    | Freigegeben durch |
 | ---------- | ----------- | ----------------- |
-| 2026-11-27 | Erstfassung | Sandro Scalco (ausstehend) |
+| 2026-11-27 | Erstfassung | Sandro Scalco |
+| 2026-11-27 | Zielwerte ≥ 80 % bestätigt; «Einmal erfassen, überall teilen» (Instagram-Bild) und optionaler Passwortschutz ergänzt | Sandro Scalco |
