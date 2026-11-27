@@ -26,7 +26,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | ------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------- |
 | FR-001 | Anmelden per E-Mail-Link | Als Reisende:r möchte ich mich mit einem Link in meiner E-Mail anmelden, damit ich kein Passwort brauche.                                  | High     | Implemented |
 | FR-002 | Reise anlegen          | Als Reisende:r möchte ich eine Reise mit Namen und Startdatum anlegen, damit ich Beiträge dazu sammeln kann.                                 | High     | Implemented |
-| FR-003 | Reise bearbeiten       | Als Reisende:r möchte ich Name, Beschreibung, Titelbild und Daten meiner Reise ändern, damit die Reise aktuell bleibt.                       | Medium   | Implemented |
+| FR-003 | Reise bearbeiten       | Als Reisende:r möchte ich Name, Beschreibung, Start- und Enddatum meiner Reise ändern, damit die Reise aktuell bleibt.                       | Medium   | Implemented |
 | FR-004 | Mitreisende einladen   | Als Reisende:r möchte ich Mitreisende per Einladungslink zur Reise hinzufügen, damit wir gemeinsam schreiben.                                | Medium   | Implemented |
 | FR-005 | Einladung annehmen     | Als Mitreisende:r möchte ich eine Einladung annehmen, damit ich in der Reise Beiträge erfassen kann.                                         | Medium   | Implemented |
 | FR-006 | Standortverzögerung    | Als Reisende:r möchte ich eine Verzögerung für den angezeigten Standort festlegen, damit Follower nicht in Echtzeit sehen, wo wir sind.     | Low      | Implemented |
@@ -45,7 +45,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-017 | Links lesbar anzeigen   | Als Follower möchte ich Links als Dienst mit Namen und Symbol sehen statt als ganze URL, damit ich weiss, wohin sie führen.                           | Medium   | Implemented |
 | FR-018 | Beitrag bearbeiten      | Als Reisende:r möchte ich einen Beitrag nachträglich bearbeiten, damit ich Fehler korrigieren und Fotos ergänzen kann.                               | High     | Implemented |
 | FR-019 | Beitrag löschen         | Als Reisende:r möchte ich einen Beitrag löschen, damit Ungewolltes verschwindet.                                                                     | High     | Implemented |
-| FR-020 | Entscheidung (Umfrage)  | Als Reisende:r möchte ich Follower über eine Frage abstimmen lassen, damit sie an Entscheidungen unterwegs teilhaben.                                | Low      | Implemented |
+| FR-020 | Entscheidung (Umfrage)  | Als Reisende:r möchte ich Follower über eine Frage abstimmen lassen, damit sie an Entscheidungen unterwegs teilhaben.                                | Low      | Open        |
 | FR-021 | Fehlenden Tag nachtragen | Als Reisende:r möchte ich einen Tag ohne Beitrag in der Zeitleiste erkennen und direkt nachtragen, damit die Reise lückenlos bleibt.               | High     | Implemented |
 
 ### Schreiben mit Claude
@@ -96,7 +96,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-062 | Abos verwalten        | Als Abonnent:in möchte ich unter «Meine Abos» Häufigkeit ändern, pausieren und beenden, damit ich die Mails steuere.                           | Medium   | Implemented |
 | FR-063 | Abmelden ohne Login   | Als Abonnent:in möchte ich mich über einen Link in der Mail abmelden, ohne mich anzumelden, damit das Abmelden einen Klick dauert.             | High     | Implemented |
 | FR-064 | Newsletter versenden  | Als System möchte ich neue Beiträge gemäss Häufigkeit an aktive Abonnent:innen versenden, damit sie per Mail informiert sind.                  | Medium   | Implemented |
-| FR-065 | Abonnent:innen sehen  | Als Reisende:r möchte ich alle Abonnent:innen meiner Reise mit Status sehen und einzelne entfernen, damit ich weiss, wer mitliest.              | Medium   | Implemented |
+| FR-065 | Abonnent:innen sehen  | Als Reisende:r möchte ich alle Abonnent:innen meiner Reise mit Status sehen und einzelne entfernen, damit ich weiss, wer mitliest (alle Mitglieder der Reise). | Medium   | Implemented |
 
 ### App und Produktseite
 
@@ -188,3 +188,8 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 - Zugangsschutz: Beitrags-Links mit oder ohne Passwort? Empfehlung ohne (siehe Konzept).
 - `follower-api` kennt noch die Aktionen `react` (Emoji-Reaktionen) und `reply` (Antworten), die App zeigt sie
   nicht. Entscheid 2026-11-27: werden nicht gebaut und aus dem Backend entfernt (Backlog Rang 7).
+- FR-020 Entscheidung: Seit der Vereinfachung (Commit 377b122) lässt sich keine neue Entscheidung mehr erfassen;
+  bestehende werden angezeigt und lassen sich abstimmen und bekanntgeben. Entscheid PO: wieder einbauen oder
+  `Rejected` (UC-008 steht auf `Draft`). Über Beitrags-Links ist kein Abstimmen möglich (UC-012, A7).
+- Rechte: Alle Mitglieder (auch Mitreisende) dürfen Reise bearbeiten, jeden Beitrag ändern oder löschen,
+  einladen und Abonnent:innen verwalten; nur die Besitzer:in entfernt Mitreisende (BR-024, BR-027, BR-029, BR-043).

@@ -26,7 +26,7 @@ Unsicherheit / Wert / Verzögerungskosten / Lernen.
 | 4    | FR-091, FR-092         | Passwortschutz Teil B: ändern und mitteilen   | aktuell (Vertrauen) | Passwort beim Teilen getrennt vom Link weitergeben (FR-092)                                                       | Wert: ohne Teil B wird das Passwort oft im selben Chat geteilt | Rang 3          | S proposed | Refining — UC-019 auf `Approved` bringen        |
 | 5    | FR-095                 | Passwortschutz Teil C: Newsletter             | aktuell (Vertrauen) | Passwort nicht über die Mail umgehbar (FR-095)                                                                    | Wert: schliesst die Lücke über den Newsletter           | Rang 3          | S proposed | Refining — Entscheid Beitrags-Links (Konzept)   |
 | 6    | FR-083                 | Erfassungsdauer messen                        | aktuell             | Sichtbar machen, ob Festhalten «den Moment nimmt» (Produkt-Ziel, NFR-001)                                          | Lernen: prüft die zweite Hälfte der Hypothese           | FR-080          | M proposed | Idea — UC-017 ergänzen, Datenschutz nachtragen  |
-| 7    | Technik                | Reaktionen und Antworten aus Backend entfernen | aktuell            | Toter Code in `follower-api` (requirements.md, offene Punkte); keine Reichweiten-Funktionen (NFR-010)              | Lernen/Aufräumen: Entscheid PO 2026-11-27               | —               | S proposed | Idea — Migration und Function-Deploy planen     |
+| 7    | Technik                | Toten Code in `follower-api` entfernen         | aktuell            | `react`/`reply` werden nicht gebaut (NFR-010); `subscribe`/`unsubscribe` nutzen noch die alte Abo-Tabelle (requirements.md, offene Punkte) | Lernen/Aufräumen: Entscheid PO 2026-11-27               | —               | S proposed | Idea — Migration und Function-Deploy planen     |
 | 8    | FR-096, FR-097, FR-098 | Zugangsanfrage und Freigabe                   | aktuell (Vertrauen) | «Nur Menschen lesen mit, die ich kenne» (FR-097, Konzept Variante 2b)                                              | Lernen: nur falls das Passwort nicht genügt             | Rang 3–5        | L proposed | Idea — Bedarf nach Passwortschutz prüfen        |
 | 9    | FR-099                 | Zugangsstufe wählen                           | aktuell (Vertrauen) | Schutz passt zur Reise (FR-099)                                                                                   | Lernen: erst mit Rang 8 sinnvoll                        | Rang 8          | S proposed | Idea                                            |
 | 10   | GOAL-2                 | Familie und Freunde lesen regelmässig mit     | nachfolgend         | Nachfolgendes Ziel (vision.md)                                                                                    | Lernen                                                  | —               | —          | Idea                                            |
@@ -49,6 +49,7 @@ allein schon den Schutz.
 | 3–4  | FR-090 – FR-094        | UC-019 von `Draft` auf `Approved`; Grösse durch Developers                  | `/ai-use-case-spec UC-019`               | 15.12.2026 |
 | 5    | FR-095                 | Entscheid: Beitrags-Links mit oder ohne Passwort                           | Entscheid PO                             | 15.12.2026 |
 | 6    | FR-083                 | Akzeptanzkriterien, Datenschutzerklärung ergänzen                          | `/ai-use-case-spec UC-017`               | 31.01.2027 |
+| —    | FR-020                 | Entscheid: Entscheidungen erfassen wieder einbauen oder `Rejected` (UC-008 `Draft`) | Entscheid PO, danach einordnen    | 15.12.2026 |
 
 ## Erledigt
 
@@ -56,7 +57,7 @@ allein schon den Schutz.
 | ---------------------- | ------------------------------------------- | ---------- | ----------------------------------------- |
 | FR-047                 | Aktionen am Beitrag (Teilen, «…» als FAB)   | 2026-11-27 | UC-018 `Implemented`, Branch `claude/lucid-wozniak-8020ra` |
 | FR-057, FR-058, FR-059 | Bild für Instagram (Story, Beitrag, Motiv)  | 2026-11-27 | UC-018 `Implemented`, Branch `claude/lucid-wozniak-8020ra` |
-| FR-001 – FR-074, FR-082 | Bestehende Funktionen (siehe requirements.md) | vor 2026-11-27 | live auf littlefootnotes.app; noch nicht `Verified` |
+| FR-001 – FR-074, FR-082 (ohne FR-020, FR-075) | Bestehende Funktionen (siehe requirements.md) | vor 2026-11-27 | live auf littlefootnotes.app; noch nicht `Verified` |
 
 ## Bewusst nicht
 
