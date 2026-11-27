@@ -1,4 +1,4 @@
-import type { FeedPost } from './updates'
+import { canvasToJpeg, type FeedPost } from './updates'
 
 /**
  * Bild eines Beitrags für Instagram (Story oder Beitrag) im Stil der Produktseite:
@@ -273,9 +273,7 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
     drawQuote(ctx, text, M, y, areaW, Math.min(areaH, areaW))
   }
 
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Bild konnte nicht erzeugt werden.'))), 'image/jpeg', 0.92),
-  )
+  return canvasToJpeg(canvas, 0.92)
 }
 
 /**

@@ -23,6 +23,7 @@ import {
 } from '@ionic/react'
 import {
   documentAttachOutline,
+  imageOutline,
   images,
   locationOutline,
   micOutline,
@@ -42,6 +43,7 @@ import { formatWhen } from '../lib/datetime'
 import { cleanLinks, normalizeUrl } from '../lib/links'
 import type { Place, Position } from '../lib/location'
 import { useCardPresenter } from '../lib/modal'
+import { canvasToJpeg } from '../lib/updates'
 import DateTimeSheet from './DateTimeSheet'
 import LinksEditor from './LinksEditor'
 import LocationPicker from './LocationPicker'
@@ -116,10 +118,46 @@ const heading: Record<ComposeKind, string> = {
   edit: 'Bearbeiten',
 }
 
+/**
+ * Kleine Vorschau eines gewählten Fotos. Nicht das Original als <img>: ein Kamerafoto (12–48 MP) belegt dekodiert
+ * 50–200 MB, bei mehreren Fotos lädt iOS die Seite dann neu. Die Vorschauen entstehen nacheinander.
+ */
+let previewQueue: Promise<unknown> = Promise.resolve()
+const PREVIEW_EDGE = 160
+const makePreview = (file: File) => {
+  const job = previewQueue.then(async () => {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, PREVIEW_EDGE / Math.min(bitmap.width, bitmap.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bitmap.width * scale)
+    canvas.height = Math.round(bitmap.height * scale)
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
+    return URL.createObjectURL(await canvasToJpeg(canvas, 0.7))
+  })
+  previewQueue = job.catch(() => undefined)
+  return job
+}
+
 const FilePreview = ({ file }: { file: File }) => {
-  const url = useMemo(() => (file.type.startsWith('image') ? URL.createObjectURL(file) : null), [file])
-  useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url])
-  if (url) return <img src={url} alt="" />
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!file.type.startsWith('image')) return
+    let created: string | null = null
+    let cancelled = false
+    makePreview(file)
+      .then((u) => {
+        created = u
+        if (cancelled) URL.revokeObjectURL(u)
+        else setUrl(u)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+      if (created) URL.revokeObjectURL(created)
+    }
+  }, [file])
+  if (file.type.startsWith('image')) return url ? <img src={url} alt="" /> : <IonIcon icon={imageOutline} />
   return <IonIcon icon={file.type.startsWith('video') ? videocamOutline : file.type.startsWith('audio') ? micOutline : documentAttachOutline} />
 }
 

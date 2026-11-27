@@ -1,4 +1,4 @@
-import { IonContent, IonFab, IonFabButton, IonIcon, IonPage, IonText, useIonViewWillEnter } from '@ionic/react'
+import { IonContent, IonFab, IonFabButton, IonIcon, IonPage, IonText, useIonViewDidLeave, useIonViewWillEnter } from '@ionic/react'
 import { add } from 'ionicons/icons'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -41,6 +41,12 @@ const MapPage = () => {
 
   useIonViewWillEnter(refresh, [refresh])
 
+  // Ionic lässt verlassene Tabs stehen: die Karte (WebGL, Kacheln, Foto-Marker) beim Verlassen abbauen und beim
+  // Zurückkehren neu aufbauen – sonst bleibt sie im Hintergrund im Speicher, was iOS zum Neuladen der Seite bringt.
+  const [active, setActive] = useState(true)
+  useIonViewWillEnter(() => setActive(true))
+  useIonViewDidLeave(() => setActive(false))
+
   // aus dem Feed: /karte?ort=<checkin_id> – zu diesem Punkt springen und Details zeigen
   const location = useLocation()
   const navigate = useNavigate()
@@ -64,7 +70,7 @@ const MapPage = () => {
             <p className="ion-padding">{error}</p>
           </IonText>
         )}
-        {points && (
+        {points && active && (
           <Suspense fallback={null}>
             <RouteMap points={points} photos={photos} onSelect={setSelected} focus={selected} />
           </Suspense>
