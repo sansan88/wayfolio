@@ -45,6 +45,10 @@ Vor jedem Commit bauen. UI-Änderungen mit Playwright prüfen (Chrome: `/usr/bin
 - Produktseite: App-Bilder in `public/screens/` (390 × 844, WebP) immer im festen Seitenverhältnis zeigen, nie verzerren. Sie gehören nicht in den Precache des Service Workers.
 - Öffentliche Reisen (Abo) sind **noch nicht gebaut** – auf der Startseite als «Bald verfügbar» mit Warteliste (`waitlist`) kennzeichnen.
 
+## Plugins
+
+`.claude/settings.json` bindet den Marketplace `liitu-ch/liitu-ai-architect-marketplace` ein und aktiviert `ai-architect-core`, `-testing`, `-dev-tools` und `-product` (Slash-Befehle wie `/ai-requirements`, `/ai-playwright-test`, `/ai-commit`, `/ai-product-backlog`).
+
 ## Commits und Deploy
 
 - Autor: `Sandro Scalco <sandro.scalco@liitu.ch>`. Push auf `main` deployt automatisch über GitHub Actions auf `littlefootnotes.app`; danach prüfen, dass das neue Bundle live ist.

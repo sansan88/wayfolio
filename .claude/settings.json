@@ -1,0 +1,16 @@
+{
+  "extraKnownMarketplaces": {
+    "liitu-ai-architect-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "liitu-ch/liitu-ai-architect-marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ai-architect-core@liitu-ai-architect-marketplace": true,
+    "ai-architect-testing@liitu-ai-architect-marketplace": true,
+    "ai-architect-dev-tools@liitu-ai-architect-marketplace": true,
+    "ai-architect-product@liitu-ai-architect-marketplace": true
+  }
+}
