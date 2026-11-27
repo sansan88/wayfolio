@@ -286,7 +286,9 @@ export const shareImageFile = async (blob: Blob, format: ShareImageFormat): Prom
   const file = new File([blob], `littlefootnotes-${format === 'story' ? 'story' : 'beitrag'}.jpg`, { type: 'image/jpeg' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file] })
+      // Nur das Bild: iOS hängt sonst den Seitentitel als Text an, und Instagram übernimmt dann den Text statt
+      // des Bildes. Leerer Titel und Text verhindern das.
+      await navigator.share({ files: [file], title: '', text: '' })
       return 'shared'
     } catch (e) {
       if ((e as Error).name === 'AbortError') return 'cancelled'

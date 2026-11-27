@@ -128,6 +128,10 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
         <p className="share-image__hint">
           {format === 'story' ? '1080 × 1920 px für eure Story.' : '1080 × 1350 px für den Feed.'} Datum und Ort kommen aus dem Beitrag.
         </p>
+        <p className="share-image__hint">
+          Erscheint das Bild in Instagram nicht: im Teilen-Menü «Bild sichern» wählen (oder das Bild oben gedrückt halten
+          → «Zu Fotos hinzufügen») und es in Instagram aus den Fotos auswählen.
+        </p>
       </IonContent>
       <IonFooter>
         <IonToolbar>
