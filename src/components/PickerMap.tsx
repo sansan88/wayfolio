@@ -14,7 +14,18 @@ interface Props {
 
 /** Karte mit festem Pin in der Mitte: die Karte wird verschoben, der Pin bleibt stehen. */
 const PickerMap = ({ center, zoom, onMove, flyTo }: Props) => {
+  const wrap = useRef<HTMLDivElement>(null)
   const host = useRef<HTMLDivElement>(null)
+
+  // Gesten auf der Karte gehören der Karte: nicht an das Modal weiterreichen (sonst zieht Wischen das Blatt nach unten)
+  useEffect(() => {
+    const el = wrap.current
+    if (!el) return
+    const stop = (e: Event) => e.stopPropagation()
+    const events = ['touchstart', 'touchmove', 'mousedown', 'pointerdown'] as const
+    events.forEach((t) => el.addEventListener(t, stop, { passive: true }))
+    return () => events.forEach((t) => el.removeEventListener(t, stop))
+  }, [])
   const map = useRef<MlMap | null>(null)
 
   useEffect(() => {
@@ -38,7 +49,7 @@ const PickerMap = ({ center, zoom, onMove, flyTo }: Props) => {
   }, [flyTo])
 
   return (
-    <div className="picker-map">
+    <div className="picker-map" ref={wrap}>
       <div ref={host} style={{ position: 'absolute', inset: 0 }} />
       <svg className="picker-map__pin" viewBox="0 0 24 36" aria-hidden="true">
         <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#11a683" />
