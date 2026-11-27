@@ -24,7 +24,7 @@ Unsicherheit / Wert / Verzögerungskosten / Lernen.
 | 2    | FR-081                 | Messgrösse letzte Reisewoche                  | aktuell             | «Ein Tagebuch, das nach zwei Wochen verstummt, lässt auch die Daheimgebliebenen im Stich» (vision.md)              | Wert: zweite Messgrösse; Baseline fehlt                 | FR-080          | S proposed | Refining — UC-017 auf `Approved` bringen        |
 | 3    | FR-090, FR-093, FR-094 | Passwortschutz Teil A: festlegen und eingeben | aktuell (Vertrauen) | Ein öffentlich geposteter Link allein genügt nicht mehr (FR-090, konzept-zugangsschutz.md)                        | Wert: Vertrauen der Reisenden; Wunsch PO; NFR-021       | —               | M proposed | Refining — UC-019 auf `Approved` bringen        |
 | 4    | FR-091, FR-092         | Passwortschutz Teil B: ändern und mitteilen   | aktuell (Vertrauen) | Passwort beim Teilen getrennt vom Link weitergeben (FR-092)                                                       | Wert: ohne Teil B wird das Passwort oft im selben Chat geteilt | Rang 3          | S proposed | Refining — UC-019 auf `Approved` bringen        |
-| 5    | FR-095                 | Passwortschutz Teil C: Newsletter             | aktuell (Vertrauen) | Passwort nicht über die Mail umgehbar (FR-095)                                                                    | Wert: schliesst die Lücke über den Newsletter           | Rang 3          | S proposed | Refining — Entscheid Beitrags-Links (Konzept)   |
+| 5    | FR-095                 | Passwortschutz Teil C: Newsletter             | aktuell (Vertrauen) | Passwort nicht über die Mail umgehbar (FR-095)                                                                    | Wert: schliesst die Lücke über den Newsletter           | Rang 3          | S proposed | Refining — UC-019 auf `Approved` bringen        |
 | 6    | FR-083                 | Erfassungsdauer messen                        | aktuell             | Sichtbar machen, ob Festhalten «den Moment nimmt» (Produkt-Ziel, NFR-001)                                          | Lernen: prüft die zweite Hälfte der Hypothese           | FR-080          | M proposed | Idea — UC-017 ergänzen, Datenschutz nachtragen  |
 | 7    | Technik                | Toten Code in `follower-api` entfernen         | aktuell            | `react`/`reply` werden nicht gebaut (NFR-010); `subscribe`/`unsubscribe` nutzen noch die alte Abo-Tabelle (requirements.md, offene Punkte) | Lernen/Aufräumen: Entscheid PO 2026-11-27               | —               | S proposed | Idea — Migration und Function-Deploy planen     |
 | 8    | FR-096, FR-097, FR-098 | Zugangsanfrage und Freigabe                   | aktuell (Vertrauen) | «Nur Menschen lesen mit, die ich kenne» (FR-097, Konzept Variante 2b)                                              | Lernen: nur falls das Passwort nicht genügt             | Rang 3–5        | L proposed | Idea — Bedarf nach Passwortschutz prüfen        |
@@ -47,7 +47,6 @@ allein schon den Schutz.
 | ---- | ---------------------- | -------------------------------------------------------------------------- | ---------------------------------------- | ---------- |
 | 1–2  | FR-080, FR-081         | UC-017 von `Draft` auf `Approved`; Zeitzone «Reisetag» festlegen           | `/ai-use-case-spec UC-017`, Entscheid PO | 15.12.2026 |
 | 3–4  | FR-090 – FR-094        | UC-019 von `Draft` auf `Approved`; Grösse durch Developers                  | `/ai-use-case-spec UC-019`               | 15.12.2026 |
-| 5    | FR-095                 | Entscheid: Beitrags-Links mit oder ohne Passwort                           | Entscheid PO                             | 15.12.2026 |
 | 6    | FR-083                 | Akzeptanzkriterien, Datenschutzerklärung ergänzen                          | `/ai-use-case-spec UC-017`               | 31.01.2027 |
 
 ## Erledigt
@@ -76,6 +75,7 @@ allein schon den Schutz.
 | ---------- | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
 | 2026-11-27 | Erstordnung übernommen: Messung vor Passwortschutz; Passwortschutz in drei Teilen; Grössen als `proposed`              | Sandro Scalco |
 | 2026-11-27 | Pflicht-Konto für Follower und Reaktionen/Antworten bewusst nicht; Zugangsanfrage bleibt als Idee im Backlog (Rang 8–9) | Sandro Scalco |
+| 2026-11-27 | Beitrags-Links bleiben ohne Passwort (Zugangsschutz gilt nur für den Reise-Link) | Sandro Scalco |
 | 2026-11-27 | Entscheidungen ausgebaut (App und `follower-api`), später bei Bedarf neu beurteilen | Sandro Scalco |
 | 2026-11-27 | Instagram-Bild und Aktions-Knöpfe am Beitrag umgesetzt                                                                 | Sandro Scalco |
 

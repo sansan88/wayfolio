@@ -185,7 +185,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 
 ## Offene Punkte
 
-- Zugangsschutz: Beitrags-Links mit oder ohne Passwort? Empfehlung ohne (siehe Konzept).
+- Zugangsschutz: Beitrags-Links öffnen ohne Passwort (Entscheid PO 2026-11-27, UC-019 BR-058).
 - `follower-api` kennt noch die Aktionen `react` (Emoji-Reaktionen) und `reply` (Antworten), die App zeigt sie
   nicht. Entscheid 2026-11-27: werden nicht gebaut und aus dem Backend entfernt (Backlog Rang 7).
 - FR-020/FR-056 Entscheidungen: 2026-11-27 ausgebaut (Entscheid PO); bei echtem Bedarf neu beurteilen. Die leeren

@@ -100,5 +100,5 @@ Passwörter werden nur als Hash gespeichert; die Reisenden können ein vergessen
 
 ### BR-058: Beitrags-Links
 
-Offen (Entscheid PO): Empfehlung, dass Beitrags-Links ohne Passwort öffnen, weil sie gezielt geteilt werden und
-einzeln sperrbar sind.
+Beitrags-Links öffnen ohne Passwort, weil sie gezielt geteilt werden, nur diesen Beitrag zeigen und einzeln
+sperrbar sind (Entscheid PO 2026-11-27).
