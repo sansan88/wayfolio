@@ -51,7 +51,6 @@ export const followerApi = (token: string) => ({
   join: (name: string) => call(token, 'join', { name }),
   react: (postId: string, emoji: string) => call(token, 'react', { post_id: postId, emoji }),
   reply: (postId: string, body: string, isPrivate: boolean) => call(token, 'reply', { post_id: postId, body, private: isPrivate }),
-  vote: (optionId: string) => call(token, 'vote', { option_id: optionId }),
   subscribe: (email: string, frequency: string) => call(token, 'subscribe', { email, frequency }),
   unsubscribe: () => call(token, 'unsubscribe'),
 })

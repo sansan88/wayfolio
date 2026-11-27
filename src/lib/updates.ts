@@ -407,45 +407,6 @@ export const createBackground = async (base: Context, title: string, text: strin
   await publish(ctx, { kind: 'background', title: title.trim(), blocks, inStories: true, checkinId: checkin?.id ?? null })
 }
 
-export const createPoll = async (
-  ctx: Context,
-  question: string,
-  description: string,
-  options: string[],
-  closesInHours: number | null,
-) => {
-  const checkin = await checkinFor(ctx)
-  const postId = await publish(ctx, { kind: 'poll', title: question.trim(), inStories: true, checkinId: checkin?.id ?? null })
-  const { data: poll, error } = await supabase
-    .from('polls')
-    .insert({
-      post_id: postId,
-      question: question.trim(),
-      description: description.trim() || null,
-      closes_at: closesInHours ? new Date(Date.now() + closesInHours * 3600 * 1000).toISOString() : null,
-    })
-    .select('id')
-    .single()
-  if (error) fail(`Abstimmung konnte nicht angelegt werden: ${error.message}`)
-  const { error: optError } = await supabase
-    .from('poll_options')
-    .insert(options.map((label, i) => ({ poll_id: poll!.id, position: i, label: label.trim() })))
-  if (optError) fail(`Optionen konnten nicht gespeichert werden: ${optError.message}`)
-}
-
-export const resolvePoll = async (pollId: string, optionId: string, text: string) => {
-  const { error } = await supabase
-    .from('polls')
-    .update({
-      status: 'resolved',
-      chosen_option_id: optionId,
-      decision_text: text.trim() || null,
-      resolved_at: new Date().toISOString(),
-    })
-    .eq('id', pollId)
-  if (error) fail(error.message)
-}
-
 export const addOwnerReply = async (postId: string, userId: string, body: string) => {
   const { error } = await supabase.from('replies').insert({ post_id: postId, author_profile_id: userId, body: body.trim() })
   if (error) fail(error.message)
@@ -665,19 +626,6 @@ export interface FeedBlock {
   route?: boolean
 }
 
-export interface FeedPoll {
-  id: string
-  question: string
-  description: string | null
-  closes_at: string | null
-  status: 'open' | 'closed' | 'resolved'
-  chosen_option_id: string | null
-  decision_text: string | null
-  options: { id: string; label: string; votes: number }[]
-  /** null = Resultat verborgen (Follower hat noch nicht abgestimmt) */
-  total: number | null
-  my_option_id?: string | null
-}
 
 export interface FeedReply {
   id: string
@@ -699,25 +647,12 @@ export interface FeedPost {
   /** wer den Beitrag erfasst hat (nur in der Ansicht der Reisenden) */
   author_name?: string | null
   blocks: FeedBlock[]
-  poll: FeedPoll | null
   reactions: Record<string, number>
   my_reactions?: string[]
   replies: FeedReply[]
 }
 
 export const EMOJIS = ['❤️', '😍', '😂', '😮', '🙏', '🎉'] as const
-
-interface RawPoll {
-  id: string
-  question: string
-  description: string | null
-  closes_at: string | null
-  status: FeedPoll['status']
-  chosen_option_id: string | null
-  decision_text: string | null
-  poll_options: { id: string; position: number; label: string }[]
-  votes: { option_id: string }[]
-}
 
 interface RawPost {
   id: string
@@ -728,7 +663,6 @@ interface RawPost {
   author: { display_name: string | null } | null
   checkin: { id: string; place_name: string | null } | null
   post_blocks: { id: string; position: number; kind: string; text_content: string | null; url: string | null; media: { storage_path: string; variants: { route?: boolean; thumb?: string } | null } | null }[]
-  polls: RawPoll | RawPoll[] | null
   reactions: { emoji: string }[]
   replies: {
     id: string
@@ -741,7 +675,7 @@ interface RawPost {
   }[]
 }
 
-/** Lädt alle veröffentlichten Updates einer Reise für Reisende (inkl. Abstimmungsergebnis und Antworten). */
+/** Lädt alle veröffentlichten Updates einer Reise für Reisende (inkl. Antworten). */
 export const loadUpdates = (tripId: string): Promise<FeedPost[]> => cachedLoad(`posts:${tripId}`, () => fetchUpdates(tripId))
 
 const fetchUpdates = async (tripId: string): Promise<FeedPost[]> => {
@@ -752,7 +686,6 @@ const fetchUpdates = async (tripId: string): Promise<FeedPost[]> => {
        author:profiles(display_name),
        checkin:checkins(id, place_name),
        post_blocks!post_blocks_post_id_fkey(id, position, kind, text_content, url, media(storage_path, variants)),
-       polls(id, question, description, closes_at, status, chosen_option_id, decision_text, poll_options!poll_options_poll_id_fkey(id, position, label), votes(option_id)),
        reactions(emoji),
        replies(id, body, visibility, hidden_at, created_at, author_profile_id, follower:followers(display_name))`,
     )
@@ -773,7 +706,6 @@ const fetchUpdates = async (tripId: string): Promise<FeedPost[]> => {
   }
 
   return (data ?? []).map((p) => {
-    const pl = (Array.isArray(p.polls) ? p.polls[0] : p.polls) ?? null
     const reactions: Record<string, number> = {}
     p.reactions.forEach((r) => (reactions[r.emoji] = (reactions[r.emoji] ?? 0) + 1))
     return {
@@ -799,21 +731,6 @@ const fetchUpdates = async (tripId: string): Promise<FeedPost[]> => {
           thumbUrl: b.media ? (urls.get(b.media.variants?.thumb ?? '') ?? urls.get(b.media.storage_path) ?? null) : null,
           route: !!b.media?.variants?.route,
         })),
-      poll: pl
-        ? {
-            id: pl.id,
-            question: pl.question,
-            description: pl.description,
-            closes_at: pl.closes_at,
-            status: pl.status,
-            chosen_option_id: pl.chosen_option_id,
-            decision_text: pl.decision_text,
-            total: pl.votes.length,
-            options: [...pl.poll_options]
-              .sort((a, b) => a.position - b.position)
-              .map((o) => ({ id: o.id, label: o.label, votes: pl.votes.filter((v) => v.option_id === o.id).length })),
-          }
-        : null,
       reactions,
       replies: p.replies
         .filter((r) => !r.hidden_at)

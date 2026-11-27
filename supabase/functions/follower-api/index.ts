@@ -99,7 +99,6 @@ const feed = async (link: Link, device: unknown, onlyPost?: string) => {
         `id, kind, title, published_at, story_expires_at, replies_enabled,
          checkin:checkins(id, place_name),
          post_blocks!post_blocks_post_id_fkey(position, kind, text_content, url, media(storage_path, variants)),
-         polls(id, question, description, closes_at, status, chosen_option_id, decision_text, poll_options!poll_options_poll_id_fkey(id, position, label), votes(option_id, follower_id)),
          reactions(emoji, follower_id),
          replies(id, body, visibility, hidden_at, created_at, follower_id, author_profile_id, follower:followers(display_name))`,
       )
@@ -119,7 +118,7 @@ const feed = async (link: Link, device: unknown, onlyPost?: string) => {
   // deno-lint-ignore no-explicit-any
   const rows = ((posts ?? []) as any[])
     .map((p) => (Date.parse(p.published_at) <= cutoff ? p : { ...p, post_blocks: p.post_blocks.filter((b: unknown) => !isRoute(b)) }))
-    .filter((p) => p.post_blocks.length > 0 || p.title || p.kind === 'poll')
+    .filter((p) => p.post_blocks.length > 0 || p.title)
   const paths = rows.flatMap((p) =>
     p.post_blocks
       .flatMap((b: { media: { storage_path: string; variants: { thumb?: string } | null } | null }) => [b.media?.storage_path, b.media?.variants?.thumb])
@@ -133,34 +132,8 @@ const feed = async (link: Link, device: unknown, onlyPost?: string) => {
   const me = follower?.id ?? null
 
   const out = rows.map((p) => {
-    const pl = Array.isArray(p.polls) ? p.polls[0] : p.polls
     const reactions: Record<string, number> = {}
     p.reactions.forEach((r: { emoji: string }) => (reactions[r.emoji] = (reactions[r.emoji] ?? 0) + 1))
-    let poll = null
-    if (pl) {
-      const myVote = me ? pl.votes.find((v: { follower_id: string }) => v.follower_id === me) : null
-      const open = pl.status === 'open' && (!pl.closes_at || Date.parse(pl.closes_at) > Date.now())
-      // Resultat erst nach der eigenen Stimme (oder wenn die Abstimmung vorbei ist)
-      const reveal = !!myVote || !open
-      poll = {
-        id: pl.id,
-        question: pl.question,
-        description: pl.description,
-        closes_at: pl.closes_at,
-        status: pl.status,
-        chosen_option_id: pl.status === 'resolved' ? pl.chosen_option_id : null,
-        decision_text: pl.status === 'resolved' ? pl.decision_text : null,
-        my_option_id: myVote?.option_id ?? null,
-        total: reveal ? pl.votes.length : null,
-        options: [...pl.poll_options]
-          .sort((a, b) => a.position - b.position)
-          .map((o) => ({
-            id: o.id,
-            label: o.label,
-            votes: reveal ? pl.votes.filter((v: { option_id: string }) => v.option_id === o.id).length : 0,
-          })),
-      }
-    }
     return {
       id: p.id,
       kind: p.kind,
@@ -183,7 +156,6 @@ const feed = async (link: Link, device: unknown, onlyPost?: string) => {
           thumbUrl: b.media ? (urls.get(b.media.variants?.thumb ?? '') ?? urls.get(b.media.storage_path) ?? null) : null,
           route: !!b.media?.variants?.route,
         })),
-      poll,
       reactions,
       my_reactions: me ? p.reactions.filter((r: { follower_id: string }) => r.follower_id === me).map((r: { emoji: string }) => r.emoji) : [],
       // öffentliche Antworten + eigene private Antworten
@@ -330,25 +302,6 @@ Deno.serve(async (req) => {
           body: text,
           visibility: body.private ? 'private' : 'public',
         })
-        if (error) throw new HttpError(500, error.message)
-        return json({ ok: true })
-      }
-
-      case 'vote': {
-        const f = await requireFollower(link, body.device)
-        const { data: option } = await supabase
-          .from('poll_options')
-          .select('id, poll:polls!poll_options_poll_id_fkey(id, status, closes_at, post:posts(trip_id))')
-          .eq('id', String(body.option_id))
-          .maybeSingle()
-        // deno-lint-ignore no-explicit-any
-        const poll = (option as any)?.poll
-        if (!option || !poll || poll.post?.trip_id !== link.trip_id) throw new HttpError(404, 'Option nicht gefunden.')
-        if (poll.status !== 'open' || (poll.closes_at && Date.parse(poll.closes_at) < Date.now()))
-          throw new HttpError(409, 'Die Abstimmung ist beendet.')
-        const { error } = await supabase
-          .from('votes')
-          .upsert({ poll_id: poll.id, option_id: option.id, follower_id: f.id }, { onConflict: 'poll_id,follower_id' })
         if (error) throw new HttpError(500, error.message)
         return json({ ok: true })
       }

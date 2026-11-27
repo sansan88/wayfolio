@@ -186,63 +186,14 @@
   color: var(--ion-color-primary);
 }
 
-.poll__desc {
-  margin-top: 0;
-}
 
-.poll__option {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--ion-color-step-200, #ddd);
-  border-radius: 10px;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
 
-.poll__option:disabled {
-  cursor: default;
-}
 
-.poll__option--chosen,
-.poll__option--mine {
-  border: 2px solid var(--ion-color-primary);
-}
 
-.poll__label {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-weight: 600;
-}
 
-.poll__share {
-  font-size: 0.8rem;
-  color: var(--ion-color-medium);
-}
 
-.poll__decision {
-  margin-bottom: 0;
-  font-style: italic;
-}
 
-.poll__resolve {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
 
-.poll__radio {
-  display: block;
-  margin: 6px 0;
-}
 
 .post__header {
   position: relative;
@@ -525,4 +476,32 @@
   height: 220px;
   margin: 0;
   border-radius: 0;
+}
+
+/* Aktionen der Reisenden: Teilen und «…» als kleine FAB-Knöpfe */
+.post__actions {
+  position: absolute;
+  z-index: 3;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+}
+
+/* mit Bild: halb über dem unteren Bildrand, wie ein FAB an der Kante */
+.post__actions--edge {
+  top: -28px;
+}
+
+.post__actions ion-fab-button {
+  --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  margin: 4px;
+}
+
+.post__actions ion-fab-button[color='light'] {
+  --color: var(--ion-color-step-700, #555);
+}
+
+.post--actions-top .post__header {
+  padding-right: 112px;
 }

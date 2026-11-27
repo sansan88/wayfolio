@@ -30,6 +30,7 @@ import ComposeModal from '../components/ComposeModal'
 import FeedSkeleton from '../components/FeedSkeleton'
 import GeoPermissionBanner from '../components/GeoPermissionBanner'
 import PostCard, { dayNumber } from '../components/PostCard'
+import ShareImageModal from '../components/ShareImageModal'
 import TimelineDots from '../components/TimelineDots'
 import { useAuth } from '../lib/auth'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -50,7 +51,6 @@ import {
   fillLinkTitles,
   regenerateRouteImages,
   revokePostLinks,
-  resolvePoll,
   updatePost,
   type FeedPost,
 } from '../lib/updates'
@@ -139,6 +139,8 @@ const FeedPage = () => {
 
 
   const openShare = useTripShare()
+  /** Beitrag, für den gerade ein Instagram-Bild entsteht */
+  const [imagePost, setImagePost] = useState<FeedPost | null>(null)
 
   const act = (task: () => Promise<void>) =>
     task()
@@ -166,15 +168,26 @@ const FeedPage = () => {
       })
       .catch((e: Error) => toast(e.message, 'danger'))
 
-  const openMenu = (post: FeedPost) =>
+  /** Teilen-Knopf: Link für WhatsApp & Co. oder Bild für Instagram */
+  const openShareMenu = (post: FeedPost) =>
     presentSheet({
-      header: post.title ?? post.place_name?.split(',')[0] ?? 'Beitrag',
+      header: 'Beitrag teilen',
       subHeader: '«Nur diesen Beitrag» zeigt der Gruppe genau diesen Beitrag – nicht die ganze Reise.',
       buttons: [
         // Teilen: nur dieser Beitrag (eigener Secret Link) oder mit Link zur ganzen Reise
         { text: 'Nur diesen Beitrag teilen', handler: () => shareAs(post, 'post') },
         { text: 'Mit Reise-Link teilen', handler: () => shareAs(post, 'trip') },
-        ...(post.kind !== 'poll' ? [{ text: 'Bearbeiten', handler: () => void editPost(post) }] : []),
+        { text: 'Bild für Instagram', handler: () => setImagePost(post) },
+        { text: 'Abbrechen', role: 'cancel' },
+      ],
+    })
+
+  /** «…»-Knopf: Bearbeiten, Links sperren, Löschen */
+  const openMenu = (post: FeedPost) =>
+    presentSheet({
+      header: post.title ?? post.place_name?.split(',')[0] ?? 'Beitrag',
+      buttons: [
+        { text: 'Bearbeiten', handler: () => void editPost(post) },
         {
           text: 'Beitrags-Links sperren',
           handler: () =>
@@ -243,9 +256,9 @@ const FeedPage = () => {
       day={dayNumber(post.published_at, tripStart)}
       mode="owner"
       onReply={(postId, body) => act(() => addOwnerReply(postId, session!.user.id, body))}
-      onResolve={(pollId, optionId, text) => act(() => resolvePoll(pollId, optionId, text))}
       onHideReply={(id) => void act(() => hideReply(id))}
       onMenu={openMenu}
+      onShare={openShareMenu}
       onPlace={(p) => router.push(`/karte?ort=${p.checkin_id}`, 'forward', 'replace')}
     />
     </div>
@@ -334,6 +347,11 @@ const FeedPage = () => {
                 throw e
               })
           }}
+        />
+        <ShareImageModal
+          post={imagePost}
+          day={imagePost ? dayNumber(imagePost.published_at, tripStart) : null}
+          onClose={() => setImagePost(null)}
         />
         <IonFab slot="fixed" vertical="bottom" horizontal="end">
           <IonFabButton

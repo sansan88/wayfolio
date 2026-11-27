@@ -6,7 +6,7 @@ import './LandingPage.css'
 import './LegalPage.css'
 
 const CONTACT = 'team@littlefootnotes.app'
-const STAND = '25. November 2026'
+const STAND = '27. November 2026'
 const home = import.meta.env.BASE_URL
 
 const Impressum = () => (
@@ -76,7 +76,7 @@ const Datenschutz = () => (
     <h3>Reisende mit Konto</h3>
     <ul>
       <li>E-Mail-Adresse und Anzeigename (für Anmeldung per E-Mail-Link und zur Kennzeichnung von Beiträgen)</li>
-      <li>Reisen und Beiträge: Texte, Fotos, Videos, Sprachnachrichten, Links, Abstimmungen</li>
+      <li>Reisen und Beiträge: Texte, Fotos, Videos, Sprachnachrichten, Links</li>
       <li>Standorte (Koordinaten, Ortsname, Zeitpunkt), die ihr bei einem Update bewusst erfasst</li>
       <li>Antworten auf Beiträge eurer Follower</li>
     </ul>
@@ -87,7 +87,7 @@ const Datenschutz = () => (
         Ein zufälliges Geräte-Kennzeichen, das im Browser gespeichert wird; auf dem Server liegt davon nur ein
         nicht umkehrbarer Hashwert
       </li>
-      <li>Reaktionen, Antworten und Stimmen bei Abstimmungen</li>
+      <li>Reaktionen und Antworten</li>
     </ul>
     <h3>Newsletter-Abos (Community-Konto)</h3>
     <ul>
@@ -121,7 +121,7 @@ const Datenschutz = () => (
     <h2>3. Zweck und Rechtsgrundlage</h2>
     <p>
       Wir bearbeiten die Daten, um das Reisetagebuch bereitzustellen: Inhalte speichern, sie über den geheimen Link
-      mit Familie und Freunden teilen, Reaktionen und Abstimmungen ermöglichen und – falls gewünscht – Updates per
+      mit Familie und Freunden teilen, Reaktionen ermöglichen und – falls gewünscht – Updates per
       E-Mail versenden. Soweit die DSGVO gilt, stützen wir uns auf die Bereitstellung des gewünschten Dienstes (Art. 6
       Abs. 1 lit. b), für den Newsletter auf eure Einwilligung (lit. a) und für die technische Sicherheit auf unser
       berechtigtes Interesse (lit. f).
