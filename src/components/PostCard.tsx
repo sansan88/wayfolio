@@ -1,19 +1,12 @@
 import {
-  IonBadge,
-  IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
   IonFabButton,
   IonIcon,
-  IonNote,
-  IonProgressBar,
-  IonRadio,
-  IonRadioGroup,
-  IonTextarea,
 } from '@ionic/react'
-import { checkmarkCircle, ellipsisHorizontal, location, openOutline, shareOutline } from 'ionicons/icons'
+import { ellipsisHorizontal, location, openOutline, shareOutline } from 'ionicons/icons'
 import { useState } from 'react'
 
 import { describeLink } from '../lib/links'
@@ -28,8 +21,6 @@ interface Props {
   mode: 'owner' | 'follower'
   onReact?: (postId: string, emoji: string) => void
   onReply?: (postId: string, body: string, isPrivate: boolean) => Promise<void>
-  onVote?: (pollId: string, optionId: string) => void
-  onResolve?: (pollId: string, optionId: string, text: string) => Promise<void>
   onHideReply?: (replyId: string) => void
   /** Menü «Bearbeiten / Löschen» (nur Reisende) */
   onMenu?: (post: FeedPost) => void
@@ -96,96 +87,11 @@ export const dayNumber = (iso: string, start: string | null | undefined) => {
   return n >= 1 ? n : null
 }
 
-const PollView = ({ post, mode, onVote, onResolve }: Pick<Props, 'post' | 'mode' | 'onVote' | 'onResolve'>) => {
-  const poll = post.poll!
-  const [choice, setChoice] = useState<string | undefined>()
-  const [reason, setReason] = useState('')
-  const [resolving, setResolving] = useState(false)
-  const open = poll.status === 'open' && (!poll.closes_at || Date.parse(poll.closes_at) > Date.now())
-  const showResults = poll.total !== null
-
-  return (
-    <IonCardContent>
-      {poll.description && <p className="poll__desc">{poll.description}</p>}
-      {poll.options.map((o) => {
-        const share = showResults && poll.total ? Math.round((o.votes / poll.total) * 100) : 0
-        const chosen = poll.chosen_option_id === o.id
-        const mine = poll.my_option_id === o.id
-        return (
-          <button
-            key={o.id}
-            type="button"
-            className={`poll__option${chosen ? ' poll__option--chosen' : ''}${mine ? ' poll__option--mine' : ''}`}
-            disabled={mode !== 'follower' || !open}
-            onClick={() => onVote?.(poll.id, o.id)}
-          >
-            <span className="poll__label">
-              {o.label}
-              {chosen && <IonBadge color="primary">Unsere Entscheidung</IonBadge>}
-              {mine && !chosen && <IonIcon icon={checkmarkCircle} color="primary" aria-label="Deine Stimme" />}
-            </span>
-            {showResults && (
-              <>
-                <IonProgressBar value={share / 100} color={chosen ? 'primary' : 'medium'} />
-                <span className="poll__share">
-                  {share} % · {o.votes}
-                </span>
-              </>
-            )}
-          </button>
-        )
-      })}
-      <IonNote>
-        {showResults
-          ? `${poll.total} ${poll.total === 1 ? 'Stimme' : 'Stimmen'}`
-          : 'Stimme ab, um das Resultat zu sehen.'}
-        {open && poll.closes_at && ` · offen bis ${formatTime(poll.closes_at)}`}
-        {!open && poll.status !== 'resolved' && ' · Abstimmung beendet'}
-      </IonNote>
-      {poll.status === 'resolved' && poll.decision_text && <p className="poll__decision">{poll.decision_text}</p>}
-
-      {mode === 'owner' && poll.status !== 'resolved' && (
-        <div className="poll__resolve">
-          {!resolving ? (
-            <IonButton size="small" fill="outline" onClick={() => setResolving(true)}>
-              Unsere Entscheidung bekanntgeben
-            </IonButton>
-          ) : (
-            <>
-              <IonRadioGroup value={choice} onIonChange={(e) => setChoice(e.detail.value)}>
-                {poll.options.map((o) => (
-                  <IonRadio key={o.id} value={o.id} labelPlacement="end" className="poll__radio">
-                    {o.label}
-                  </IonRadio>
-                ))}
-              </IonRadioGroup>
-              <IonTextarea
-                fill="outline"
-                placeholder="Warum wir uns so entschieden haben …"
-                autoGrow
-                value={reason}
-                onIonInput={(e) => setReason(String(e.detail.value ?? ''))}
-              />
-              <IonButton
-                size="small"
-                disabled={!choice}
-                onClick={() => choice && void onResolve?.(poll.id, choice, reason).then(() => setResolving(false))}
-              >
-                Bekanntgeben
-              </IonButton>
-            </>
-          )}
-        </div>
-      )}
-    </IonCardContent>
-  )
-}
-
-const PostCard = ({ post, mode, onVote, onResolve, onMenu, onShare, day, onPlace }: Props) => {
+const PostCard = ({ post, mode, onMenu, onShare, day, onPlace }: Props) => {
   const texts = post.blocks.filter((b) => b.kind === 'text' && b.text)
   const links = post.blocks.filter((b) => b.kind === 'link' && b.url)
   // Bilder oben: Fotos, danach das Routenbild (bei Orten ohne Fotos ist es das einzige Bild)
-  const media = post.kind === 'poll' ? [] : [
+  const media = [
     ...post.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && !b.route),
     ...post.blocks.filter((b) => b.kind === 'photo' && b.mediaUrl && b.route),
   ]
@@ -206,7 +112,7 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, onShare, day, onPlace
         {(onShare || onMenu) && (
           // Aktionen als kleine FAB-Knöpfe am unteren Rand des Bildes (ohne Bild oben rechts)
           <div className={`post__actions${media.length > 0 ? ' post__actions--edge' : ''}`}>
-            {onShare && post.kind !== 'poll' && (
+            {onShare && (
               <IonFabButton size="small" onClick={() => onShare(post)} aria-label="Beitrag teilen">
                 <IonIcon icon={shareOutline} />
               </IonFabButton>
@@ -230,7 +136,7 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, onShare, day, onPlace
             </span>
           ))}
         <div className="post__meta">
-          {[post.kind === 'poll' ? 'Entscheidung' : null, day ? `Tag ${day}` : null, formatTime(post.published_at), mode === 'owner' ? post.author_name : null]
+          {[day ? `Tag ${day}` : null, formatTime(post.published_at), mode === 'owner' ? post.author_name : null]
             .filter(Boolean)
             .join(' · ')}
         </div>
@@ -243,7 +149,7 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, onShare, day, onPlace
               {b.text}
             </p>
           ))}
-          {post.kind !== 'poll' && <MediaBlocks post={post} other />}
+          <MediaBlocks post={post} other />
           {links.length > 0 && (
             <div className="post__links">
               {links.map((b) => {
@@ -265,7 +171,6 @@ const PostCard = ({ post, mode, onVote, onResolve, onMenu, onShare, day, onPlace
           )}
         </IonCardContent>
       )}
-      {post.poll && <PollView post={post} mode={mode} onVote={onVote} onResolve={onResolve} />}
 
     </IonCard>
   )

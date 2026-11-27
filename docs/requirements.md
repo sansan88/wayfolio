@@ -45,7 +45,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-017 | Links lesbar anzeigen   | Als Follower möchte ich Links als Dienst mit Namen und Symbol sehen statt als ganze URL, damit ich weiss, wohin sie führen.                           | Medium   | Implemented |
 | FR-018 | Beitrag bearbeiten      | Als Reisende:r möchte ich einen Beitrag nachträglich bearbeiten, damit ich Fehler korrigieren und Fotos ergänzen kann.                               | High     | Implemented |
 | FR-019 | Beitrag löschen         | Als Reisende:r möchte ich einen Beitrag löschen, damit Ungewolltes verschwindet.                                                                     | High     | Implemented |
-| FR-020 | Entscheidung (Umfrage)  | Als Reisende:r möchte ich Follower über eine Frage abstimmen lassen, damit sie an Entscheidungen unterwegs teilhaben.                                | Low      | Open        |
+| FR-020 | Entscheidung (Umfrage)  | Als Reisende:r möchte ich Follower über eine Frage abstimmen lassen, damit sie an Entscheidungen unterwegs teilhaben.                                | Low      | Rejected    |
 | FR-021 | Fehlenden Tag nachtragen | Als Reisende:r möchte ich einen Tag ohne Beitrag in der Zeitleiste erkennen und direkt nachtragen, damit die Reise lückenlos bleibt.               | High     | Implemented |
 
 ### Schreiben mit Claude
@@ -85,7 +85,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-057 | Bild für Instagram        | Als Reisende:r möchte ich aus einem Beitrag ein Bild im Stil der Produktseite mit Datum, Reisetag und Ort erzeugen, damit ich einmal Erfasstes auch auf Instagram teilen kann. | High | Implemented |
 | FR-058 | Story oder Beitrag        | Als Reisende:r möchte ich zwischen Story (9:16) und Feed-Beitrag (4:5) wählen, damit das Bild ohne Zuschneiden passt.                          | High     | Implemented |
 | FR-059 | Foto für das Bild wählen  | Als Reisende:r möchte ich bei mehreren Fotos das Motiv wählen, damit das beste Bild auf Instagram landet.                                     | Medium   | Implemented |
-| FR-056 | Abstimmen als Follower    | Als Follower möchte ich an einer Entscheidung der Reisenden teilnehmen, damit ich mitreden kann.                                              | Low      | Implemented |
+| FR-056 | Abstimmen als Follower    | Als Follower möchte ich an einer Entscheidung der Reisenden teilnehmen, damit ich mitreden kann.                                              | Low      | Rejected    |
 
 ### Newsletter
 
@@ -188,8 +188,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 - Zugangsschutz: Beitrags-Links mit oder ohne Passwort? Empfehlung ohne (siehe Konzept).
 - `follower-api` kennt noch die Aktionen `react` (Emoji-Reaktionen) und `reply` (Antworten), die App zeigt sie
   nicht. Entscheid 2026-11-27: werden nicht gebaut und aus dem Backend entfernt (Backlog Rang 7).
-- FR-020 Entscheidung: Seit der Vereinfachung (Commit 377b122) lässt sich keine neue Entscheidung mehr erfassen;
-  bestehende werden angezeigt und lassen sich abstimmen und bekanntgeben. Entscheid PO: wieder einbauen oder
-  `Rejected` (UC-008 steht auf `Draft`). Über Beitrags-Links ist kein Abstimmen möglich (UC-012, A7).
+- FR-020/FR-056 Entscheidungen: 2026-11-27 ausgebaut (Entscheid PO); bei echtem Bedarf neu beurteilen. Die leeren
+  Tabellen `polls`, `poll_options`, `votes` und der Wert `poll` von `post_kind` bleiben vorerst in der Datenbank.
 - Rechte: Alle Mitglieder (auch Mitreisende) dürfen Reise bearbeiten, jeden Beitrag ändern oder löschen,
   einladen und Abonnent:innen verwalten; nur die Besitzer:in entfernt Mitreisende (BR-024, BR-027, BR-029, BR-043).

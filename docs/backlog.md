@@ -49,7 +49,6 @@ allein schon den Schutz.
 | 3–4  | FR-090 – FR-094        | UC-019 von `Draft` auf `Approved`; Grösse durch Developers                  | `/ai-use-case-spec UC-019`               | 15.12.2026 |
 | 5    | FR-095                 | Entscheid: Beitrags-Links mit oder ohne Passwort                           | Entscheid PO                             | 15.12.2026 |
 | 6    | FR-083                 | Akzeptanzkriterien, Datenschutzerklärung ergänzen                          | `/ai-use-case-spec UC-017`               | 31.01.2027 |
-| —    | FR-020                 | Entscheid: Entscheidungen erfassen wieder einbauen oder `Rejected` (UC-008 `Draft`) | Entscheid PO, danach einordnen    | 15.12.2026 |
 
 ## Erledigt
 
@@ -57,7 +56,7 @@ allein schon den Schutz.
 | ---------------------- | ------------------------------------------- | ---------- | ----------------------------------------- |
 | FR-047                 | Aktionen am Beitrag (Teilen, «…» als FAB)   | 2026-11-27 | UC-018 `Implemented`, Branch `claude/lucid-wozniak-8020ra` |
 | FR-057, FR-058, FR-059 | Bild für Instagram (Story, Beitrag, Motiv)  | 2026-11-27 | UC-018 `Implemented`, Branch `claude/lucid-wozniak-8020ra` |
-| FR-001 – FR-074, FR-082 (ohne FR-020, FR-075) | Bestehende Funktionen (siehe requirements.md) | vor 2026-11-27 | live auf littlefootnotes.app; noch nicht `Verified` |
+| FR-001 – FR-074, FR-082 (ohne FR-020, FR-056, FR-075) | Bestehende Funktionen (siehe requirements.md) | vor 2026-11-27 | live auf littlefootnotes.app; noch nicht `Verified` |
 
 ## Bewusst nicht
 
@@ -68,6 +67,7 @@ allein schon den Schutz.
 | Likes, Followerzahlen, Algorithmus | Ausserhalb der Vision (vision.md, Abgrenzung)                                          | 2026-11-27     |
 | Reiseplanung, Buchungen, Budgets   | Andere Systeme (vision.md, Abgrenzung)                                                 | 2026-11-27     |
 | Foto-Downloads für Follower        | Die Fotos bleiben bei den Reisenden (vision.md, Abgrenzung)                            | 2026-11-27     |
+| Entscheidungen (FR-020, FR-056)    | Ausgebaut 2026-11-27: nie genutzt (0 Entscheidungen in der Datenbank); bei echtem Bedarf neu beurteilen | 2026-11-27     |
 | Direktes Posten auf Instagram      | Little Footnotes erzeugt das Bild, gepostet wird in der jeweiligen App (vision.md)     | 2026-11-27     |
 
 ## Entscheidungen
@@ -76,6 +76,7 @@ allein schon den Schutz.
 | ---------- | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
 | 2026-11-27 | Erstordnung übernommen: Messung vor Passwortschutz; Passwortschutz in drei Teilen; Grössen als `proposed`              | Sandro Scalco |
 | 2026-11-27 | Pflicht-Konto für Follower und Reaktionen/Antworten bewusst nicht; Zugangsanfrage bleibt als Idee im Backlog (Rang 8–9) | Sandro Scalco |
+| 2026-11-27 | Entscheidungen ausgebaut (App und `follower-api`), später bei Bedarf neu beurteilen | Sandro Scalco |
 | 2026-11-27 | Instagram-Bild und Aktions-Knöpfe am Beitrag umgesetzt                                                                 | Sandro Scalco |
 
 ## Quellen

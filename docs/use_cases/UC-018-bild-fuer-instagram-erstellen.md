@@ -13,7 +13,7 @@
 ## Preconditions
 
 - Die Person ist angemeldet und Mitglied der Reise.
-- Der Beitrag ist gespeichert und keine Entscheidung.
+- Der Beitrag ist gespeichert.
 
 ## Main Success Scenario
 

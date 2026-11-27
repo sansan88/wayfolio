@@ -6,9 +6,11 @@
 **Use Case Name:** An Entscheidung teilnehmen  
 **Primary Actor:** Follower  
 **Goal:** Bei einer Frage der Reisenden mitreden und sehen, wie die anderen abgestimmt haben  
-**Status:** Implemented
+**Status:** Obsolete
 
 **Anforderungen:** FR-056, NFR-006
+
+> **Obsolete seit 2026-11-27:** Entscheidungen wurden ausgebaut (Entscheid PO). Bei echtem Bedarf neu beurteilen.
 
 ## Preconditions
 

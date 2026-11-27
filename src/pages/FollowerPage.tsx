@@ -159,7 +159,6 @@ const FollowerPage = ({ token }: { token: string }) => {
       day={dayNumber(post.published_at, data?.trip.starts_on ?? data?.posts.at(-1)?.published_at)}
       mode="follower"
       onReact={(postId, emoji) => void withName(() => api.react(postId, emoji))}
-      onVote={(_pollId, optionId) => void withName(() => api.vote(optionId))}
       onReply={(postId, body, isPrivate) =>
         withName(async () => {
           await api.reply(postId, body, isPrivate)

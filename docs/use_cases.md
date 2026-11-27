@@ -21,11 +21,11 @@ flowchart LR
         UC005[UC-005\nBeitrag bearbeiten oder löschen]
         UC006[UC-006\nMit Claude schreiben]
         UC007[UC-007\nRückblick erstellen]
-        UC008[UC-008\nEntscheidung stellen]
+        UC008[UC-008\nEntscheidung stellen – obsolet]
         UC009[UC-009\nReise nachlesen]
         UC010[UC-010\nReise oder Beitrag teilen]
         UC011[UC-011\nTagebuch per Link lesen]
-        UC012[UC-012\nAn Entscheidung teilnehmen]
+        UC012[UC-012\nAn Entscheidung teilnehmen – obsolet]
         UC013[UC-013\nNewsletter abonnieren]
         UC014[UC-014\nAbos verwalten]
         UC015[UC-015\nNewsletter versenden]
@@ -71,7 +71,7 @@ flowchart LR
     UC018 --> instagram
 ```
 
-`UC-019` und `UC-020` sind Konzepte (Status `Draft`), noch nicht gebaut. `UC-006` und `UC-007` setzen die KI-Einwilligung voraus (FR-030). Mitreisende werden durch `UC-003` zu Mitgliedern
+`UC-008` und `UC-012` sind obsolet (Entscheidungen ausgebaut, 2026-11-27). `UC-019` und `UC-020` sind Konzepte (Status `Draft`), noch nicht gebaut. `UC-006` und `UC-007` setzen die KI-Einwilligung voraus (FR-030). Mitreisende werden durch `UC-003` zu Mitgliedern
 der Reise.
 
 ## Rückverfolgbarkeit

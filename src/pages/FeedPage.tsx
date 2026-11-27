@@ -51,7 +51,6 @@ import {
   fillLinkTitles,
   regenerateRouteImages,
   revokePostLinks,
-  resolvePoll,
   updatePost,
   type FeedPost,
 } from '../lib/updates'
@@ -188,7 +187,7 @@ const FeedPage = () => {
     presentSheet({
       header: post.title ?? post.place_name?.split(',')[0] ?? 'Beitrag',
       buttons: [
-        ...(post.kind !== 'poll' ? [{ text: 'Bearbeiten', handler: () => void editPost(post) }] : []),
+        { text: 'Bearbeiten', handler: () => void editPost(post) },
         {
           text: 'Beitrags-Links sperren',
           handler: () =>
@@ -257,7 +256,6 @@ const FeedPage = () => {
       day={dayNumber(post.published_at, tripStart)}
       mode="owner"
       onReply={(postId, body) => act(() => addOwnerReply(postId, session!.user.id, body))}
-      onResolve={(pollId, optionId, text) => act(() => resolvePoll(pollId, optionId, text))}
       onHideReply={(id) => void act(() => hideReply(id))}
       onMenu={openMenu}
       onShare={openShareMenu}

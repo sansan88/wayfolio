@@ -6,7 +6,7 @@
 **Use Case Name:** Entscheidung stellen  
 **Primary Actor:** Reisende:r  
 **Goal:** Follower über eine Frage unterwegs abstimmen lassen und danach die eigene Entscheidung bekanntgeben  
-**Status:** Draft
+**Status:** Obsolete
 
 **Anforderungen:** FR-020
 
@@ -14,6 +14,8 @@
 > Seit dem Zusammenführen der Beitragsarten öffnet «+» nur noch den normalen Beitrag. Bestehende Entscheidungen
 > werden weiterhin angezeigt, Follower stimmen ab (UC-012) und Reisende geben die Entscheidung bekannt (Schritte 7
 > bis 10).
+
+> **Obsolete seit 2026-11-27:** Entscheidungen wurden ausgebaut (Entscheid PO). Bei echtem Bedarf neu beurteilen.
 
 ## Preconditions
 

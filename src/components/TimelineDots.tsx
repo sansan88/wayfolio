@@ -1,5 +1,5 @@
 import { IonIcon } from '@ionic/react'
-import { add, barChart, documentText, location, mic, videocam } from 'ionicons/icons'
+import { add, documentText, location, mic, videocam } from 'ionicons/icons'
 import { useEffect, useMemo, useRef } from 'react'
 
 import type { FeedPost } from '../lib/updates'
@@ -22,15 +22,13 @@ const startOfDay = (d: Date) => new Date(`${dayKey(d)}T00:00`)
 /** Vorschau eines Events: erstes Foto, sonst ein passendes Symbol. */
 const preview = (p: FeedPost) => p.blocks.find((b) => b.kind === 'photo' && !b.route && (b.thumbUrl || b.mediaUrl))
 const iconFor = (p: FeedPost) =>
-  p.kind === 'poll'
-      ? barChart
-      : p.blocks.some((b) => b.kind === 'video')
-        ? videocam
-        : p.blocks.some((b) => b.kind === 'audio')
-          ? mic
-          : p.place_name
-            ? location
-            : documentText
+  p.blocks.some((b) => b.kind === 'video')
+    ? videocam
+    : p.blocks.some((b) => b.kind === 'audio')
+      ? mic
+      : p.place_name
+        ? location
+        : documentText
 
 /**
  * Ein Punkt pro Event der ganzen Reise (gleiche Reihenfolge wie der Feed).

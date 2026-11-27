@@ -8,13 +8,10 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonListHeader,
   IonModal,
   IonNote,
   IonReorder,
   IonReorderGroup,
-  IonSelect,
-  IonSelectOption,
   IonTextarea,
   IonSpinner,
   IonThumbnail,
@@ -25,7 +22,6 @@ import {
   useIonToast,
 } from '@ionic/react'
 import {
-  addCircle,
   documentAttachOutline,
   images,
   locationOutline,
@@ -68,15 +64,13 @@ const fileKey = (f: File) => {
   return k
 }
 
-export type ComposeKind = 'post' | 'background' | 'poll' | 'edit'
+export type ComposeKind = 'post' | 'background' | 'edit'
 
 export interface ComposeResult {
   title: string
   text: string
   files: File[]
   links: string[]
-  options: string[]
-  closesInHours: number | null
   /** Zeitpunkt; null = jetzt bzw. Aufnahmezeit der Fotos */
   at: Date | null
   /** nur gesetzt, wenn der Ort in diesem Dialog gewählt wurde – hat dann Vorrang vor Foto-GPS */
@@ -119,7 +113,6 @@ interface Props {
 const heading: Record<ComposeKind, string> = {
   post: 'Neuer Beitrag',
   background: 'Hintergrund',
-  poll: 'Entscheidung',
   edit: 'Bearbeiten',
 }
 
@@ -130,7 +123,7 @@ const FilePreview = ({ file }: { file: File }) => {
   return <IonIcon icon={file.type.startsWith('video') ? videocamOutline : file.type.startsWith('audio') ? micOutline : documentAttachOutline} />
 }
 
-/** iOS-Card-Modal für Beitrag, Hintergrund-Story, Abstimmung und Bearbeiten – Formular als Inset-Listen. */
+/** iOS-Card-Modal für Beitrag, Hintergrund-Story und Bearbeiten – Formular als Inset-Listen. */
 const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const presenter = useCardPresenter(kind !== null)
   const modal = useRef<HTMLIonModalElement>(null)
@@ -140,8 +133,6 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const [text, setText] = useState('')
   const [links, setLinks] = useState<string[]>([])
   const [files, setFiles] = useState<File[]>([])
-  const [options, setOptions] = useState(['', ''])
-  const [closesInHours, setClosesInHours] = useState<number | null>(48)
   const [at, setAt] = useState<Date | null>(null)
   const [choosingTime, setChoosingTime] = useState(false)
   const [location, setLocation] = useState<{ position: Position; place: Place } | null>(null)
@@ -178,8 +169,6 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
     setText(initial?.text ?? '')
     setLinks(initial?.links ?? [])
     setFiles([])
-    setOptions(['', ''])
-    setClosesInHours(48)
     setAt(initial?.at ?? null)
     setLocation(null)
     setAutoLoc(initial?.position && initial.place ? { position: initial.position, place: initial.place, source: 'gps' } : null)
@@ -234,7 +223,6 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
   const sortedFiles = mediaItems.filter((m) => m.file).map((m) => m.file!)
   const mediaOrder = mediaItems.map((m) => (m.file ? `new:${sortedFiles.indexOf(m.file)}` : m.key))
 
-  const filledOptions = options.map((o) => o.trim()).filter(Boolean)
   const dirty =
     kind === 'edit'
       ? title !== (initial?.title ?? '') ||
@@ -245,13 +233,11 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
         files.length > 0 ||
         removed.length > 0 ||
         orderChanged
-      : !!(title || text || cleanLinks(links).length || files.length || filledOptions.length)
+      : !!(title || text || cleanLinks(links).length || files.length)
   const linksOk = links.every((l) => !l.trim() || normalizeUrl(l))
   const valid =
     !linksOk
       ? false
-      : kind === 'poll'
-      ? title.trim().length > 0 && filledOptions.length >= 2
       : kind === 'background'
         ? title.trim().length > 0 && text.trim().length > 0
         : kind === 'edit'
@@ -423,8 +409,6 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
       text,
       files: sortedFiles,
       links: cleanLinks(links),
-      options: filledOptions,
-      closesInHours,
       at,
       location,
       removedBlockIds: removed,
@@ -471,18 +455,18 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
         <IonList inset>
           <IonItem>
             <IonInput
-              aria-label={kind === 'poll' ? 'Frage' : 'Titel'}
-              placeholder={kind === 'poll' ? 'Welches Auto sollen wir kaufen?' : kind === 'background' ? 'Titel, z.B. Wie wir das Auto fanden' : 'Titel (optional – sonst der Ort)'}
+              aria-label="Titel"
+              placeholder={kind === 'background' ? 'Titel, z.B. Wie wir das Auto fanden' : 'Titel (optional – sonst der Ort)'}
               value={title}
               onIonInput={(e) => setTitle(String(e.detail.value ?? ''))}
             />
           </IonItem>
           <IonItem>
             <IonTextarea
-              aria-label={kind === 'poll' ? 'Beschreibung' : 'Text'}
-              placeholder={kind === 'poll' ? 'Kurze Beschreibung (optional)' : 'Was ist passiert?'}
+              aria-label="Text"
+              placeholder="Was ist passiert?"
               autoGrow
-              rows={kind === 'poll' ? 2 : 6}
+              rows={6}
               value={text}
               onIonInput={(e) => setText(String(e.detail.value ?? ''))}
             />
@@ -529,7 +513,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
             </IonNote>
           </IonItem>
         </IonList>
-        {kind !== 'edit' && kind !== 'poll' && (
+        {kind !== 'edit' && (
           <IonNote className="compose__note">Fotos mit Ortsdaten setzen Ort und Zeit automatisch – ausser du wählst sie hier.</IonNote>
         )}
         <DateTimeSheet
@@ -545,55 +529,6 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
           onClose={() => setPicking(false)}
           onPick={(position, place) => setLocation({ position, place })}
         />
-
-        {kind === 'poll' && (
-          <>
-            <IonList inset>
-              <IonListHeader>
-                <IonLabel>Optionen</IonLabel>
-              </IonListHeader>
-              {options.map((o, i) => (
-                <IonItem key={i}>
-                  {options.length > 2 && (
-                    <IonButton
-                      slot="start"
-                      fill="clear"
-                      color="danger"
-                      className="compose__remove"
-                      aria-label={`Option ${i + 1} entfernen`}
-                      onClick={() => setOptions(options.filter((_, j) => j !== i))}
-                    >
-                      <IonIcon slot="icon-only" icon={removeCircle} />
-                    </IonButton>
-                  )}
-                  <IonInput
-                    aria-label={`Option ${i + 1}`}
-                    placeholder={`Option ${i + 1}`}
-                    value={o}
-                    onIonInput={(e) => setOptions(options.map((x, j) => (j === i ? String(e.detail.value ?? '') : x)))}
-                  />
-                </IonItem>
-              ))}
-              {options.length < 4 && (
-                <IonItem button detail={false} onClick={() => setOptions([...options, ''])}>
-                  <IonIcon slot="start" icon={addCircle} color="success" />
-                  <IonLabel>Option hinzufügen</IonLabel>
-                </IonItem>
-              )}
-            </IonList>
-            <IonList inset>
-              <IonItem>
-                <IonSelect label="Abstimmung offen" interface="action-sheet" value={closesInHours} onIonChange={(e) => setClosesInHours(e.detail.value)}>
-                  <IonSelectOption value={24}>24 Stunden</IonSelectOption>
-                  <IonSelectOption value={48}>48 Stunden</IonSelectOption>
-                  <IonSelectOption value={168}>1 Woche</IonSelectOption>
-                  <IonSelectOption value={null}>bis wir entscheiden</IonSelectOption>
-                </IonSelect>
-              </IonItem>
-            </IonList>
-            <IonNote className="compose__note">Follower sehen das Resultat, sobald sie abgestimmt haben.</IonNote>
-          </>
-        )}
 
         {(kind === 'post' || kind === 'background' || kind === 'edit') && (
           <IonList inset>

@@ -53,13 +53,6 @@
 
 1. Siehe [UC-013](UC-013-newsletter-abonnieren.md).
 
-### A5: An Entscheidung teilnehmen
-
-**Trigger:** Ein Beitrag enthält eine offene Entscheidung
-**Flow:**
-
-1. Siehe UC-012.
-
 ## Postconditions
 
 ### Success Postconditions

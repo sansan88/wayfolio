@@ -88,13 +88,6 @@
 2. Reisende:r bestätigt mit «Löschen».
 3. System entfernt den Beitrag aus Feed, Zeitleiste und Follower-Ansicht.
 
-### A8: Entscheidung
-
-**Trigger:** Der Beitrag ist eine Entscheidung (Schritt 2)
-**Flow:**
-
-1. System bietet «Bearbeiten» nicht an; Löschen ist wie in A7 möglich.
-
 ## Postconditions
 
 ### Success Postconditions
@@ -119,9 +112,9 @@ Jedes Mitglied der Reise darf jeden Beitrag der Reise bearbeiten und löschen, n
 Beim Löschen eines Beitrags werden seine Reaktionen und Antworten mitgelöscht; Fotos und Videos bleiben in der
 Galerie der Reise.
 
-### BR-031: Entscheidungen nicht bearbeitbar
+### BR-031: (entfallen)
 
-Eine Entscheidung (Abstimmung) kann nach dem Veröffentlichen nicht mehr bearbeitet, nur gelöscht werden.
+Galt für Entscheidungen, die am 2026-11-27 ausgebaut wurden. Die ID bleibt reserviert.
 
 ### Weitere Regeln
 
