@@ -15,7 +15,7 @@ import {
   useIonToast,
 } from '@ionic/react'
 import { logoInstagram } from 'ionicons/icons'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useCardPresenter } from '../lib/modal'
 import {
@@ -25,7 +25,9 @@ import {
   shareImageFile,
   sharePhotos,
   type ShareImageFormat,
+  type ShareImageSymbol,
   type ShareImageTheme,
+  symbolPreview,
 } from '../lib/shareImage'
 import type { FeedPost } from '../lib/updates'
 import './ShareImageModal.css'
@@ -38,6 +40,37 @@ interface Props {
 }
 
 const THEME_KEY = 'lf-share-theme'
+const SYMBOL_KEY = 'lf-share-symbol'
+
+const SYMBOLS: { key: ShareImageSymbol; label: string }[] = [
+  { key: 'sonne', label: 'Sonne' },
+  { key: 'mond', label: 'Mond' },
+  { key: 'palme', label: 'Palme' },
+  { key: 'camper', label: 'Camper' },
+  { key: 'haus', label: 'Häuschen' },
+  { key: 'zelt', label: 'Zelt' },
+  { key: 'fahrrad', label: 'Fahrrad' },
+  { key: 'berge', label: 'Berge' },
+  { key: 'welle', label: 'Welle' },
+  { key: 'keins', label: 'Keins' },
+]
+
+const savedSymbol = (): ShareImageSymbol => {
+  try {
+    const v = localStorage.getItem(SYMBOL_KEY) as ShareImageSymbol | null
+    return v && SYMBOLS.some((x) => x.key === v) ? v : 'sonne'
+  } catch {
+    return 'sonne'
+  }
+}
+
+const remember = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // ohne Speicher: Wahl gilt nur für diesen Dialog
+  }
+}
 /** Zuletzt gewähltes Design merken (nur Komfort; ohne Speicher gilt «Sand»). */
 const savedTheme = (): ShareImageTheme => {
   try {
@@ -56,6 +89,13 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
   const [format, setFormat] = useState<ShareImageFormat>('story')
   const [photoIndex, setPhotoIndex] = useState(0)
   const [theme, setTheme] = useState<ShareImageTheme>(savedTheme)
+  const [symbol, setSymbol] = useState<ShareImageSymbol>(savedSymbol)
+  // Vorschaubilder der Symbole in der Farbe des gewählten Designs
+  const symbolColor = theme === 'foto' ? '#c9893f' : SHARE_IMAGE_THEMES[theme].sun
+  const previews = useMemo(
+    () => Object.fromEntries(SYMBOLS.map((x) => [x.key, x.key === 'keins' ? '' : symbolPreview(x.key, symbolColor)])),
+    [symbolColor],
+  )
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
@@ -71,7 +111,7 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
     let url: string | null = null
     setImage(null)
     setError(null)
-    renderShareImage(post, { format, photoIndex, day, theme })
+    renderShareImage(post, { format, photoIndex, day, theme, symbol })
       .then((blob) => {
         if (cancelled) return
         url = URL.createObjectURL(blob)
@@ -82,7 +122,7 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
       cancelled = true
       if (url) URL.revokeObjectURL(url)
     }
-  }, [post, format, photoIndex, day, theme])
+  }, [post, format, photoIndex, day, theme, symbol])
 
   const photos = post ? sharePhotos(post) : []
   const { w, h } = SHARE_IMAGE_SIZE[format]
@@ -163,6 +203,26 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
               </button>
             )
           })}
+        </div>
+        <div className="share-image__themes share-image__symbols" role="radiogroup" aria-label="Symbol wählen">
+          {SYMBOLS.map((x) => (
+            <button
+              key={x.key}
+              type="button"
+              role="radio"
+              aria-checked={x.key === symbol}
+              className={x.key === symbol ? 'active' : ''}
+              onClick={() => {
+                setSymbol(x.key)
+                remember(SYMBOL_KEY, x.key)
+              }}
+            >
+              <span className="share-image__swatch share-image__swatch--symbol" aria-hidden="true">
+                {previews[x.key] ? <img src={previews[x.key]} alt="" /> : '–'}
+              </span>
+              {x.label}
+            </button>
+          ))}
         </div>
         {photos.length > 1 && (
           <div className="share-image__photos" role="radiogroup" aria-label="Foto wählen">
