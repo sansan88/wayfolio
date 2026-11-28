@@ -1,17 +1,19 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { IonContent, IonIcon, IonPage } from '@ionic/react'
 import {
-  bookOutline,
   calendarOutline,
+  checkmarkCircle,
   cloudOfflineOutline,
-  imagesOutline,
   locationOutline,
   lockClosedOutline,
   logoGithub,
   logoInstagram,
-  logoWhatsapp,
+  mailOutline,
   mapOutline,
   moonOutline,
+  shareSocialOutline,
+  shieldCheckmarkOutline,
+  sparklesOutline,
   sunnyOutline,
 } from 'ionicons/icons'
 
@@ -37,11 +39,11 @@ const go = (path: string) => window.location.assign(`${base}${path}`)
 
 const featureIcons = [
   locationOutline,
-  bookOutline,
+  sparklesOutline,
   mapOutline,
   calendarOutline,
-  imagesOutline,
-  logoWhatsapp,
+  mailOutline,
+  shareSocialOutline,
   lockClosedOutline,
   cloudOfflineOutline,
 ]
@@ -294,6 +296,42 @@ const LandingPage = ({ signedIn = false }: { signedIn?: boolean }) => {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="lp-section lp-compare" id="vergleich">
+            <h2>{t.compareTitle}</h2>
+            <p className="lp-sub">{t.compareSub}</p>
+            <div className="lp-compare__wrap">
+              <table className="lp-compare__table">
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      <span className="lp-visually-hidden">{t.compareTitle}</span>
+                    </th>
+                    <th scope="col" className="lp-compare__us">
+                      {t.compareUs}
+                    </th>
+                    <th scope="col">{t.compareOthers}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {t.compareRows.map((r) => (
+                    <tr key={r.label}>
+                      <th scope="row">{r.label}</th>
+                      <td className="lp-compare__us">
+                        <IonIcon icon={checkmarkCircle} aria-hidden="true" /> {r.us}
+                      </td>
+                      <td>{r.others}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="lp-compare__promise">
+              <IonIcon icon={shieldCheckmarkOutline} aria-hidden="true" />
+              <span>{t.dataPromise}</span>
+            </p>
+            <p className="lp-compare__note">{t.compareNote}</p>
           </section>
 
           <section className="lp-section lp-section--sand" id="preise">

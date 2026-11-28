@@ -2,7 +2,9 @@
 
 **Bewusst reisen. Momente teilen mit denen, die euch wichtig sind.**
 
-Little Footnotes ist ein Open-Source-Reisetagebuch als Progressive Web App (PWA). Reisende halten unterwegs mit wenigen Tipps fest, wo sie sind und was sie erleben. Familie und Freunde lesen per Secret Link mit – im Browser, ohne App und ohne Konto. Es gibt keine Likes, keine Followerzahlen und keinen Algorithmus.
+Little Footnotes ist ein Open-Source-Reisetagebuch als Progressive Web App (PWA). Reisende halten unterwegs mit wenigen Tipps fest, wo sie sind und was sie erleben. Familie und Freunde lesen per Secret Link mit – im Browser, ohne App und ohne Konto. Es gibt keine Likes, keine Followerzahlen und keinen Algorithmus. Auf Wunsch ist Little Footnotes KI-gestützt: Claude schreibt aus Stichworten und Fotos Entwürfe, liest Korrektur oder fasst die letzten Tage zusammen – nur mit Einwilligung, jederzeit ausschaltbar.
+
+Die Daten liegen in Zürich und werden nicht weiterverwendet: kein KI-Training, kein Verkauf an Dritte. Ausnahmen lösen die Reisenden selbst aus – mit der Schreibhilfe (Text und Fotos gehen dann zur Verarbeitung an Anthropic) oder wenn sie Bilder auf Instagram oder anderen Plattformen teilen.
 
 Live: **https://littlefootnotes.app**
 
@@ -42,6 +44,7 @@ Live: **https://littlefootnotes.app**
 - Positionierung als Open-Source-Reisetagebuch für bewusstes Reisen, Boho-/Travel-Design.
 - Sprachen Deutsch, Englisch, Französisch, Spanisch; helles und dunkles Design (Wahl wird im Browser gespeichert); Kopfzeile bleibt beim Scrollen oben.
 - Echte App-Bilder einer Demo-Reise Zürich → Dubai → Auckland → Wellington.
+- Vergleichstabelle «Little Footnotes im Vergleich» gegenüber typischen Reise-Apps (ohne Namen): Likes/Algorithmus, Mitlesen ohne Konto, Datenstandort, KI-Training, Verkauf an Dritte, Open Source, KI-Schreibhilfe, E-Mail-Updates, Kosten – mit dem Datenversprechen darunter.
 - Angemeldete sehen die Startseite ebenfalls, mit «Zur App».
 - Die App selbst ist derzeit nur auf Deutsch.
 
@@ -119,7 +122,7 @@ Nach `npx cap add ios` in `ios/App/App/Info.plist` ergänzen:
 
 ```xml
 <key>NSLocationWhenInUseUsageDescription</key>
-<string>Little Footnotes setzt euren aktuellen Ort für Check-ins und Fotos.</string>
+<string>Little Footnotes setzt euren aktuellen Ort für Beiträge und Fotos.</string>
 ```
 
 ## Lizenz

@@ -109,6 +109,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-072 | Update-Hinweis          | Als Reisende:r möchte ich einen Hinweis bei einer neuen App-Version erhalten, damit ich bewusst aktualisiere.                                     | Medium   | Implemented |
 | FR-073 | Produktseite mehrsprachig | Als Besucher:in möchte ich die Produktseite auf Deutsch, Englisch, Französisch oder Spanisch lesen, damit ich das Angebot verstehe.            | Medium   | Implemented |
 | FR-074 | Warteliste              | Als Besucher:in möchte ich mich mit meiner E-Mail in die Warteliste für öffentliche Reisen eintragen, damit ich beim Start informiert werde.     | Low      | Implemented |
+| FR-076 | Vergleich mit Reise-Apps | Als Besucher:in möchte ich Little Footnotes in einer Tabelle mit typischen Reise-Apps vergleichen (Likes/Algorithmus, Mitlesen ohne Konto, Datenstandort, KI-Training, Verkauf an Dritte, Open Source, KI-Schreibhilfe, E-Mail-Updates, Kosten), damit ich den Unterschied ohne Werbesprache verstehe. | Medium | Implemented |
 | FR-075 | Öffentliche Reise       | Als Reisende:r möchte ich meine Reise als öffentliche Seite ohne Secret Link zeigen, damit auch Unbekannte mitlesen.                              | Low      | Deferred    |
 
 ### Produkt-Ziel «Reisen bleiben lebendig»
