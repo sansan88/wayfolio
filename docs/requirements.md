@@ -119,6 +119,8 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-082 | Reiseende festlegen          | Als Reisende:r möchte ich das Enddatum meiner Reise setzen, damit Zeitleiste und Messung wissen, wann die Reise vorbei ist.                       | Medium   | Implemented |
 | FR-083 | Erfassungsdauer messen       | Als Betreiber möchte ich die Dauer vom Öffnen bis zum Posten eines Beitrags anonym erfassen, damit ich sehe, ob Festhalten wenig Zeit kostet.     | Medium   | Open   |
 | FR-084 | Erinnerung bei Funkstille    | Als Reisende:r möchte ich per E-Mail erinnert werden, wenn einige Tage (Standard 3) kein Beitrag kam, damit Familie und Freunde nicht vergeblich warten. Höchstens eine Erinnerung pro Pause, nur während die Reise läuft. | Medium | Implemented |
+| FR-086 | In der Nähe entdecken        | Als Reisende:r möchte ich über den Kompass oben links Tipps rund um meinen Standort (GPS, sonst letzter Ort der Reise) sehen – Links anderer Reisender, Wikipedia-Artikel und Orte aus OpenStreetMap –, damit ich unterwegs Neues entdecke. Umkreis 5/10/25/50 km. | Medium | Implemented |
+| FR-087 | Links als Tipps teilen       | Als Reisende:r möchte ich, dass Links meiner Beiträge anonym als Tipps für andere erscheinen (nur Link ohne Tracking-Parameter, Seitentitel, Ort auf ~1 km gerundet, frühestens 24 h später, nur Follower-Beiträge), und das pro Reise ausschalten können. Standard: an. | Medium | Implemented |
 | FR-085 | Erinnerung einstellen        | Als Reisende:r möchte ich die Erinnerung pro Reise auf 2, 3, 5 oder 7 Tage stellen oder ausschalten, damit sie zu meinem Reiserhythmus passt. | Medium | Implemented |
 
 ### Zugangsschutz (Konzept: [konzept-zugangsschutz.md](konzept-zugangsschutz.md))

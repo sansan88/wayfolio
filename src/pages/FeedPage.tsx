@@ -22,13 +22,14 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react'
-import { add, shareSocialOutline } from 'ionicons/icons'
+import { add, compassOutline, shareSocialOutline } from 'ionicons/icons'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import CamperRefresher from '../components/CamperRefresher'
 import ComposeModal from '../components/ComposeModal'
 import FeedSkeleton from '../components/FeedSkeleton'
 import GeoPermissionBanner from '../components/GeoPermissionBanner'
+import NearbyModal from '../components/NearbyModal'
 import PostCard, { dayNumber } from '../components/PostCard'
 import ShareImageModal from '../components/ShareImageModal'
 import TimelineDots from '../components/TimelineDots'
@@ -141,6 +142,7 @@ const FeedPage = () => {
   const openShare = useTripShare()
   /** Beitrag, für den gerade ein Instagram-Bild entsteht */
   const [imagePost, setImagePost] = useState<FeedPost | null>(null)
+  const [exploring, setExploring] = useState(false)
 
   const act = (task: () => Promise<void>) =>
     task()
@@ -268,6 +270,11 @@ const FeedPage = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={() => setExploring(true)} aria-label="In der Nähe entdecken">
+              <IonIcon slot="icon-only" icon={compassOutline} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>{trip?.title ?? 'Feed'}</IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={() => void openShare()} aria-label="Reise teilen">
@@ -348,6 +355,7 @@ const FeedPage = () => {
               })
           }}
         />
+        <NearbyModal isOpen={exploring} tripId={trip?.id ?? null} onClose={() => setExploring(false)} />
         <ShareImageModal
           post={imagePost}
           day={imagePost ? dayNumber(imagePost.published_at, tripStart) : null}

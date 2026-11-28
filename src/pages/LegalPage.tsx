@@ -97,6 +97,16 @@ const Datenschutz = () => (
       ausschalten.
     </p>
 
+    <h3>Tipps «In der Nähe»</h3>
+    <p>
+      Links, die Reisende in ihre Beiträge setzen (z. B. Google Maps, Websites von Cafés, Museen oder Unterkünften),
+      zeigen wir angemeldeten Reisenden anderer Reisen als Tipps in der Nähe. Weitergegeben werden nur die Link-Adresse
+      ohne Teilen- und Tracking-Parameter, der Titel der verlinkten Seite und der Ort des Beitrags, auf etwa 1 km
+      gerundet – nie Namen, Reisetitel, Texte oder Fotos. Ein Link erscheint frühestens 24 Stunden nach dem Beitrag
+      (bzw. nach der eingestellten Standort-Verzögerung) und nur aus Beiträgen, die für Follower sichtbar sind. Unter
+      «Reise bearbeiten» lässt sich das pro Reise ausschalten («Links als Tipps teilen»).
+    </p>
+
     <h3>Newsletter-Abos (Community-Konto)</h3>
     <ul>
       <li>
@@ -163,6 +173,16 @@ const Datenschutz = () => (
       <li>
         <strong>OpenStreetMap Nominatim</strong> (OpenStreetMap Foundation, Vereinigtes Königreich): Beim Erfassen
         eines Standorts sendet der Browser der Reisenden die Koordinaten, um den Ortsnamen zu ermitteln.
+      </li>
+      <li>
+        <strong>Wikipedia</strong> (Wikimedia Foundation, USA): Nur wenn Reisende «In der Nähe» öffnen, fragt unser
+        Server dort mit dem auf etwa 1 km gerundeten Standort und dem Umkreis nach Artikeln in der Nähe. Die IP-Adresse der
+        Reisenden wird nicht weitergegeben.
+      </li>
+      <li>
+        <strong>Overpass-API</strong> (OpenStreetMap-Daten, overpass-api.de, Deutschland): Wählen Reisende unter «In der
+        Nähe» die Orte aus OpenStreetMap, fragt ihr Browser die Overpass-API direkt mit dem auf etwa 1 km gerundeten
+        Standort ab; dabei wird die IP-Adresse übermittelt.
       </li>
       <li>
         <strong>OpenFreeMap</strong>: Auslieferung der Kartenkacheln; dabei wird die IP-Adresse übermittelt.

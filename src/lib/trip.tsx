@@ -15,9 +15,11 @@ export interface Trip {
   location_delay_minutes: number
   /** E-Mail-Erinnerung nach so vielen Tagen ohne Beitrag; null = aus */
   reminder_days: number | null
+  /** Links dieser Reise erscheinen anonym als Tipps «In der Nähe» bei anderen Reisenden */
+  share_tips: boolean
 }
 
-export type TripDetails = Pick<Trip, 'title' | 'description' | 'starts_on' | 'ends_on' | 'location_delay_minutes' | 'reminder_days'>
+export type TripDetails = Pick<Trip, 'title' | 'description' | 'starts_on' | 'ends_on' | 'location_delay_minutes' | 'reminder_days' | 'share_tips'>
 
 interface TripState {
   trips: Trip[]
@@ -33,7 +35,7 @@ interface TripState {
 
 const TripContext = createContext<TripState | undefined>(undefined)
 const STORAGE_KEY = 'wayfolio-current-trip'
-const COLUMNS = 'id, owner_id, title, description, starts_on, ends_on, location_delay_minutes, reminder_days'
+const COLUMNS = 'id, owner_id, title, description, starts_on, ends_on, location_delay_minutes, reminder_days, share_tips'
 
 const remember = (id: string) => {
   try {

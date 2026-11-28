@@ -15,6 +15,7 @@ import {
   IonSelectOption,
   IonTextarea,
   IonTitle,
+  IonToggle,
   IonToolbar,
   useIonAlert,
   useIonToast,
@@ -58,6 +59,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
   const [endsOn, setEndsOn] = useState('')
   const [delay, setDelay] = useState(0)
   const [reminder, setReminder] = useState<number | null>(3)
+  const [shareTips, setShareTips] = useState(true)
   const [members, setMembers] = useState<Member[]>([])
   const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -76,6 +78,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
     setEndsOn(trip.ends_on ?? '')
     setDelay(trip.location_delay_minutes ?? 0)
     setReminder(trip.reminder_days === undefined ? 3 : trip.reminder_days)
+    setShareTips(trip.share_tips ?? true)
     void refreshMembers(trip.id)
     setSubscribers(null)
     void tripSubscribers(trip.id)
@@ -120,6 +123,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
         ends_on: endsOn || null,
         location_delay_minutes: delay,
         reminder_days: reminder,
+        share_tips: shareTips,
       })
       toast('Reise gespeichert')
       await modal.current?.dismiss()
@@ -260,6 +264,18 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
         <IonNote className="list-footnote">
           Kommt so lange kein neuer Beitrag, erinnern wir die Besitzer:innen der Reise per E-Mail – höchstens einmal pro
           Pause und nur, solange die Reise läuft.
+        </IonNote>
+
+        <IonList inset>
+          <IonItem>
+            <IonToggle checked={shareTips} onIonChange={(e) => setShareTips(e.detail.checked)}>
+              Links als Tipps teilen
+            </IonToggle>
+          </IonItem>
+        </IonList>
+        <IonNote className="list-footnote">
+          Links aus euren Beiträgen erscheinen bei anderen Reisenden unter «In der Nähe» – ohne Namen, Texte oder Fotos,
+          Ort auf etwa 1 km gerundet und frühestens 24 Stunden nach dem Beitrag.
         </IonNote>
 
         <IonList inset>

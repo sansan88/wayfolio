@@ -1,0 +1,50 @@
+.nearby__head {
+  padding: 14px 16px 0;
+}
+
+.nearby__origin {
+  margin: 0 4px 6px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  min-height: 1.2em;
+}
+
+.nearby__radii {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.nearby__radii ion-chip {
+  margin: 0 4px 0 0;
+}
+
+.nearby__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.nearby__empty {
+  margin: 28px 24px;
+  text-align: center;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+.nearby__km {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.nearby__km ion-icon {
+  font-size: 14px;
+}
+
+.nearby__note {
+  display: block;
+  padding-bottom: 32px;
+}

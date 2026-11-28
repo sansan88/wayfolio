@@ -35,6 +35,7 @@ flowchart LR
         UC019[UC-019\nReise-Link mit Passwort schützen]
         UC020[UC-020\nZugang anfragen und freigeben]
         UC021[UC-021\nErinnerung bei Funkstille]
+        UC022[UC-022\nIn der Nähe entdecken]
     end
     instagram([📷 Instagram])
 
@@ -69,6 +70,7 @@ flowchart LR
     system --> UC015
     system --> UC021
     reisende --> UC021
+    reisende --> UC022
     UC006 --> claude
     UC007 --> claude
     UC018 --> instagram
@@ -102,3 +104,4 @@ der Reise.
 | [UC-019](use_cases/UC-019-reise-link-mit-passwort-schuetzen.md) | Reise-Link mit Passwort schützen | Reisende:r, Follower | FR-090 – FR-095 |
 | [UC-020](use_cases/UC-020-zugang-anfragen-und-freigeben.md) | Zugang anfragen und freigeben | Follower, Reisende:r | FR-096 – FR-099 |
 | [UC-021](use_cases/UC-021-erinnerung-bei-funkstille.md) | Erinnerung bei Funkstille | System, Reisende:r | FR-084, FR-085 |
+| [UC-022](use_cases/UC-022-in-der-naehe-entdecken.md) | In der Nähe entdecken | Reisende:r | FR-086, FR-087 |
