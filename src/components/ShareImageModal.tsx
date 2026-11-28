@@ -18,6 +18,7 @@ import { logoInstagram } from 'ionicons/icons'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useCardPresenter } from '../lib/modal'
+import { SYMBOL_GROUPS, SYMBOL_LIST, type SymbolGroup } from '../lib/shareSymbols'
 import {
   renderShareImage,
   SHARE_IMAGE_SIZE,
@@ -42,23 +43,11 @@ interface Props {
 const THEME_KEY = 'lf-share-theme'
 const SYMBOL_KEY = 'lf-share-symbol'
 
-const SYMBOLS: { key: ShareImageSymbol; label: string }[] = [
-  { key: 'sonne', label: 'Sonne' },
-  { key: 'mond', label: 'Mond' },
-  { key: 'palme', label: 'Palme' },
-  { key: 'camper', label: 'Camper' },
-  { key: 'haus', label: 'Häuschen' },
-  { key: 'zelt', label: 'Zelt' },
-  { key: 'fahrrad', label: 'Fahrrad' },
-  { key: 'berge', label: 'Berge' },
-  { key: 'welle', label: 'Welle' },
-  { key: 'keins', label: 'Keins' },
-]
 
 const savedSymbol = (): ShareImageSymbol => {
   try {
     const v = localStorage.getItem(SYMBOL_KEY) as ShareImageSymbol | null
-    return v && SYMBOLS.some((x) => x.key === v) ? v : 'sonne'
+    return v && SYMBOL_LIST.some((x) => x.key === v) ? v : 'sonne'
   } catch {
     return 'sonne'
   }
@@ -90,11 +79,15 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
   const [photoIndex, setPhotoIndex] = useState(0)
   const [theme, setTheme] = useState<ShareImageTheme>(savedTheme)
   const [symbol, setSymbol] = useState<ShareImageSymbol>(savedSymbol)
+  // Gruppe der Symbol-Auswahl: anfangs die des gewählten Symbols
+  const [group, setGroup] = useState<SymbolGroup>(() => SYMBOL_LIST.find((x) => x.key === symbol)?.group ?? 'unterwegs')
+  const groupSymbols = SYMBOL_LIST.filter((x) => x.group === group)
   // Vorschaubilder der Symbole in der Farbe des gewählten Designs
   const symbolColor = theme === 'foto' ? '#c9893f' : SHARE_IMAGE_THEMES[theme].sun
   const previews = useMemo(
-    () => Object.fromEntries(SYMBOLS.map((x) => [x.key, x.key === 'keins' ? '' : symbolPreview(x.key, symbolColor)])),
-    [symbolColor],
+    () => Object.fromEntries(groupSymbols.map((x) => [x.key, x.key === 'keins' ? '' : symbolPreview(x.key, symbolColor)])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [symbolColor, group],
   )
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -204,8 +197,20 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
             )
           })}
         </div>
+        <IonSegment
+          className="share-image__groups"
+          scrollable
+          value={group}
+          onIonChange={(e) => setGroup((e.detail.value as SymbolGroup) ?? 'unterwegs')}
+        >
+          {SYMBOL_GROUPS.map((g) => (
+            <IonSegmentButton key={g.key} value={g.key}>
+              <IonLabel>{g.label}</IonLabel>
+            </IonSegmentButton>
+          ))}
+        </IonSegment>
         <div className="share-image__themes share-image__symbols" role="radiogroup" aria-label="Symbol wählen">
-          {SYMBOLS.map((x) => (
+          {groupSymbols.map((x) => (
             <button
               key={x.key}
               type="button"

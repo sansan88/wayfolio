@@ -1,5 +1,8 @@
+import { type ShareImageSymbol, SYMBOLS } from './shareSymbols'
 import { supabase } from './supabase'
 import { canvasToJpeg, type FeedPost } from './updates'
+
+export type { ShareImageSymbol } from './shareSymbols'
 
 /**
  * Bild eines Beitrags für Instagram (Story oder Beitrag) im Stil der Produktseite:
@@ -259,66 +262,17 @@ const drawSunIn = (ctx: CanvasRenderingContext2D, color: string, cx: number, cy:
 
 // ---- Symbole oben rechts --------------------------------------------------------------------------------------
 
-export type ShareImageSymbol = 'sonne' | 'mond' | 'palme' | 'camper' | 'haus' | 'zelt' | 'fahrrad' | 'berge' | 'welle' | 'keins'
-
-/**
- * Linienzeichnungen im Raster 100 × 100, im selben Stil wie die Sonne: Strich in der Symbolfarbe, Flächen leicht
- * gefüllt. `fill` = Pfade, deren Fläche getönt wird; `line` = nur Strich.
- */
-const SYMBOL_PATHS: Record<Exclude<ShareImageSymbol, 'sonne' | 'keins'>, { fill?: string[]; line?: string[] }> = {
-  mond: { fill: ['M60 14 A36 36 0 1 0 86 68 A30 30 0 1 1 60 14 Z'], line: ['M78 22 l0 8 M74 26 l8 0', 'M86 40 l0 6 M83 43 l6 0'] },
-  palme: {
-    line: [
-      'M52 92 C54 72 56 54 50 34',
-      'M50 34 C38 22 22 24 14 36',
-      'M50 34 C40 32 30 40 26 52',
-      'M50 34 C62 22 78 24 86 36',
-      'M50 34 C60 32 70 40 74 52',
-      'M50 34 C48 22 54 12 64 8',
-      'M30 92 H74',
-    ],
-    fill: ['M44 38 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 Z'],
-  },
-  camper: {
-    fill: ['M14 70 V46 C14 38 20 32 28 32 H70 C78 32 84 38 84 46 V70 Z'],
-    line: ['M22 40 h18 v12 h-18 Z', 'M50 40 h12 v24 h-12 Z', 'M84 64 H94', 'M30 78 a8 8 0 1 0 0.1 0', 'M68 78 a8 8 0 1 0 0.1 0', 'M8 86 H94'],
-  },
-  haus: {
-    fill: ['M26 46 V84 H74 V46 L50 26 Z'],
-    line: ['M16 52 L50 22 L84 52', 'M44 84 V64 H56 V84', 'M60 54 h10 v10 h-10 Z', 'M66 34 V22 H74 V40', 'M10 84 H90'],
-  },
-  zelt: { fill: ['M14 82 L50 22 L86 82 Z'], line: ['M42 82 L50 58 L58 82', 'M50 22 L44 12 M50 22 L56 12', 'M6 82 H94'] },
-  fahrrad: {
-    line: [
-      'M26 66 m-16 0 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0',
-      'M76 66 m-16 0 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0',
-      'M26 66 L42 40 H64 L76 66',
-      'M42 40 L52 66 L64 40',
-      'M52 66 H26',
-      'M38 32 H50',
-      'M62 40 L60 28 H70',
-    ],
-  },
-  berge: { fill: ['M6 82 L36 34 L52 58 L66 40 L94 82 Z'], line: ['M29 45 L36 34 L43 45 L39 42 L33 46 Z', 'M2 82 H98'] },
-  welle: {
-    line: [
-      'M8 44 C18 34 28 34 38 44 S58 54 68 44 S86 34 94 40',
-      'M8 62 C18 52 28 52 38 62 S58 72 68 62 S86 52 94 58',
-      'M8 80 C18 70 28 70 38 80 S58 90 68 80 S86 70 94 76',
-    ],
-  },
-}
-
 /** Symbol zentriert bei (cx, cy); `size` = Kantenlänge. */
 const drawSymbol = (ctx: CanvasRenderingContext2D, symbol: ShareImageSymbol, color: string, cx: number, cy: number, size: number) => {
   if (symbol === 'keins') return
   if (symbol === 'sonne') return drawSunIn(ctx, color, cx, cy, size / 3.4)
-  const def = SYMBOL_PATHS[symbol]
-  const scale = size / 100
+  const def = SYMBOLS[symbol]
+  const scale = size / def.grid
   ctx.save()
   ctx.translate(cx - size / 2, cy - size / 2)
   ctx.scale(scale, scale)
-  ctx.lineWidth = 5
+  // gleiche sichtbare Strichstärke in beiden Rastern
+  ctx.lineWidth = def.grid === 24 ? 1.3 : 5
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   ctx.strokeStyle = alpha(color, 0.7)
@@ -328,7 +282,10 @@ const drawSymbol = (ctx: CanvasRenderingContext2D, symbol: ShareImageSymbol, col
     ctx.fill(path)
     ctx.stroke(path)
   }
-  for (const d of def.line ?? []) ctx.stroke(new Path2D(d))
+  // alle Linien als ein Pfad: Überkreuzungen werden so nicht dunkler
+  const lines = new Path2D()
+  for (const d of def.line ?? []) lines.addPath(new Path2D(d))
+  ctx.stroke(lines)
   ctx.restore()
 }
 

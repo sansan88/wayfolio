@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: min(100%, calc((100dvh - 470px) * 9 / 16));
+  max-width: min(100%, calc((100dvh - 520px) * 9 / 16));
   margin: 0 auto;
   overflow: hidden;
   border-radius: 14px;
@@ -141,4 +141,8 @@
 .share-image__swatch--symbol img {
   width: 30px;
   height: 30px;
+}
+
+.share-image__groups {
+  margin-top: 14px;
 }
