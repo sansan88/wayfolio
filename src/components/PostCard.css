@@ -290,8 +290,7 @@
   transform: translateY(-50%);
 }
 
-.post__photo,
-.carousel__track img {
+.post__photo {
   display: block;
   width: 100%;
   max-height: 70vh;
@@ -320,10 +319,22 @@
   display: none;
 }
 
-.carousel__track img {
+/* jede Folie ein quadratischer Rahmen; das Bild liegt absolut darin und wird zugeschnitten, nie verzerrt */
+.carousel__slide {
+  position: relative;
   flex: 0 0 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1;
+  overflow: hidden;
   scroll-snap-align: center;
+}
+
+.carousel__slide img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .carousel__count {
@@ -404,11 +415,6 @@
   margin: 8px 0 0;
   color: var(--ion-color-medium);
   font-size: 0.8rem;
-}
-
-.post .carousel__track img {
-  aspect-ratio: 1;
-  max-height: none;
 }
 
 /* einzelnes Bild in natürlichem Format, Routenbild nie beschneiden */

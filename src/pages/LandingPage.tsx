@@ -53,7 +53,7 @@ const screens = [
   { src: 'feed2.webp', alt: 1, label: 0 },
   { src: 'map.webp', alt: 2, label: 1 },
   { src: 'sheet.webp', alt: 3, label: 2 },
-  { src: 'checkin.webp', alt: 4, label: 3 },
+  { src: 'compose.webp', alt: 4, label: 3 },
 ]
 
 const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
@@ -61,7 +61,10 @@ const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').ma
 /** Handy-Rahmen mit echtem App-Bild im festen Seitenverhältnis 390:844. */
 const Phone = ({ src, alt, className = '' }: { src: string; alt: string; className?: string }) => (
   <figure className={`lp-phone ${className}`}>
-    <img src={`${base}screens/${src}`} alt={alt} width={390} height={844} loading="lazy" decoding="async" />
+    {/* fester Rahmen 390:844, das Bild füllt ihn – nie verzerrt */}
+    <span className="lp-phone__screen">
+      <img src={`${base}screens/${src}`} alt={alt} width={390} height={844} loading="lazy" decoding="async" />
+    </span>
   </figure>
 )
 
