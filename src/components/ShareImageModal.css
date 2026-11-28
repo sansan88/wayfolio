@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: min(100%, calc((100dvh - 330px) * 9 / 16));
+  max-width: min(100%, calc((100dvh - 400px) * 9 / 16));
   margin: 0 auto;
   overflow: hidden;
   border-radius: 14px;
@@ -61,4 +61,53 @@
   color: var(--ion-color-medium);
   font-size: 0.85rem;
   text-align: center;
+}
+
+/* Auswahl des Farbdesigns */
+.share-image__themes {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px 0 0;
+  overflow-x: auto;
+}
+
+.share-image__themes button {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 56px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ion-color-medium);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.share-image__themes button.active {
+  color: var(--ion-text-color);
+  font-weight: 600;
+}
+
+.share-image__swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid;
+  border-radius: 50%;
+  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.share-image__themes button.active .share-image__swatch {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
 }

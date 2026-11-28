@@ -13,17 +13,37 @@ export const SHARE_IMAGE_SIZE: Record<ShareImageFormat, { w: number; h: number }
   post: { w: 1080, h: 1350 }, // 4:5, grösstes Hochformat im Instagram-Feed
 }
 
-// Farben und Schrift wie auf der Startseite (LandingPage.css, helles Design)
-const C = {
-  bg: '#fbf6ee',
-  tint: '#f3e8d8',
-  card: '#fffdf9',
-  line: '#e6d8c4',
-  ink: '#2b2420',
-  muted: '#74675d',
-  mint: '#0e9474',
-  ochre: '#dda94b',
-  clay: '#c9714f',
+/** Farbdesign des Bildes. «sand» entspricht der Startseite (LandingPage.css), «nacht» ihrem dunklen Design. */
+export type ShareImageTheme = 'sand' | 'nacht' | 'mint' | 'terrakotta' | 'salbei'
+
+interface Palette {
+  label: string
+  bg: string
+  tint: string
+  card: string
+  line: string
+  ink: string
+  muted: string
+  /** Etikett und Ort */
+  accent: string
+  sun: string
+}
+
+export const SHARE_IMAGE_THEMES: Record<ShareImageTheme, Palette> = {
+  sand: { label: 'Sand', bg: '#fbf6ee', tint: '#f3e8d8', card: '#fffdf9', line: '#e6d8c4', ink: '#2b2420', muted: '#74675d', accent: '#0e9474', sun: '#dda94b' },
+  nacht: { label: 'Nacht', bg: '#141210', tint: '#241d18', card: '#f4ebdf', line: '#40342a', ink: '#f4ebdf', muted: '#b5a797', accent: '#5ee0b5', sun: '#e6bb6a' },
+  mint: { label: 'Mint', bg: '#e4f4ee', tint: '#cfeadf', card: '#fffdf9', line: '#b9ddd0', ink: '#10372c', muted: '#4f7268', accent: '#0e9474', sun: '#dda94b' },
+  terrakotta: { label: 'Terrakotta', bg: '#f6e3d7', tint: '#efd2c0', card: '#fffdf9', line: '#e3bfa9', ink: '#3a2219', muted: '#80594a', accent: '#b4573a', sun: '#dda94b' },
+  salbei: { label: 'Salbei', bg: '#e9eee3', tint: '#d9e2cf', card: '#fffdf9', line: '#c9d4bd', ink: '#26301f', muted: '#5e6b55', accent: '#5f7a52', sun: '#dda94b' },
+}
+
+/** Aktuelles Design; wird in renderShareImage direkt vor dem (synchronen) Zeichnen gesetzt. */
+let C: Palette = SHARE_IMAGE_THEMES.sand
+
+/** #rrggbb → rgba() mit Deckkraft */
+const alpha = (hex: string, a: number) => {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
 }
 const SERIF = "'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif"
 const SANS = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
@@ -114,8 +134,8 @@ const wrap = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
 
 const drawSun = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) => {
   ctx.save()
-  ctx.fillStyle = 'rgba(221, 169, 75, 0.22)'
-  ctx.strokeStyle = 'rgba(221, 169, 75, 0.55)'
+  ctx.fillStyle = alpha(C.sun, 0.22)
+  ctx.strokeStyle = alpha(C.sun, 0.55)
   ctx.lineWidth = r * 0.08
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
@@ -141,13 +161,13 @@ const drawPill = (ctx: CanvasRenderingContext2D, text: string, x: number, y: num
   const h = size * 2.2
   const w = ctx.measureText(text).width + padX * 2
   roundRect(ctx, x, y, w, h, h / 2)
-  ctx.fillStyle = 'rgba(17, 166, 131, 0.08)'
+  ctx.fillStyle = alpha(C.accent, 0.1)
   ctx.fill()
   ctx.setLineDash([size * 0.4, size * 0.3])
   ctx.lineWidth = size * 0.09
-  ctx.strokeStyle = C.mint
+  ctx.strokeStyle = C.accent
   ctx.stroke()
-  ctx.fillStyle = C.mint
+  ctx.fillStyle = C.accent
   ctx.textBaseline = 'middle'
   ctx.fillText(text, x + padX, y + h / 2 + size * 0.05)
   ctx.restore()
@@ -208,10 +228,11 @@ export interface ShareImageOptions {
   photoIndex?: number
   /** Reisetag (1 = erster Tag) */
   day?: number | null
+  theme?: ShareImageTheme
 }
 
 /** Zeichnet das Bild und liefert es als JPEG. */
-export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0, day }: ShareImageOptions): Promise<Blob> => {
+export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0, day, theme = 'sand' }: ShareImageOptions): Promise<Blob> => {
   const { w: W, h: H } = SHARE_IMAGE_SIZE[format]
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -223,6 +244,8 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
   const photo = photos[photoIndex] ?? photos[0]
   const img = photo?.mediaUrl ? await loadImage(photo.mediaUrl) : null
   await document.fonts?.ready
+  // ab hier synchron gezeichnet – ein paralleler Aufruf kann das Design nicht mehr wechseln
+  C = SHARE_IMAGE_THEMES[theme] ?? SHARE_IMAGE_THEMES.sand
 
   // Instagram überdeckt in Storys oben und unten je ca. 250 px – dort nur Dekoration
   const story = format === 'story'
@@ -253,7 +276,7 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
   if (place) {
     const placeSize = story ? 54 : 44
     ctx.font = `italic 600 ${placeSize}px ${SERIF}`
-    ctx.fillStyle = C.mint
+    ctx.fillStyle = C.accent
     y += placeSize * 0.15
     for (const l of wrap(ctx, place, W - M * 2, 1)) {
       ctx.fillText(l, M, y)
@@ -262,30 +285,49 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
   }
   y += story ? 56 : 40
 
-  // Fusszeile: Marke und Adresse
-  const footH = story ? 96 : 84
-  const footY = bottom - footH
-  ctx.save()
-  ctx.setLineDash([12, 9])
-  ctx.lineWidth = 3
-  ctx.strokeStyle = C.line
-  ctx.beginPath()
-  ctx.moveTo(M, footY)
-  ctx.lineTo(W - M, footY)
-  ctx.stroke()
-  ctx.restore()
-  ctx.textBaseline = 'alphabetic'
-  ctx.font = `italic 600 ${story ? 50 : 44}px ${SERIF}`
-  ctx.fillStyle = C.ink
-  ctx.fillText('Little Footnotes', M, bottom - (story ? 14 : 10))
-  ctx.font = `500 ${story ? 30 : 26}px ${SANS}`
-  ctx.fillStyle = C.muted
-  ctx.textAlign = 'right'
-  ctx.fillText('littlefootnotes.app', W - M, bottom - (story ? 20 : 16))
-  ctx.textAlign = 'left'
+  // Fusszeile: Marke und Adresse. In der Story dezent und tief unten (unterhalb der Schutzzone, eine Zeile,
+  // gedämpfte Farbe); das Foto bekommt dafür mehr Platz.
+  let footY: number
+  if (story) {
+    footY = bottom
+    ctx.textBaseline = 'alphabetic'
+    ctx.fillStyle = C.muted
+    const brand = 'Little Footnotes'
+    const site = '  ·  littlefootnotes.app'
+    ctx.font = `italic 500 34px ${SERIF}`
+    const bw = ctx.measureText(brand).width
+    ctx.font = `400 24px ${SANS}`
+    const sw = ctx.measureText(site).width
+    const x0 = (W - bw - sw) / 2
+    ctx.font = `italic 500 34px ${SERIF}`
+    ctx.fillText(brand, x0, H - 150)
+    ctx.font = `400 24px ${SANS}`
+    ctx.fillText(site, x0 + bw, H - 152)
+  } else {
+    const footH = 84
+    footY = bottom - footH
+    ctx.save()
+    ctx.setLineDash([12, 9])
+    ctx.lineWidth = 3
+    ctx.strokeStyle = C.line
+    ctx.beginPath()
+    ctx.moveTo(M, footY)
+    ctx.lineTo(W - M, footY)
+    ctx.stroke()
+    ctx.restore()
+    ctx.textBaseline = 'alphabetic'
+    ctx.font = `italic 600 44px ${SERIF}`
+    ctx.fillStyle = C.ink
+    ctx.fillText('Little Footnotes', M, bottom - 10)
+    ctx.font = `500 26px ${SANS}`
+    ctx.fillStyle = C.muted
+    ctx.textAlign = 'right'
+    ctx.fillText('littlefootnotes.app', W - M, bottom - 16)
+    ctx.textAlign = 'left'
+  }
 
   // Motiv dazwischen
-  const areaH = footY - (story ? 64 : 44) - y
+  const areaH = footY - (story ? 16 : 44) - y
   const areaW = W - M * 2
   if (img) {
     // Fläche füllen (zugeschnitten), aber nicht höher als 4:5 im Beitrag bzw. 3:4 in der Story

@@ -8,7 +8,7 @@
 **Goal:** Einen erfassten Beitrag ohne erneutes Abtippen als Bild mit Datum und Ort auf Instagram teilen  
 **Status:** Implemented
 
-**Anforderungen:** FR-047, FR-057, FR-058, FR-059, NFR-019, NFR-020
+**Anforderungen:** FR-047, FR-057, FR-058, FR-059, FR-048, NFR-019, NFR-020
 
 ## Preconditions
 
@@ -42,6 +42,13 @@
 
 1. Reisende:r tippt auf ein anderes Vorschaubild.
 2. System erstellt das Bild mit diesem Foto neu.
+
+### A6: Anderes Design wählen
+
+**Trigger:** Reisende:r tippt auf ein Design (Schritt 4)
+**Flow:**
+
+1. System erstellt das Bild im gewählten Design neu und merkt sich die Wahl auf diesem Gerät.
 
 ### A3: Beitrag ohne Foto
 
@@ -80,6 +87,11 @@
 
 Story 1080 × 1920 px, Beitrag 1080 × 1350 px. In der Story bleiben die oberen und unteren 250 px frei von Text und
 Foto, weil Instagram sie überdeckt.
+
+### BR-060: Marke in der Story
+
+In der Story steht «Little Footnotes · littlefootnotes.app» dezent in einer Zeile in gedämpfter Farbe unterhalb der
+Schutzzone; im Beitragsformat bleibt die Fusszeile mit Trennlinie.
 
 ### BR-052: Inhalt
 
