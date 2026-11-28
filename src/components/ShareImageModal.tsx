@@ -129,7 +129,7 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
           )}
         </div>
         <div className="share-image__themes" role="radiogroup" aria-label="Design wählen">
-          {(Object.keys(SHARE_IMAGE_THEMES) as ShareImageTheme[]).map((key) => {
+          {(Object.keys(SHARE_IMAGE_THEMES) as ShareImageTheme[]).filter((key) => key !== 'foto' || photos.length > 0).map((key) => {
             const t = SHARE_IMAGE_THEMES[key]
             return (
               <button
@@ -147,9 +147,18 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
                   }
                 }}
               >
-                <span className="share-image__swatch" style={{ background: t.bg, color: t.accent, borderColor: t.line }} aria-hidden="true">
-                  Aa
-                </span>
+                {key === 'foto' ? (
+                  // Vorschau mit dem gewählten Foto; die Farben entstehen erst beim Zeichnen
+                  <span
+                    className="share-image__swatch share-image__swatch--photo"
+                    style={{ backgroundImage: photos[photoIndex]?.mediaUrl ? `url("${photos[photoIndex].mediaUrl}")` : undefined }}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className="share-image__swatch" style={{ background: t.bg, color: t.accent, borderColor: t.line }} aria-hidden="true">
+                    Aa
+                  </span>
+                )}
                 {t.label}
               </button>
             )

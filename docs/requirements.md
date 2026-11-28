@@ -85,7 +85,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-057 | Bild für Instagram        | Als Reisende:r möchte ich aus einem Beitrag ein Bild im Stil der Produktseite mit Datum, Reisetag und Ort erzeugen, damit ich einmal Erfasstes auch auf Instagram teilen kann. | High | Implemented |
 | FR-058 | Story oder Beitrag        | Als Reisende:r möchte ich zwischen Story (9:16) und Feed-Beitrag (4:5) wählen, damit das Bild ohne Zuschneiden passt.                          | High     | Implemented |
 | FR-059 | Foto für das Bild wählen  | Als Reisende:r möchte ich bei mehreren Fotos das Motiv wählen, damit das beste Bild auf Instagram landet.                                     | Medium   | Implemented |
-| FR-048 | Design für das Bild    | Als Reisende:r möchte ich zwischen mehreren Farbdesigns (Sand, Nacht, Mint, Terrakotta, Salbei) wählen, damit das Bild zu meinem Foto und meinem Profil passt. | Medium   | Implemented |
+| FR-048 | Design für das Bild    | Als Reisende:r möchte ich zwischen mehreren Farbdesigns (Foto-Verlauf aus dem gewählten Foto, Sand, Nacht, Mint, Terrakotta, Salbei) wählen, damit das Bild zu meinem Foto und meinem Profil passt. | Medium   | Implemented |
 | FR-056 | Abstimmen als Follower    | Als Follower möchte ich an einer Entscheidung der Reisenden teilnehmen, damit ich mitreden kann.                                              | Low      | Rejected    |
 
 ### Newsletter

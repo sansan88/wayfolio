@@ -49,6 +49,8 @@
 **Flow:**
 
 1. System erstellt das Bild im gewählten Design neu und merkt sich die Wahl auf diesem Gerät.
+2. Beim Design «Foto» entsteht der Hintergrund als Verlauf aus den Farben der oberen und unteren Hälfte des
+   gewählten Fotos; ein dunkles Foto ergibt einen dunklen Verlauf mit heller Schrift, ein helles einen hellen.
 
 ### A3: Beitrag ohne Foto
 

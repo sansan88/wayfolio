@@ -14,7 +14,7 @@ export const SHARE_IMAGE_SIZE: Record<ShareImageFormat, { w: number; h: number }
 }
 
 /** Farbdesign des Bildes. «sand» entspricht der Startseite (LandingPage.css), «nacht» ihrem dunklen Design. */
-export type ShareImageTheme = 'sand' | 'nacht' | 'mint' | 'terrakotta' | 'salbei'
+export type ShareImageTheme = 'foto' | 'sand' | 'nacht' | 'mint' | 'terrakotta' | 'salbei'
 
 interface Palette {
   label: string
@@ -27,9 +27,13 @@ interface Palette {
   /** Etikett und Ort */
   accent: string
   sun: string
+  /** zweite Farbe für einen Verlauf von oben (bg) nach unten (bg2) */
+  bg2?: string
 }
 
 export const SHARE_IMAGE_THEMES: Record<ShareImageTheme, Palette> = {
+  // Platzhalter: die echten Farben entstehen beim Zeichnen aus dem gewählten Foto (photoPalette)
+  foto: { label: 'Foto', bg: '#3a2e28', bg2: '#141210', tint: '#241d18', card: '#fffdf9', line: '#5a4a40', ink: '#f7f1e8', muted: '#c9bcae', accent: '#f2c48d', sun: '#f2c48d' },
   sand: { label: 'Sand', bg: '#fbf6ee', tint: '#f3e8d8', card: '#fffdf9', line: '#e6d8c4', ink: '#2b2420', muted: '#74675d', accent: '#0e9474', sun: '#dda94b' },
   nacht: { label: 'Nacht', bg: '#141210', tint: '#241d18', card: '#f4ebdf', line: '#40342a', ink: '#f4ebdf', muted: '#b5a797', accent: '#5ee0b5', sun: '#e6bb6a' },
   mint: { label: 'Mint', bg: '#e4f4ee', tint: '#cfeadf', card: '#fffdf9', line: '#b9ddd0', ink: '#10372c', muted: '#4f7268', accent: '#0e9474', sun: '#dda94b' },
@@ -39,6 +43,107 @@ export const SHARE_IMAGE_THEMES: Record<ShareImageTheme, Palette> = {
 
 /** Aktuelles Design; wird in renderShareImage direkt vor dem (synchronen) Zeichnen gesetzt. */
 let C: Palette = SHARE_IMAGE_THEMES.sand
+
+// ---- Farben aus dem Foto ------------------------------------------------------------------------------------
+
+type Hsl = [number, number, number]
+
+const rgbToHsl = (r: number, g: number, b: number): Hsl => {
+  r /= 255
+  g /= 255
+  b /= 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  if (max === min) return [0, 0, l]
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4
+  return [h / 6, s, l]
+}
+
+const hslToHex = ([h, s, l]: Hsl) => {
+  const f = (n: number) => {
+    const k = (n + h * 12) % 12
+    const a = s * Math.min(l, 1 - l)
+    const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
+    return Math.round(c * 255)
+      .toString(16)
+      .padStart(2, '0')
+  }
+  return `#${f(0)}${f(8)}${f(4)}`
+}
+
+/** Mittlere Farbe einer Bildzone; kräftige Pixel zählen mehr, damit der Verlauf nicht grau wird. */
+const zoneColor = (data: Uint8ClampedArray, from: number, to: number): { hsl: Hsl; light: number } => {
+  let r = 0
+  let g = 0
+  let b = 0
+  let wSum = 0
+  let lSum = 0
+  let n = 0
+  for (let i = from; i < to; i += 4) {
+    const [, sat, l] = rgbToHsl(data[i], data[i + 1], data[i + 2])
+    const w = 0.15 + sat * (1 - Math.abs(l - 0.5) * 1.6)
+    r += data[i] * w
+    g += data[i + 1] * w
+    b += data[i + 2] * w
+    wSum += w
+    lSum += l
+    n++
+  }
+  return { hsl: rgbToHsl(r / wSum, g / wSum, b / wSum), light: lSum / Math.max(1, n) }
+}
+
+/**
+ * Design aus dem Foto: Farbverlauf aus der oberen und unteren Bildhälfte. Ein dunkles Foto ergibt einen dunklen
+ * Hintergrund mit heller Schrift, ein helles einen hellen mit dunkler Schrift – lesbar bleibt es so immer.
+ */
+const photoPalette = (img: ImageBitmap): Palette => {
+  const size = 24
+  const c = document.createElement('canvas')
+  c.width = size
+  c.height = size
+  const x = c.getContext('2d', { willReadFrequently: true })!
+  x.drawImage(img, 0, 0, size, size)
+  const data = x.getImageData(0, 0, size, size).data
+  c.width = 0
+  c.height = 0
+  const half = (size * size * 4) / 2
+  const top = zoneColor(data, 0, half)
+  const bottom = zoneColor(data, half, data.length)
+  const dark = (top.light + bottom.light) / 2 < 0.55
+  const tone = ([h, s]: Hsl, l: number, maxS: number): string => hslToHex([h, Math.min(s, maxS), l])
+  // Akzent mit etwas Farbe, auch wenn das Foto eher blass ist
+  const strong = ([h, s]: Hsl, l: number): string => hslToHex([h, Math.min(Math.max(s, 0.5), 0.8), l])
+  // Akzent: die kräftigere der beiden Farben
+  const vivid = top.hsl[1] >= bottom.hsl[1] ? top.hsl : bottom.hsl
+  return dark
+    ? {
+        label: 'Foto',
+        bg: tone(top.hsl, 0.24, 0.5),
+        bg2: tone(bottom.hsl, 0.1, 0.45),
+        tint: tone(top.hsl, 0.18, 0.4),
+        card: '#fffdf9',
+        line: tone(top.hsl, 0.36, 0.35),
+        ink: '#f7f1e8',
+        muted: tone(top.hsl, 0.78, 0.25),
+        accent: strong(vivid, 0.74),
+        sun: tone(vivid, 0.7, 0.7),
+      }
+    : {
+        label: 'Foto',
+        bg: tone(top.hsl, 0.92, 0.55),
+        bg2: tone(bottom.hsl, 0.82, 0.45),
+        tint: tone(top.hsl, 0.86, 0.45),
+        card: '#fffdf9',
+        line: tone(top.hsl, 0.74, 0.35),
+        ink: '#231d19',
+        muted: tone(top.hsl, 0.36, 0.25),
+        accent: strong(vivid, 0.34),
+        sun: tone(vivid, 0.6, 0.7),
+      }
+}
 
 /** #rrggbb → rgba() mit Deckkraft */
 const alpha = (hex: string, a: number) => {
@@ -245,7 +350,7 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
   const img = photo?.mediaUrl ? await loadImage(photo.mediaUrl) : null
   await document.fonts?.ready
   // ab hier synchron gezeichnet – ein paralleler Aufruf kann das Design nicht mehr wechseln
-  C = SHARE_IMAGE_THEMES[theme] ?? SHARE_IMAGE_THEMES.sand
+  C = theme === 'foto' ? (img ? photoPalette(img) : SHARE_IMAGE_THEMES.sand) : (SHARE_IMAGE_THEMES[theme] ?? SHARE_IMAGE_THEMES.sand)
 
   // Instagram überdeckt in Storys oben und unten je ca. 250 px – dort nur Dekoration
   const story = format === 'story'
@@ -253,7 +358,12 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
   const top = story ? 270 : 84
   const bottom = story ? H - 250 : H - 64
 
-  ctx.fillStyle = C.bg
+  if (C.bg2) {
+    const g = ctx.createLinearGradient(0, 0, 0, H)
+    g.addColorStop(0, C.bg)
+    g.addColorStop(1, C.bg2)
+    ctx.fillStyle = g
+  } else ctx.fillStyle = C.bg
   ctx.fillRect(0, 0, W, H)
   drawSun(ctx, W - 120, story ? 190 : 120, story ? 92 : 70)
 
