@@ -126,7 +126,7 @@ let previewQueue: Promise<unknown> = Promise.resolve()
 const PREVIEW_EDGE = 160
 const makePreview = (file: File) => {
   const job = previewQueue.then(async () => {
-    const bitmap = await createImageBitmap(file)
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
     const scale = Math.min(1, PREVIEW_EDGE / Math.min(bitmap.width, bitmap.height))
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(bitmap.width * scale)

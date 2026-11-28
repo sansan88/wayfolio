@@ -42,7 +42,7 @@ const storyExpiry = () => new Date(Date.now() + STORY_HOURS * 3600 * 1000).toISO
  */
 /** Bild verkleinern und als JPEG neu kodieren (entfernt EXIF aus der Datei). */
 export const resizeImage = async (file: Blob, maxEdge = MAX_IMAGE_EDGE, quality = 0.82): Promise<Blob> => {
-  const bitmap = await createImageBitmap(file)
+  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(bitmap.width * scale)

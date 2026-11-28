@@ -164,6 +164,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | NFR-016 | Verfügbarkeit              | Die App ist über 30 Tage zu mindestens 99,5 % erreichbar; abhängig von GitHub Pages und Supabase).                               | Availability    | Medium   | Open        |
 | NFR-017 | Build vor Commit           | Jeder Commit auf `main` baut fehlerfrei (`BASE_PATH=/ npm run build`, `tsc --noEmit` ohne Fehler).                                           | Maintainability | High     | Implemented |
 | NFR-022 | Speicher auf iOS           | Kein Foto wird in Originalauflösung angezeigt oder mehrfach dekodiert (Vorschau max. 160 px, Upload max. 1600 px); Leinwände werden nach Gebrauch freigegeben; die Karte der Reisenden wird beim Verlassen des Tabs abgebaut. | Performance | High | Implemented |
+| NFR-023 | Bilder nie verzerrt       | Fotos und App-Bilder werden in festen Rahmen mit `object-fit: cover` gezeigt (Karussell 1:1, Handy-Rahmen 390:844) und beim Verkleinern nach den EXIF-Angaben ausgerichtet; kein Bild wird gestreckt, auch nicht in Safari. | Usability | High | Implemented |
 | NFR-018 | Messgrössen ohne Tracking  | Die Messung des Produkt-Ziels kommt ohne Drittanbieter-Tracking und ohne Cookies für Follower aus.                                          | Security        | High     | Open        |
 
 ---

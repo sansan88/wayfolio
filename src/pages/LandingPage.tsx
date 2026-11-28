@@ -61,7 +61,10 @@ const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').ma
 /** Handy-Rahmen mit echtem App-Bild im festen Seitenverhältnis 390:844. */
 const Phone = ({ src, alt, className = '' }: { src: string; alt: string; className?: string }) => (
   <figure className={`lp-phone ${className}`}>
-    <img src={`${base}screens/${src}`} alt={alt} width={390} height={844} loading="lazy" decoding="async" />
+    {/* fester Rahmen 390:844, das Bild füllt ihn – nie verzerrt */}
+    <span className="lp-phone__screen">
+      <img src={`${base}screens/${src}`} alt={alt} width={390} height={844} loading="lazy" decoding="async" />
+    </span>
   </figure>
 )
 

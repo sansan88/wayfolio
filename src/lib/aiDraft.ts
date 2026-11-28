@@ -31,7 +31,7 @@ const MAX_SIDE = 1024;
 /** Verkleinert ein Bild für Claude (längste Seite 1024 px, JPEG) und gibt Base64 ohne Präfix zurück. */
 const toJpegBase64 = async (blob: Blob): Promise<string | null> => {
   try {
-    const bmp = await createImageBitmap(blob);
+    const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' });
     const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bmp.width * scale);

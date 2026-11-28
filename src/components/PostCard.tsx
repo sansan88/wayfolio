@@ -64,7 +64,10 @@ export const PhotoCarousel = ({ photos }: { photos: FeedPost['blocks'] }) => {
         }}
       >
         {photos.map((p) => (
-          <img key={p.position} src={p.mediaUrl!} alt="" loading="lazy" />
+          // Rahmen mit festem Seitenverhältnis, das Foto füllt ihn zugeschnitten – nie gestreckt (auch in Safari)
+          <div key={p.position} className="carousel__slide">
+            <img src={p.mediaUrl!} alt="" loading="lazy" />
+          </div>
         ))}
       </div>
       <span className="carousel__count">
