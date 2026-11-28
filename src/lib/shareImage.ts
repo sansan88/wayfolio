@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { FeedPost } from './updates'
+import { canvasToJpeg, type FeedPost } from './updates'
 
 /**
  * Bild eines Beitrags für Instagram (Story oder Beitrag) im Stil der Produktseite:
@@ -298,9 +298,7 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
     drawQuote(ctx, text, M, y, areaW, Math.min(areaH, areaW))
   }
 
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Bild konnte nicht erzeugt werden.'))), 'image/jpeg', 0.92),
-  )
+  return canvasToJpeg(canvas, 0.92)
 }
 
 /**
@@ -311,7 +309,9 @@ export const shareImageFile = async (blob: Blob, format: ShareImageFormat): Prom
   const file = new File([blob], `littlefootnotes-${format === 'story' ? 'story' : 'beitrag'}.jpg`, { type: 'image/jpeg' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file] })
+      // Nur das Bild: iOS hängt sonst den Seitentitel als Text an, und Instagram übernimmt dann den Text statt
+      // des Bildes. Leerer Titel und Text verhindern das.
+      await navigator.share({ files: [file], title: '', text: '' })
       return 'shared'
     } catch (e) {
       if ((e as Error).name === 'AbortError') return 'cancelled'

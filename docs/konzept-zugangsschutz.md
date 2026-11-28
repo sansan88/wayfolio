@@ -38,10 +38,10 @@ gleich; das Passwort steht nie automatisch im geteilten Text.
 - **Passwort ändern** erhöht `password_version`: Alle Geräte müssen das neue Passwort eingeben. **Passwort
   entfernen** macht den Link wieder offen.
 
-**Offene Punkte zur Entscheidung.**
+**Entscheide und Folgen.**
 
-1. **Beitrags-Links** (`/p/<token>`): Empfehlung *ohne* Passwort – sie werden gezielt für einen Moment geteilt,
-   zeigen nur diesen Beitrag und lassen sich einzeln sperren. Alternative: Passwort der Reise gilt auch dort.
+1. **Beitrags-Links** (`/p/<token>`): öffnen *ohne* Passwort (Entscheid PO 2026-11-27) – sie werden gezielt für
+   einen Moment geteilt, zeigen nur diesen Beitrag und lassen sich einzeln sperren.
 2. **Newsletter:** Abonnieren nur nach Freischaltung (sonst umgeht man das Passwort über die Mail). Bestehende
    Abos bleiben aktiv. Links in der Mail führen zur Reise; ein neues Gerät verlangt dort das Passwort.
 3. **Instagram-Bild:** enthält keinen Link und keine Reise-Adresse – unabhängig vom Passwort.

@@ -49,10 +49,20 @@ export const resizeImage = async (file: Blob, maxEdge = MAX_IMAGE_EDGE, quality 
   canvas.height = Math.round(bitmap.height * scale)
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
   bitmap.close()
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Bild konnte nicht verarbeitet werden.'))), 'image/jpeg', quality),
-  )
+  return canvasToJpeg(canvas, quality)
 }
+
+/**
+ * Leinwand als JPEG und danach sofort freigeben. iOS Safari gibt den Speicher einer Leinwand sonst erst spät frei;
+ * bei mehreren Fotos summiert sich das, bis iOS die Seite neu lädt.
+ */
+export const canvasToJpeg = (canvas: HTMLCanvasElement, quality: number): Promise<Blob> =>
+  new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Bild konnte nicht verarbeitet werden.'))), 'image/jpeg', quality),
+  ).finally(() => {
+    canvas.width = 0
+    canvas.height = 0
+  })
 
 /** Vorschaubild (Feed-Punkte, Galerie-Raster, Karte): klein und schnell auf dem Handy. */
 const THUMB_EDGE = 480
@@ -70,7 +80,8 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind, opt
   // zu jedem Foto ein Vorschaubild (ausser Routenbildern)
   let thumbPath: string | null = null
   if (kind === 'photo' && !opts.route) {
-    const thumb = await resizeImage(data, THUMB_EDGE, 0.72)
+    // aus dem bereits verkleinerten Bild – das Original (bis 48 MP) nicht ein zweites Mal dekodieren
+    const thumb = await resizeImage(blob, THUMB_EDGE, 0.72)
     thumbPath = `${ctx.tripId}/${crypto.randomUUID()}_thumb.jpg`
     const up = await supabase.storage.from('media').upload(thumbPath, thumb, { contentType: 'image/jpeg' })
     if (up.error) thumbPath = null
