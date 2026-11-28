@@ -18,7 +18,15 @@ import { logoInstagram } from 'ionicons/icons'
 import { useEffect, useState } from 'react'
 
 import { useCardPresenter } from '../lib/modal'
-import { renderShareImage, SHARE_IMAGE_SIZE, shareImageFile, sharePhotos, type ShareImageFormat } from '../lib/shareImage'
+import {
+  renderShareImage,
+  SHARE_IMAGE_SIZE,
+  SHARE_IMAGE_THEMES,
+  shareImageFile,
+  sharePhotos,
+  type ShareImageFormat,
+  type ShareImageTheme,
+} from '../lib/shareImage'
 import type { FeedPost } from '../lib/updates'
 import './ShareImageModal.css'
 
@@ -29,6 +37,17 @@ interface Props {
   onClose: () => void
 }
 
+const THEME_KEY = 'lf-share-theme'
+/** Zuletzt gewähltes Design merken (nur Komfort; ohne Speicher gilt «Sand»). */
+const savedTheme = (): ShareImageTheme => {
+  try {
+    const t = localStorage.getItem(THEME_KEY) as ShareImageTheme | null
+    return t && t in SHARE_IMAGE_THEMES ? t : 'sand'
+  } catch {
+    return 'sand'
+  }
+}
+
 /** Vorschau und Teilen des Instagram-Bildes zu einem Beitrag (Story 9:16 oder Beitrag 4:5). */
 const ShareImageModal = ({ post, day, onClose }: Props) => {
   const isOpen = post !== null
@@ -36,6 +55,7 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
   const [presentToast] = useIonToast()
   const [format, setFormat] = useState<ShareImageFormat>('story')
   const [photoIndex, setPhotoIndex] = useState(0)
+  const [theme, setTheme] = useState<ShareImageTheme>(savedTheme)
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
@@ -51,7 +71,7 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
     let url: string | null = null
     setImage(null)
     setError(null)
-    renderShareImage(post, { format, photoIndex, day })
+    renderShareImage(post, { format, photoIndex, day, theme })
       .then((blob) => {
         if (cancelled) return
         url = URL.createObjectURL(blob)
@@ -62,7 +82,7 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
       cancelled = true
       if (url) URL.revokeObjectURL(url)
     }
-  }, [post, format, photoIndex, day])
+  }, [post, format, photoIndex, day, theme])
 
   const photos = post ? sharePhotos(post) : []
   const { w, h } = SHARE_IMAGE_SIZE[format]
@@ -107,6 +127,42 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
           ) : (
             <IonSpinner name="crescent" aria-label="Bild wird erstellt" />
           )}
+        </div>
+        <div className="share-image__themes" role="radiogroup" aria-label="Design wählen">
+          {(Object.keys(SHARE_IMAGE_THEMES) as ShareImageTheme[]).filter((key) => key !== 'foto' || photos.length > 0).map((key) => {
+            const t = SHARE_IMAGE_THEMES[key]
+            return (
+              <button
+                key={key}
+                type="button"
+                role="radio"
+                aria-checked={key === theme}
+                className={key === theme ? 'active' : ''}
+                onClick={() => {
+                  setTheme(key)
+                  try {
+                    localStorage.setItem(THEME_KEY, key)
+                  } catch {
+                    // ohne Speicher: Wahl gilt nur für diesen Dialog
+                  }
+                }}
+              >
+                {key === 'foto' ? (
+                  // Vorschau mit dem gewählten Foto; die Farben entstehen erst beim Zeichnen
+                  <span
+                    className="share-image__swatch share-image__swatch--photo"
+                    style={{ backgroundImage: photos[photoIndex]?.mediaUrl ? `url("${photos[photoIndex].mediaUrl}")` : undefined }}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className="share-image__swatch" style={{ background: t.bg, color: t.accent, borderColor: t.line }} aria-hidden="true">
+                    Aa
+                  </span>
+                )}
+                {t.label}
+              </button>
+            )
+          })}
         </div>
         {photos.length > 1 && (
           <div className="share-image__photos" role="radiogroup" aria-label="Foto wählen">
