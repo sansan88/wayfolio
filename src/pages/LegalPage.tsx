@@ -6,7 +6,7 @@ import './LandingPage.css'
 import './LegalPage.css'
 
 const CONTACT = 'team@littlefootnotes.app'
-const STAND = '27. November 2026'
+const STAND = '28. November 2026'
 const home = import.meta.env.BASE_URL
 
 const Impressum = () => (
@@ -89,6 +89,14 @@ const Datenschutz = () => (
       </li>
       <li>Reaktionen und Antworten</li>
     </ul>
+    <h3>Erinnerungen an die Reisenden</h3>
+    <p>
+      Kommt bei einer laufenden Reise einige Tage (Standard: 3) kein neuer Beitrag, schicken wir den Besitzer:innen der
+      Reise eine E-Mail-Erinnerung an die Adresse ihres Kontos – höchstens eine pro Pause. Dafür werten wir nur aus, wann
+      der letzte Beitrag erfasst wurde. Die Erinnerung lässt sich pro Reise unter «Reise bearbeiten» ändern oder
+      ausschalten.
+    </p>
+
     <h3>Newsletter-Abos (Community-Konto)</h3>
     <ul>
       <li>
@@ -161,7 +169,7 @@ const Datenschutz = () => (
       </li>
       <li>
         <strong>Infomaniak</strong> (Infomaniak Network SA, Schweiz): Domain littlefootnotes.app, E-Mail-Postfach und
-        Versand der Anmelde-E-Mails und des Newsletters.
+        Versand der Anmelde-E-Mails, des Newsletters und der Erinnerungen.
       </li>
     </ul>
     <p>

@@ -57,6 +57,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
   const [startsOn, setStartsOn] = useState('')
   const [endsOn, setEndsOn] = useState('')
   const [delay, setDelay] = useState(0)
+  const [reminder, setReminder] = useState<number | null>(3)
   const [members, setMembers] = useState<Member[]>([])
   const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -74,6 +75,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
     setStartsOn(trip.starts_on ?? '')
     setEndsOn(trip.ends_on ?? '')
     setDelay(trip.location_delay_minutes ?? 0)
+    setReminder(trip.reminder_days === undefined ? 3 : trip.reminder_days)
     void refreshMembers(trip.id)
     setSubscribers(null)
     void tripSubscribers(trip.id)
@@ -117,6 +119,7 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
         starts_on: startsOn || null,
         ends_on: endsOn || null,
         location_delay_minutes: delay,
+        reminder_days: reminder,
       })
       toast('Reise gespeichert')
       await modal.current?.dismiss()
@@ -236,6 +239,27 @@ const TripEditorModal = ({ trip, onClose }: Props) => {
         </IonList>
         <IonNote className="list-footnote">
           Mit Verzögerung sehen Follower neue Orte, Route-Updates und Routenpunkte erst später.
+        </IonNote>
+
+        <IonList inset>
+          <IonItem>
+            <IonSelect
+              label="Erinnerung"
+              interface="action-sheet"
+              value={reminder ?? 0}
+              onIonChange={(e) => setReminder(Number(e.detail.value) || null)}
+            >
+              <IonSelectOption value={2}>nach 2 Tagen</IonSelectOption>
+              <IonSelectOption value={3}>nach 3 Tagen</IonSelectOption>
+              <IonSelectOption value={5}>nach 5 Tagen</IonSelectOption>
+              <IonSelectOption value={7}>nach 7 Tagen</IonSelectOption>
+              <IonSelectOption value={0}>aus</IonSelectOption>
+            </IonSelect>
+          </IonItem>
+        </IonList>
+        <IonNote className="list-footnote">
+          Kommt so lange kein neuer Beitrag, erinnern wir die Besitzer:innen der Reise per E-Mail – höchstens einmal pro
+          Pause und nur, solange die Reise läuft.
         </IonNote>
 
         <IonList inset>

@@ -32,6 +32,7 @@ Live: **https://littlefootnotes.app**
 - Ein Link `/t/<token>` öffnet das Tagebuch; die Route kommt über den Karten-Knopf oben rechts, zurück geht es mit «‹ Tagebuch» (keine separate Fotogalerie); ein Beitrags-Link `/p/<token>` zeigt nur diesen einen Beitrag.
 - Tipp auf einen Ort springt auf der Karte genau dorthin.
 - Kein Download-Knopf für Fotos.
+- **Erinnerung bei Funkstille:** Kommt bei einer laufenden Reise 3 Tage lang kein Beitrag, bekommen die Besitzer:innen eine Mail «Bist du noch da?». Höchstens eine pro Pause; unter Reise bearbeiten › Erinnerung auf 2, 3, 5 oder 7 Tage stellen oder ausschalten.
 - **Newsletter mit eigenem Konto:** Unten im Reise-Link «Updates per E-Mail»: Häufigkeit wählen (bei jedem Beitrag oder wöchentlich), E-Mail eingeben. Supabase schickt einen Bestätigungs-Link; damit ist das Konto angelegt und das Abo aktiv. Unter `/abos` («Meine Abos») verwaltet man alle abonnierten Reisen (Häufigkeit, Pausieren, Beenden) und seinen Namen. Ein Konto kann mehrere Reisen abonnieren und später auch eigene anlegen.
 
 **Produktseite (`/`)**

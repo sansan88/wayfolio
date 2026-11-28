@@ -1,6 +1,7 @@
 // Little Footnotes – Newsletter-Versand
 // POST mit Header «x-newsletter-secret» (Wert im Vault, Cron alle 15 Min.): verschickt fällige Abos
 //   – «instant»: sobald neue Beiträge da sind, «weekly»: höchstens alle 7 Tage eine Zusammenfassung.
+//   Ausserdem: Erinnerung an die Reisenden, wenn seit trips.reminder_days Tagen kein Beitrag kam.
 // POST {"unsubscribe": "<token>"}: Abmelden per Link aus der Mail (ohne Login).
 // Versand über SMTP (Infomaniak); Zugangsdaten nur als Secrets SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS.
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -245,6 +246,62 @@ const renderMail = (d: Due, posts: MailPost[]) => {
 }
 
 // ---------------------------------------------------------------------------
+// Erinnerung an die Reisenden: «Bist du noch da?»
+// ---------------------------------------------------------------------------
+interface Reminder {
+  trip_id: string
+  trip_title: string
+  email: string
+  name: string
+  days: number
+  last_activity: string
+}
+
+const renderReminder = (r: Reminder) => {
+  const since = Math.max(r.days, Math.floor((Date.now() - Date.parse(r.last_activity)) / 86_400_000))
+  const subject = `Bist du noch da? ${r.trip_title} wartet auf ein Update 🚐`
+  const html = `<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.bg};">
+<div style="display:none;max-height:0;overflow:hidden;">Seit ${since} Tagen gibt es nichts Neues von «${esc(r.trip_title)}».</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};">
+<tr><td align="center" style="padding:28px 14px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+    <tr><td style="padding:0 4px 18px;">
+      <span style="font:italic 600 20px ${SERIF};color:${C.ink};">Little Footnotes</span>
+      <span style="float:right;font:20px ${SANS};">☀️</span>
+    </td></tr>
+    <tr><td style="padding:0 4px 8px;">
+      <span style="display:inline-block;padding:4px 12px;border:1.5px dashed ${C.mint};border-radius:999px;font:700 12px ${SANS};letter-spacing:.06em;text-transform:uppercase;color:${C.mintText};">Kleine Erinnerung</span>
+      <h1 style="margin:14px 0 10px;font:600 32px/1.1 ${SERIF};color:${C.ink};">Bist du noch da?</h1>
+      <p style="margin:0 0 12px;font:16px/1.6 ${SANS};color:${C.ink};">Hallo ${esc(r.name)}, seit ${since} Tagen gibt es nichts Neues von «${esc(r.trip_title)}».</p>
+      <p style="margin:0 0 12px;font:16px/1.6 ${SANS};color:${C.ink};">Lass deine Freund:innen und deine Familie an deiner Reise teilhaben – ein Foto und ein Satz genügen. Wenn dir die Worte fehlen, hilft dir Claude aus Stichworten oder mit einem Rückblick auf die letzten Tage.</p>
+      ${button(`${APP}/feed`, 'Beitrag schreiben')}
+    </td></tr>
+    <tr><td style="padding:26px 4px 0;font:13px/1.7 ${SANS};color:${C.muted};">
+      <div style="border-top:1.5px dashed ${C.line};padding-top:18px;">
+      Du bekommst diese Erinnerung, weil du «${esc(r.trip_title)}» verwaltest. Ausschalten oder den Abstand ändern kannst du in der App unter Reise bearbeiten › Erinnerung.<br>
+      Made with ❤️ and some ☕️ · <a href="${APP}" style="color:${C.muted};">littlefootnotes.app</a> · <a href="${INSTAGRAM}" style="color:${C.muted};">Instagram @littefootnotes</a>
+      </div>
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>`
+  const text = [
+    'Bist du noch da?',
+    '',
+    `Hallo ${r.name}, seit ${since} Tagen gibt es nichts Neues von «${r.trip_title}».`,
+    'Lass deine Freund:innen und deine Familie an deiner Reise teilhaben – ein Foto und ein Satz genügen.',
+    '',
+    `Beitrag schreiben: ${APP}/feed`,
+    '',
+    'Ausschalten oder den Abstand ändern: in der App unter Reise bearbeiten › Erinnerung.',
+  ].join('\n')
+  return { subject, html, text }
+}
+
+// ---------------------------------------------------------------------------
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Nur POST' }, 405)
@@ -311,5 +368,26 @@ Deno.serve(async (req) => {
       results.push({ id: d.id, ok: false, error: (e as Error).message })
     }
   }
-  return json({ sent: results.filter((r) => r.ok && r.posts).length, results })
+  // Erinnerungen an die Reisenden
+  const { data: dueReminders, error: remErr } = await admin.rpc('trip_reminders_due', { p_limit: 40 })
+  if (remErr) console.error('Erinnerungen', remErr.message)
+  const reminders: { trip_id: string; ok: boolean; error?: string; subject?: string; html?: string }[] = []
+  const remindedTrips = new Set<string>()
+  for (const r of (dueReminders ?? []) as Reminder[]) {
+    try {
+      const mail = renderReminder(r)
+      if (!dryRun) {
+        await transport.sendMail({ from: FROM, to: r.email, subject: mail.subject, html: mail.html, text: mail.text })
+        remindedTrips.add(r.trip_id)
+      }
+      reminders.push({ trip_id: r.trip_id, ok: true, ...(dryRun ? { subject: mail.subject, html: mail.html } : {}) })
+    } catch (e) {
+      console.error('Erinnerung', r.trip_id, e)
+      reminders.push({ trip_id: r.trip_id, ok: false, error: (e as Error).message })
+    }
+  }
+  // höchstens eine Erinnerung pro Pause: erst ein neuer Beitrag macht die Reise wieder fällig
+  if (remindedTrips.size) await admin.from('trips').update({ reminder_sent_at: new Date().toISOString() }).in('id', [...remindedTrips])
+
+  return json({ sent: results.filter((r) => r.ok && r.posts).length, results, reminders })
 })

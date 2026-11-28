@@ -117,6 +117,8 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-081 | Messgrösse letzte Reisewoche | Als Betreiber möchte ich sehen, wie viele abgeschlossene Reisen in ihrer letzten Woche noch Beiträge haben, damit ich erkenne, ob Reisen verstummen. | High   | Open   |
 | FR-082 | Reiseende festlegen          | Als Reisende:r möchte ich das Enddatum meiner Reise setzen, damit Zeitleiste und Messung wissen, wann die Reise vorbei ist.                       | Medium   | Implemented |
 | FR-083 | Erfassungsdauer messen       | Als Betreiber möchte ich die Dauer vom Öffnen bis zum Posten eines Beitrags anonym erfassen, damit ich sehe, ob Festhalten wenig Zeit kostet.     | Medium   | Open   |
+| FR-084 | Erinnerung bei Funkstille    | Als Reisende:r möchte ich per E-Mail erinnert werden, wenn einige Tage (Standard 3) kein Beitrag kam, damit Familie und Freunde nicht vergeblich warten. Höchstens eine Erinnerung pro Pause, nur während die Reise läuft. | Medium | Implemented |
+| FR-085 | Erinnerung einstellen        | Als Reisende:r möchte ich die Erinnerung pro Reise auf 2, 3, 5 oder 7 Tage stellen oder ausschalten, damit sie zu meinem Reiserhythmus passt. | Medium | Implemented |
 
 ### Zugangsschutz (Konzept: [konzept-zugangsschutz.md](konzept-zugangsschutz.md))
 
