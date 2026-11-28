@@ -14,7 +14,7 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | Abonnent:in   | Follower mit Konto (Magic Link), erhält den Newsletter                                         |
 | Besucher:in   | Liest die Produktseite, trägt sich in die Warteliste ein                                       |
 | Betreiber     | Sandro Scalco als Product Owner, Entwickler und Betreiber                                      |
-| System        | Hintergrundprozesse (Newsletter-Versand, Routenbilder, Link-Titel)                             |
+| System        | Hintergrundprozesse (Newsletter-Versand, Link-Titel)                               |
 
 ---
 
@@ -68,8 +68,8 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
 | FR-042 | Karte mit Route     | Als Reisende:r möchte ich die Route aller Orte mit Fotos als Marker auf einer Karte sehen, damit die Reise räumlich sichtbar wird. | High   | Implemented |
 | FR-043 | Ort im Detail       | Als Reisende:r möchte ich auf einen Ort tippen und alle Beiträge von dort sehen, damit ich Erlebnisse am selben Ort finde.         | Medium   | Implemented |
 | FR-044 | Galerie             | Als Reisende:r möchte ich alle Fotos der Reise in einer Galerie sehen, damit ich Bilder ohne Text durchblättern kann.             | Medium   | Implemented |
-| FR-045 | Routenbilder        | Als System möchte ich zu Beiträgen automatisch ein Routenbild erzeugen, damit der Weg zwischen zwei Orten sichtbar wird.           | Low      | Implemented |
-| FR-047 | Aktionen am Beitrag     | Als Reisende:r möchte ich Teilen und «…» (Bearbeiten, Links sperren, Löschen) als sichtbare Knöpfe direkt am Beitrag finden, damit ich nicht nach dem Menü suchen muss. | High | Implemented |
+| FR-045 | Routenbilder        | Als System möchte ich zu Beiträgen automatisch ein Routenbild erzeugen, damit der Weg zwischen zwei Orten sichtbar wird.           | Low      | Rejected    |
+| FR-047 | Aktionen am Beitrag     | Als Reisende:r möchte ich Teilen und «…» (Bearbeiten, Links sperren, Löschen) als sichtbare Knöpfe direkt am Beitrag finden (Teilen oben links im Bild), damit ich nicht nach dem Menü suchen muss. | High | Implemented |
 | FR-046 | Ziehen zum Aktualisieren | Als Reisende:r möchte ich den Feed durch Ziehen aktualisieren, damit ich neue Beiträge von Mitreisenden sehe.                  | Medium   | Implemented |
 
 ### Teilen und Mitlesen
@@ -199,3 +199,4 @@ aber noch nicht mit einem Test oder Testplan bestätigt. Alle Schwellenwerte sin
   Tabellen `polls`, `poll_options`, `votes` und der Wert `poll` von `post_kind` bleiben vorerst in der Datenbank.
 - Rechte: Alle Mitglieder (auch Mitreisende) dürfen Reise bearbeiten, jeden Beitrag ändern oder löschen,
   einladen und Abonnent:innen verwalten; nur die Besitzer:in entfernt Mitreisende (BR-024, BR-027, BR-029, BR-043).
+- FR-045 Routenbilder: 2026-11-28 ausgebaut (Entscheid PO). Bestehende Routenbilder in Beiträgen bleiben sichtbar.

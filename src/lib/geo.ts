@@ -11,5 +11,3 @@ export const distanceKm = (a: { lat: number; lon: number }, b: { lat: number; lo
 /** Alte automatische Distanzzeile («12 km seit X · 80 km gesamt») – wird nicht mehr angezeigt. */
 export const isDistanceLine = (text: string | null | undefined) => !!text && /^\d+ km seit .+ · \d+ km gesamt$/.test(text.trim())
 
-/** Version der Routenbilder – ist variants.v kleiner, wird das Bild neu erzeugt (2 = Ausschnitt nah am aktuellen Ort). */
-export const ROUTE_IMAGE_VERSION = 3

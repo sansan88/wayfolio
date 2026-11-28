@@ -135,13 +135,6 @@
   --min-height: 0;
 }
 
-.regen-note {
-  margin: 8px 16px 0;
-  color: var(--ion-color-medium);
-  font-size: 0.8rem;
-  text-align: center;
-}
-
 /* Newsletter-Formular für die Community */
 .newsletter__email {
   --padding-start: 14px;

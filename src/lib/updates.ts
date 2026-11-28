@@ -1,9 +1,9 @@
 import { appUrl } from './auth'
 import { readPhotoMeta } from './exif'
 import { cachedLoad } from './offline'
-import { distanceKm, isDistanceLine, ROUTE_IMAGE_VERSION } from './geo'
+import { distanceKm, isDistanceLine } from './geo'
 import { cleanLinks } from './links'
-import { loadRoute, type RoutePoint } from './route'
+import { loadRoute } from './route'
 import { reverseGeocode, toWkt, type Place, type Position } from './location'
 import { supabase } from './supabase'
 
@@ -73,13 +73,13 @@ const extensionFor = (type: string, fallback: string) => {
 }
 
 /** Lädt eine Datei in den privaten Bucket «media» und legt den Medien-Eintrag an. */
-export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind, opts: { route?: boolean } = {}): Promise<string> => {
+export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind): Promise<string> => {
   // Aufnahmedatum und -ort aus den Metadaten übernehmen, bevor das Verkleinern sie entfernt
-  const meta = kind === 'photo' && !opts.route ? await readPhotoMeta(data) : { takenAt: null, position: null }
+  const meta = kind === 'photo' ? await readPhotoMeta(data) : { takenAt: null, position: null }
   const blob = kind === 'photo' ? await resizeImage(data) : data
   // zu jedem Foto ein Vorschaubild (ausser Routenbildern)
   let thumbPath: string | null = null
-  if (kind === 'photo' && !opts.route) {
+  if (kind === 'photo') {
     // aus dem bereits verkleinerten Bild – das Original (bis 48 MP) nicht ein zweites Mal dekodieren
     const thumb = await resizeImage(blob, THUMB_EDGE, 0.72)
     thumbPath = `${ctx.tripId}/${crypto.randomUUID()}_thumb.jpg`
@@ -99,7 +99,7 @@ export const uploadMedia = async (ctx: Context, data: Blob, kind: MediaKind, opt
       kind,
       storage_path: path,
       // Routenbilder markieren: nicht in der Galerie und nicht als Foto auf der Karte
-      variants: opts.route ? { route: true, v: ROUTE_IMAGE_VERSION } : thumbPath ? { thumb: thumbPath } : {},
+      variants: thumbPath ? { thumb: thumbPath } : {},
       taken_at: meta.takenAt?.toISOString() ?? when(ctx),
       // Ort aus den Foto-Metadaten, sonst der beim Erfassen gewählte Ort (GPS oder Pin)
       taken_location: meta.position ? toWkt(meta.position) : ctx.position ? toWkt(ctx.position) : null,
@@ -227,71 +227,6 @@ const checkinFor = async (ctx: Context, forceNew = false): Promise<{ id: string;
   return id ? { id, isNew: true } : null
 }
 
-/** Bildzeile: «Tag 3 · Queenstown → Wānaka» */
-const routeCaption = (route: RoutePoint[], placeName?: string | null) => {
-  const prev = route.at(-2)
-  const day = route.length ? Math.floor((Date.parse(route.at(-1)!.recorded_at) - Date.parse(route[0].recorded_at)) / 86400000) + 1 : 1
-  const name = (placeName ?? route.at(-1)?.place_name ?? 'Neuer Ort').split(',')[0]
-  return prev?.place_name ? `Tag ${day} · ${prev.place_name.split(',')[0]} → ${name}` : `Tag ${day} · ${name}`
-}
-
-/**
- * Bestehende Routenbilder neu zeichnen (z.B. nach geändertem Kartenausschnitt). Ersetzt die Datei,
- * die Verknüpfung in den Beiträgen bleibt. Nur Bilder mit älterer Version werden angefasst.
- */
-export const regenerateRouteImages = async (tripId: string, onProgress?: (done: number, total: number) => void) => {
-  const { data: media, error } = await supabase
-    .from('media')
-    .select('id, storage_path, variants, post_blocks(post:posts!post_blocks_post_id_fkey(checkin_id))')
-    .eq('trip_id', tripId)
-    .eq('variants->>route', 'true')
-  if (error) fail(error.message)
-  const outdated = (media ?? []).filter((m) => ((m.variants as { v?: number } | null)?.v ?? 1) < ROUTE_IMAGE_VERSION)
-  if (!outdated.length) return 0
-  const { renderRouteImage } = await import('./map')
-  const all = await loadRoute(tripId)
-  let done = 0
-  for (const m of outdated) {
-    const blocks = (m.post_blocks ?? []) as unknown as { post: { checkin_id: string | null } | null }[]
-    const checkinId = blocks.map((b) => b.post?.checkin_id).find(Boolean)
-    const idx = all.findIndex((p) => p.id === checkinId)
-    if (idx >= 0) {
-      const route = all.slice(0, idx + 1)
-      const image = await renderRouteImage(route, routeCaption(route))
-      const path = `${tripId}/${crypto.randomUUID()}.jpg`
-      const up = await supabase.storage.from('media').upload(path, image, { contentType: 'image/jpeg' })
-      if (!up.error) {
-        const { error: e } = await supabase
-          .from('media')
-          .update({ storage_path: path, variants: { route: true, v: ROUTE_IMAGE_VERSION } })
-          .eq('id', m.id)
-        if (!e) await supabase.storage.from('media').remove([m.storage_path])
-      }
-    }
-    onProgress?.(++done, outdated.length)
-  }
-  return done
-}
-
-/** Routenbild bis zu diesem (evtl. rückdatierten) Punkt plus Distanzzeile. */
-const routeBlocks = async (ctx: Context, checkinId: string): Promise<NewBlock[]> => {
-  try {
-    const { renderRouteImage, distanceKm } = await import('./map')
-    const all = await loadRoute(ctx.tripId)
-    const idx = all.findIndex((p) => p.id === checkinId)
-    const route = idx >= 0 ? all.slice(0, idx + 1) : all
-    const prev = route.at(-2)
-    const leg = prev ? Math.round(distanceKm(prev, route.at(-1)!)) : 0
-    const image = await renderRouteImage(route, routeCaption(route, ctx.place?.name))
-    const blocks: NewBlock[] = [{ kind: 'photo', mediaId: await uploadMedia(ctx, image, 'photo', { route: true }) }]
-    if (leg) await supabase.from('checkins').update({ leg_distance_m: leg * 1000 }).eq('id', checkinId)
-    return blocks
-  } catch (e) {
-    console.warn('Routenbild konnte nicht erzeugt werden', e)
-    return []
-  }
-}
-
 const mediaBlocks = async (ctx: Context, files: File[]): Promise<NewBlock[]> => {
   const blocks: NewBlock[] = []
   for (const file of files) {
@@ -304,22 +239,6 @@ const mediaBlocks = async (ctx: Context, files: File[]): Promise<NewBlock[]> => 
 // ---------------------------------------------------------------------------
 // Kacheln
 // ---------------------------------------------------------------------------
-
-/**
- * Foto, Video oder Sprachnachricht: Story. Bringt das Update einen neuen Ort mit
- * (Foto-GPS oder Pin), erscheint es zusätzlich im Feed – mit Routenbild.
- */
-export const createMediaStory = async (base: Context, data: File | Blob, kind: MediaKind) => {
-  const ctx = kind === 'photo' ? await withPhotoMeta(base, [data]) : base
-  const checkin = await checkinFor(ctx)
-  const mediaId = await uploadMedia(ctx, data, kind)
-  if (checkin?.isNew) {
-    const route = await routeBlocks(ctx, checkin.id)
-    await publish(ctx, { kind: 'feed', title: ctx.place?.name.split(',')[0] ?? null, blocks: [{ kind, mediaId }, ...route], inStories: true, checkinId: checkin.id })
-  } else {
-    await publish(ctx, { kind: 'story', blocks: [{ kind, mediaId }], inStories: true, checkinId: checkin?.id ?? null })
-  }
-}
 
 /** Seitentitel bzw. Ortsnamen für Links holen (Edge Function «link-title»). */
 const fetchTitles = async (urls: string[]): Promise<(string | null)[]> => {
@@ -376,18 +295,10 @@ const linkBlocks = async (links: string[]): Promise<NewBlock[]> => {
   return urls.map((url, i) => ({ kind: 'link', url, text: titles[i] ?? undefined }))
 }
 
-/** Standort setzen: immer ein neuer Routenpunkt mit Routenbild im Feed. */
-export const createLocationUpdate = async (ctx: Context) => {
-  if (!ctx.position) fail('Ohne Standort kein Update.')
-  const checkin = await checkinFor(ctx, true)
-  const blocks = await routeBlocks(ctx, checkin!.id)
-  await publish(ctx, { kind: 'feed', checkinId: checkin!.id, blocks })
-}
-
 /**
  * Ein Beitrag – die einzige Art, Neues zu erfassen: optional Titel, Text, Ort, Zeit, Fotos/Medien, Links.
- * Ort: manuell gewählt (fix) > aus dem ersten Foto > GPS. An einem neuen Ort oder ohne Fotos kommt
- * das Routenbild dazu. Ohne Titel zeigt die App den Ort als Titel.
+ * Ort: manuell gewählt (fix) > aus dem ersten Foto > GPS. Ohne Titel zeigt die App den Ort als Titel.
+ * (Automatische Routenbilder wurden 2026-11-28 ausgebaut; ältere werden weiter angezeigt.)
  * `recap`: Vorlage aus «Rückblick mit Claude» – markiert als Beitragsart «background», damit der
  * nächste Rückblick erst danach beginnt.
  */
@@ -401,8 +312,6 @@ export const createPost = async (
   if (post.text.trim()) blocks.push({ kind: 'text', text: post.text.trim() })
   blocks.push(...(await mediaBlocks(ctx, post.files)))
   blocks.push(...(await linkBlocks(post.links ?? [])))
-  const hasPhoto = post.files.some((f) => f.type.startsWith('image') || f.type.startsWith('video'))
-  if (checkin && (checkin.isNew || !hasPhoto)) blocks.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
   await publish(ctx, {
     kind: post.recap ? 'background' : 'feed',
     title: post.title.trim() || null,
@@ -446,13 +355,12 @@ export const updatePost = async (post: FeedPost, tripId: string, userId: string,
   const at = c.at ?? new Date(post.published_at)
   const ctx: Context = { tripId, userId, position: c.location?.position ?? null, place: c.location?.place ?? null, at, lockPlace: true }
 
-  // neuer Ort: passenden Routenpunkt finden oder anlegen, an neuem Ort mit Routenbild
+  // neuer Ort: passenden Routenpunkt finden oder anlegen
   let checkinId = post.checkin_id ?? null
   const extra: NewBlock[] = []
   if (c.location) {
     const checkin = await checkinFor(ctx)
     checkinId = checkin?.id ?? null
-    if (checkin?.isNew && !post.blocks.some((b) => b.route)) extra.push(...(await routeBlocks(ctx, checkin.id)).filter((b) => b.kind !== 'text'))
   } else if (c.at && post.checkin_id) {
     // Zeitpunkt auch am Ort nachführen, damit die Route in der richtigen Reihenfolge bleibt
     const { error: e } = await supabase.from('checkins').update({ recorded_at: at.toISOString() }).eq('id', post.checkin_id)

@@ -62,7 +62,7 @@
 
 ### A3: Beitrag ohne Foto
 
-**Trigger:** Der Beitrag hat weder Foto noch Routenbild (Schritt 4)
+**Trigger:** Der Beitrag hat kein Foto (Schritt 4)
 **Flow:**
 
 1. System zeigt statt des Fotos den Anfang des Textes als Zitat.

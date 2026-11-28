@@ -8,7 +8,7 @@
 **Goal:** Einen Moment der Reise mit wenigen Tipps festhalten – Foto, ein Satz, Ort und Zeitpunkt  
 **Status:** Implemented
 
-**Anforderungen:** FR-010, FR-011, FR-012, FR-013, FR-014, FR-015, FR-016, FR-021, FR-045, NFR-001, NFR-003
+**Anforderungen:** FR-010, FR-011, FR-012, FR-013, FR-014, FR-015, FR-016, FR-021, NFR-001, NFR-003
 
 ## Preconditions
 
@@ -96,7 +96,7 @@
 
 - Der Beitrag ist mit Ort, Zeitpunkt, Text und Medien in der gewählten Reihenfolge gespeichert.
 - Follower sehen den Beitrag über den Reise-Link; der Newsletter-Versand berücksichtigt ihn (UC-015).
-- Die Route der Reise enthält den neuen Ort; ein Routenbild wird bei Bedarf erzeugt.
+- Die Route der Reise enthält den neuen Ort.
 
 ### Failure Postconditions
 
