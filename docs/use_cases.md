@@ -86,7 +86,7 @@ der Reise.
 | [UC-001](use_cases/UC-001-anmelden.md) | Anmelden                        | Reisende:r, Mitreisende:r     | FR-001                                 |
 | [UC-002](use_cases/UC-002-reise-anlegen-und-verwalten.md) | Reise anlegen und verwalten     | Reisende:r                    | FR-002, FR-003, FR-006, FR-082         |
 | [UC-003](use_cases/UC-003-mitreisende-einladen.md) | Mitreisende einladen            | Reisende:r, Mitreisende:r     | FR-004, FR-005                         |
-| [UC-004](use_cases/UC-004-beitrag-erfassen.md) | Beitrag erfassen                | Reisende:r, Mitreisende:r     | FR-010 – FR-016, FR-021, FR-045        |
+| [UC-004](use_cases/UC-004-beitrag-erfassen.md) | Beitrag erfassen                | Reisende:r, Mitreisende:r     | FR-010 – FR-016, FR-021                |
 | [UC-005](use_cases/UC-005-beitrag-bearbeiten-oder-loeschen.md) | Beitrag bearbeiten oder löschen | Reisende:r, Mitreisende:r     | FR-015, FR-018, FR-019, FR-047         |
 | [UC-006](use_cases/UC-006-mit-claude-schreiben.md) | Mit Claude schreiben            | Reisende:r, Mitreisende:r     | FR-030 – FR-033, FR-035                |
 | [UC-007](use_cases/UC-007-rueckblick-erstellen.md) | Rückblick erstellen             | Reisende:r, Mitreisende:r     | FR-030, FR-034                         |

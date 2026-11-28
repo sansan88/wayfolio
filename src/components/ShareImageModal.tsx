@@ -1,24 +1,32 @@
 import {
+  IonAccordion,
+  IonAccordionGroup,
   IonButton,
   IonButtons,
   IonContent,
   IonFooter,
   IonHeader,
   IonIcon,
+  IonItem,
   IonLabel,
   IonModal,
+  IonNote,
   IonSegment,
   IonSegmentButton,
   IonSpinner,
   IonTitle,
   IonToolbar,
   useIonToast,
-} from '@ionic/react'
-import { logoInstagram } from 'ionicons/icons'
-import { useEffect, useMemo, useState } from 'react'
+} from "@ionic/react";
+import { logoInstagram } from "ionicons/icons";
+import { useEffect, useMemo, useState } from "react";
 
-import { useCardPresenter } from '../lib/modal'
-import { SYMBOL_GROUPS, SYMBOL_LIST, type SymbolGroup } from '../lib/shareSymbols'
+import { useCardPresenter } from "../lib/modal";
+import {
+  SYMBOL_GROUPS,
+  SYMBOL_LIST,
+  type SymbolGroup,
+} from "../lib/shareSymbols";
 import {
   renderShareImage,
   SHARE_IMAGE_SIZE,
@@ -29,110 +37,133 @@ import {
   type ShareImageSymbol,
   type ShareImageTheme,
   symbolPreview,
-} from '../lib/shareImage'
-import type { FeedPost } from '../lib/updates'
-import './ShareImageModal.css'
+} from "../lib/shareImage";
+import type { FeedPost } from "../lib/updates";
+import "./ShareImageModal.css";
 
 interface Props {
   /** Beitrag, für den das Bild entsteht; null = geschlossen */
-  post: FeedPost | null
-  day?: number | null
-  onClose: () => void
+  post: FeedPost | null;
+  day?: number | null;
+  onClose: () => void;
 }
 
-const THEME_KEY = 'lf-share-theme'
-const SYMBOL_KEY = 'lf-share-symbol'
-
+const THEME_KEY = "lf-share-theme";
+const SYMBOL_KEY = "lf-share-symbol";
 
 const savedSymbol = (): ShareImageSymbol => {
   try {
-    const v = localStorage.getItem(SYMBOL_KEY) as ShareImageSymbol | null
-    return v && SYMBOL_LIST.some((x) => x.key === v) ? v : 'sonne'
+    const v = localStorage.getItem(SYMBOL_KEY) as ShareImageSymbol | null;
+    return v && SYMBOL_LIST.some((x) => x.key === v) ? v : "sonne";
   } catch {
-    return 'sonne'
+    return "sonne";
   }
-}
+};
 
 const remember = (key: string, value: string) => {
   try {
-    localStorage.setItem(key, value)
+    localStorage.setItem(key, value);
   } catch {
     // ohne Speicher: Wahl gilt nur für diesen Dialog
   }
-}
+};
 /** Zuletzt gewähltes Design merken (nur Komfort; ohne Speicher gilt «Sand»). */
 const savedTheme = (): ShareImageTheme => {
   try {
-    const t = localStorage.getItem(THEME_KEY) as ShareImageTheme | null
-    return t && t in SHARE_IMAGE_THEMES ? t : 'sand'
+    const t = localStorage.getItem(THEME_KEY) as ShareImageTheme | null;
+    return t && t in SHARE_IMAGE_THEMES ? t : "sand";
   } catch {
-    return 'sand'
+    return "sand";
   }
-}
+};
 
 /** Vorschau und Teilen des Instagram-Bildes zu einem Beitrag (Story 9:16 oder Beitrag 4:5). */
 const ShareImageModal = ({ post, day, onClose }: Props) => {
-  const isOpen = post !== null
-  const presenter = useCardPresenter(isOpen)
-  const [presentToast] = useIonToast()
-  const [format, setFormat] = useState<ShareImageFormat>('story')
-  const [photoIndex, setPhotoIndex] = useState(0)
-  const [theme, setTheme] = useState<ShareImageTheme>(savedTheme)
-  const [symbol, setSymbol] = useState<ShareImageSymbol>(savedSymbol)
+  const isOpen = post !== null;
+  const presenter = useCardPresenter(isOpen);
+  const [presentToast] = useIonToast();
+  const [format, setFormat] = useState<ShareImageFormat>("story");
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [theme, setTheme] = useState<ShareImageTheme>(savedTheme);
+  const [symbol, setSymbol] = useState<ShareImageSymbol>(savedSymbol);
+  /** offener Bereich der Einstellungen; anfangs alle zu, damit die Vorschau Platz hat */
+  const [panel, setPanel] = useState<string | undefined>(undefined);
   // Gruppe der Symbol-Auswahl: anfangs die des gewählten Symbols
-  const [group, setGroup] = useState<SymbolGroup>(() => SYMBOL_LIST.find((x) => x.key === symbol)?.group ?? 'unterwegs')
-  const groupSymbols = SYMBOL_LIST.filter((x) => x.group === group)
+  const [group, setGroup] = useState<SymbolGroup>(
+    () => SYMBOL_LIST.find((x) => x.key === symbol)?.group ?? "unterwegs",
+  );
+  const groupSymbols = SYMBOL_LIST.filter((x) => x.group === group);
   // Vorschaubilder der Symbole in der Farbe des gewählten Designs
-  const symbolColor = theme === 'foto' ? '#c9893f' : SHARE_IMAGE_THEMES[theme].sun
+  const symbolColor =
+    theme === "foto" ? "#c9893f" : SHARE_IMAGE_THEMES[theme].sun;
   const previews = useMemo(
-    () => Object.fromEntries(groupSymbols.map((x) => [x.key, x.key === 'keins' ? '' : symbolPreview(x.key, symbolColor)])),
+    () =>
+      Object.fromEntries(
+        groupSymbols.map((x) => [
+          x.key,
+          x.key === "keins" ? "" : symbolPreview(x.key, symbolColor),
+        ]),
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [symbolColor, group],
-  )
-  const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [sharing, setSharing] = useState(false)
+  );
+  const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setPhotoIndex(0)
-  }, [isOpen, post?.id])
+    if (!isOpen) return
+    setPhotoIndex(0)
+    setPanel(undefined);
+  }, [isOpen, post?.id]);
 
   // Bild neu zeichnen, wenn Format oder Foto wechselt
   useEffect(() => {
-    if (!post) return
-    let cancelled = false
-    let url: string | null = null
-    setImage(null)
-    setError(null)
+    if (!post) return;
+    let cancelled = false;
+    let url: string | null = null;
+    setImage(null);
+    setError(null);
     renderShareImage(post, { format, photoIndex, day, theme, symbol })
       .then((blob) => {
-        if (cancelled) return
-        url = URL.createObjectURL(blob)
-        setImage({ blob, url })
+        if (cancelled) return;
+        url = URL.createObjectURL(blob);
+        setImage({ blob, url });
       })
-      .catch((e: Error) => !cancelled && setError(e.message))
+      .catch((e: Error) => !cancelled && setError(e.message));
     return () => {
-      cancelled = true
-      if (url) URL.revokeObjectURL(url)
-    }
-  }, [post, format, photoIndex, day, theme, symbol])
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [post, format, photoIndex, day, theme, symbol]);
 
-  const photos = post ? sharePhotos(post) : []
-  const { w, h } = SHARE_IMAGE_SIZE[format]
+  const photos = post ? sharePhotos(post) : [];
+  const { w, h } = SHARE_IMAGE_SIZE[format];
 
   const share = async () => {
-    if (!image) return
-    setSharing(true)
+    if (!image) return;
+    setSharing(true);
     try {
-      const r = await shareImageFile(image.blob, format)
-      if (r === 'saved') void presentToast({ message: 'Bild gespeichert – in Instagram auswählen', duration: 2400, position: 'top', color: 'success' })
+      const r = await shareImageFile(image.blob, format);
+      if (r === "saved")
+        void presentToast({
+          message: "Bild gespeichert – in Instagram auswählen",
+          duration: 2400,
+          position: "top",
+          color: "success",
+        });
     } finally {
-      setSharing(false)
+      setSharing(false);
     }
-  }
+  };
 
   return (
-    <IonModal isOpen={isOpen} presentingElement={presenter} onDidDismiss={onClose} className="share-image">
+    <IonModal
+      isOpen={isOpen}
+      presentingElement={presenter}
+      onDidDismiss={onClose}
+      className="share-image"
+    >
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
@@ -141,7 +172,12 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
           <IonTitle>Bild für Instagram</IonTitle>
         </IonToolbar>
         <IonToolbar>
-          <IonSegment value={format} onIonChange={(e) => setFormat((e.detail.value as ShareImageFormat) ?? 'story')}>
+          <IonSegment
+            value={format}
+            onIonChange={(e) =>
+              setFormat((e.detail.value as ShareImageFormat) ?? "story")
+            }
+          >
             <IonSegmentButton value="story">
               <IonLabel>Story</IonLabel>
             </IonSegmentButton>
@@ -151,119 +187,223 @@ const ShareImageModal = ({ post, day, onClose }: Props) => {
           </IonSegment>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding" color="light">
-        <div className="share-image__preview" style={{ aspectRatio: `${w} / ${h}` }}>
-          {image ? (
-            <img src={image.url} alt={`Vorschau ${format === 'story' ? 'Story' : 'Beitrag'}`} />
-          ) : error ? (
-            <p className="share-image__error">{error}</p>
-          ) : (
-            <IonSpinner name="crescent" aria-label="Bild wird erstellt" />
-          )}
-        </div>
-        <div className="share-image__themes" role="radiogroup" aria-label="Design wählen">
-          {(Object.keys(SHARE_IMAGE_THEMES) as ShareImageTheme[]).filter((key) => key !== 'foto' || photos.length > 0).map((key) => {
-            const t = SHARE_IMAGE_THEMES[key]
-            return (
-              <button
-                key={key}
-                type="button"
-                role="radio"
-                aria-checked={key === theme}
-                className={key === theme ? 'active' : ''}
-                onClick={() => {
-                  setTheme(key)
-                  try {
-                    localStorage.setItem(THEME_KEY, key)
-                  } catch {
-                    // ohne Speicher: Wahl gilt nur für diesen Dialog
-                  }
-                }}
-              >
-                {key === 'foto' ? (
-                  // Vorschau mit dem gewählten Foto; die Farben entstehen erst beim Zeichnen
-                  <span
-                    className="share-image__swatch share-image__swatch--photo"
-                    style={{ backgroundImage: photos[photoIndex]?.mediaUrl ? `url("${photos[photoIndex].mediaUrl}")` : undefined }}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span className="share-image__swatch" style={{ background: t.bg, color: t.accent, borderColor: t.line }} aria-hidden="true">
-                    Aa
-                  </span>
-                )}
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
-        <IonSegment
-          className="share-image__groups"
-          scrollable
-          value={group}
-          onIonChange={(e) => setGroup((e.detail.value as SymbolGroup) ?? 'unterwegs')}
-        >
-          {SYMBOL_GROUPS.map((g) => (
-            <IonSegmentButton key={g.key} value={g.key}>
-              <IonLabel>{g.label}</IonLabel>
-            </IonSegmentButton>
-          ))}
-        </IonSegment>
-        <div className="share-image__themes share-image__symbols" role="radiogroup" aria-label="Symbol wählen">
-          {groupSymbols.map((x) => (
-            <button
-              key={x.key}
-              type="button"
-              role="radio"
-              aria-checked={x.key === symbol}
-              className={x.key === symbol ? 'active' : ''}
-              onClick={() => {
-                setSymbol(x.key)
-                remember(SYMBOL_KEY, x.key)
+      <IonContent color="light" scrollY={false}>
+        {/* Vorschau oben, nimmt den freien Platz ein; Einstellungen darunter als Akkordeon (immer nur eines offen) */}
+        <div className="share-image__layout">
+          <div className="share-image__stage">
+            <div
+              className="share-image__preview"
+              style={{ aspectRatio: `${w} / ${h}` }}
+            >
+              {image ? (
+                <img
+                  src={image.url}
+                  alt={`Vorschau ${format === "story" ? "Story" : "Beitrag"}`}
+                />
+              ) : error ? (
+                <p className="share-image__error">{error}</p>
+              ) : (
+                <IonSpinner name="crescent" aria-label="Bild wird erstellt" />
+              )}
+            </div>
+          </div>
+          <div className="share-image__settings">
+            <IonAccordionGroup
+              value={panel}
+              onIonChange={(e) => {
+                // ionChange der Segmente im Inhalt steigt bis hierher auf – nur das eigene Ereignis zählt
+                if (e.target !== e.currentTarget) return
+                setPanel((e.detail.value as string | undefined) ?? undefined)
               }}
             >
-              <span className="share-image__swatch share-image__swatch--symbol" aria-hidden="true">
-                {previews[x.key] ? <img src={previews[x.key]} alt="" /> : '–'}
-              </span>
-              {x.label}
-            </button>
-          ))}
-        </div>
-        {photos.length > 1 && (
-          <div className="share-image__photos" role="radiogroup" aria-label="Foto wählen">
-            {photos.map((p, i) => (
-              <button
-                key={p.position}
-                type="button"
-                role="radio"
-                aria-checked={i === photoIndex}
-                aria-label={`Foto ${i + 1}`}
-                className={i === photoIndex ? 'active' : ''}
-                onClick={() => setPhotoIndex(i)}
-              >
-                <img src={p.mediaUrl!} alt="" />
-              </button>
-            ))}
+              <IonAccordion value="design">
+                <IonItem slot="header" color="light">
+                  <IonLabel>Design</IonLabel>
+                  <IonNote slot="end">
+                    {SHARE_IMAGE_THEMES[theme].label}
+                  </IonNote>
+                </IonItem>
+                <div slot="content" className="share-image__panel">
+                  <div
+                    className="share-image__themes"
+                    role="radiogroup"
+                    aria-label="Design wählen"
+                  >
+                    {(Object.keys(SHARE_IMAGE_THEMES) as ShareImageTheme[])
+                      .filter((key) => key !== "foto" || photos.length > 0)
+                      .map((key) => {
+                        const t = SHARE_IMAGE_THEMES[key];
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            role="radio"
+                            aria-checked={key === theme}
+                            className={key === theme ? "active" : ""}
+                            onClick={() => {
+                              setTheme(key);
+                              try {
+                                localStorage.setItem(THEME_KEY, key);
+                              } catch {
+                                // ohne Speicher: Wahl gilt nur für diesen Dialog
+                              }
+                            }}
+                          >
+                            {key === "foto" ? (
+                              // Vorschau mit dem gewählten Foto; die Farben entstehen erst beim Zeichnen
+                              <span
+                                className="share-image__swatch share-image__swatch--photo"
+                                style={{
+                                  backgroundImage: photos[photoIndex]?.mediaUrl
+                                    ? `url("${photos[photoIndex].mediaUrl}")`
+                                    : undefined,
+                                }}
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <span
+                                className="share-image__swatch"
+                                style={{
+                                  background: t.bg,
+                                  color: t.accent,
+                                  borderColor: t.line,
+                                }}
+                                aria-hidden="true"
+                              >
+                                Aa
+                              </span>
+                            )}
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              </IonAccordion>
+              <IonAccordion value="symbol">
+                <IonItem slot="header" color="light">
+                  <IonLabel>Symbol</IonLabel>
+                  <IonNote slot="end">
+                    {SYMBOL_LIST.find((x) => x.key === symbol)?.label}
+                  </IonNote>
+                </IonItem>
+                <div slot="content" className="share-image__panel">
+                  <IonSegment
+                    className="share-image__groups"
+                    scrollable
+                    value={group}
+                    onIonChange={(e) =>
+                      setGroup((e.detail.value as SymbolGroup) ?? "unterwegs")
+                    }
+                  >
+                    {SYMBOL_GROUPS.map((g) => (
+                      <IonSegmentButton key={g.key} value={g.key}>
+                        <IonLabel>{g.label}</IonLabel>
+                      </IonSegmentButton>
+                    ))}
+                  </IonSegment>
+                  <div
+                    className="share-image__themes share-image__symbols"
+                    role="radiogroup"
+                    aria-label="Symbol wählen"
+                  >
+                    {groupSymbols.map((x) => (
+                      <button
+                        key={x.key}
+                        type="button"
+                        role="radio"
+                        aria-checked={x.key === symbol}
+                        className={x.key === symbol ? "active" : ""}
+                        onClick={() => {
+                          setSymbol(x.key);
+                          remember(SYMBOL_KEY, x.key);
+                        }}
+                      >
+                        <span
+                          className="share-image__swatch share-image__swatch--symbol"
+                          aria-hidden="true"
+                        >
+                          {previews[x.key] ? (
+                            <img src={previews[x.key]} alt="" />
+                          ) : (
+                            "–"
+                          )}
+                        </span>
+                        {x.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </IonAccordion>
+              {photos.length > 1 && (
+                <IonAccordion value="foto">
+                  <IonItem slot="header" color="light">
+                    <IonLabel>Foto</IonLabel>
+                    <IonNote slot="end">
+                      {photoIndex + 1} von {photos.length}
+                    </IonNote>
+                  </IonItem>
+                  <div slot="content" className="share-image__panel">
+                    <div
+                      className="share-image__photos"
+                      role="radiogroup"
+                      aria-label="Foto wählen"
+                    >
+                      {photos.map((p, i) => (
+                        <button
+                          key={p.position}
+                          type="button"
+                          role="radio"
+                          aria-checked={i === photoIndex}
+                          aria-label={`Foto ${i + 1}`}
+                          className={i === photoIndex ? "active" : ""}
+                          onClick={() => setPhotoIndex(i)}
+                        >
+                          <img src={p.mediaUrl!} alt="" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </IonAccordion>
+              )}
+              <IonAccordion value="hilfe">
+                <IonItem slot="header" color="light">
+                  <IonLabel>Hinweise</IonLabel>
+                </IonItem>
+                <div slot="content" className="share-image__panel">
+                  <p className="share-image__hint">
+                    {format === "story"
+                      ? "1080 × 1920 px für eure Story."
+                      : "1080 × 1350 px für den Feed."}{" "}
+                    Datum und Ort kommen aus dem Beitrag.
+                  </p>
+                  <p className="share-image__hint">
+                    Erscheint das Bild in Instagram nicht: im Teilen-Menü «Bild
+                    sichern» wählen (oder das Bild oben gedrückt halten → «Zu
+                    Fotos hinzufügen») und es in Instagram aus den Fotos
+                    auswählen.
+                  </p>
+                </div>
+              </IonAccordion>
+            </IonAccordionGroup>
           </div>
-        )}
-        <p className="share-image__hint">
-          {format === 'story' ? '1080 × 1920 px für eure Story.' : '1080 × 1350 px für den Feed.'} Datum und Ort kommen aus dem Beitrag.
-        </p>
-        <p className="share-image__hint">
-          Erscheint das Bild in Instagram nicht: im Teilen-Menü «Bild sichern» wählen (oder das Bild oben gedrückt halten
-          → «Zu Fotos hinzufügen») und es in Instagram aus den Fotos auswählen.
-        </p>
+        </div>
       </IonContent>
       <IonFooter>
         <IonToolbar>
-          <IonButton expand="block" className="ion-margin-horizontal" disabled={!image || sharing} onClick={() => void share()}>
+          <IonButton
+            expand="block"
+            className="ion-margin-horizontal"
+            disabled={!image || sharing}
+            onClick={() => void share()}
+          >
             <IonIcon slot="start" icon={logoInstagram} />
             Teilen
           </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonModal>
-  )
-}
+  );
+};
 
-export default ShareImageModal
+export default ShareImageModal;

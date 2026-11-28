@@ -144,6 +144,12 @@ const Datenschutz = () => (
       Abs. 1 lit. b), für den Newsletter auf eure Einwilligung (lit. a) und für die technische Sicherheit auf unser
       berechtigtes Interesse (lit. f).
     </p>
+    <p>
+      Wir verwenden eure Daten zu keinem anderen Zweck: Wir verkaufen sie nicht, geben sie nicht für Werbung weiter und
+      nutzen sie nicht zum Training von KI-Modellen. Daten verlassen den beschriebenen Rahmen nur, wenn ihr es selbst
+      auslöst – mit der Schreibhilfe (siehe Anthropic unten) oder wenn ihr Inhalte, etwa ein Bild für Instagram, selbst
+      auf anderen Plattformen teilt; dort gelten deren Bedingungen.
+    </p>
 
     <h2>4. Sichtbarkeit</h2>
     <p>

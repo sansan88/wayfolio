@@ -1,11 +1,26 @@
+/* Aufteilung: Vorschau füllt den freien Platz, Einstellungen darunter (scrollen bei Bedarf) */
+.share-image__layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.share-image__stage {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  padding: 16px 16px 12px;
+}
+
 /* Vorschau im festen Seitenverhältnis des gewählten Formats, nie verzerrt */
 .share-image__preview {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  max-width: min(100%, calc((100dvh - 520px) * 9 / 16));
-  margin: 0 auto;
+  height: 100%;
+  max-width: 100%;
   overflow: hidden;
   border-radius: 14px;
   background: #fbf6ee;
@@ -17,6 +32,18 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.share-image__settings {
+  flex: 0 1 auto;
+  max-height: 55%;
+  overflow-y: auto;
+  border-top: 0.55px solid var(--ion-color-step-150, rgba(0, 0, 0, 0.12));
+}
+
+.share-image__panel {
+  padding: 4px 16px 14px;
+  background: var(--ion-color-light);
 }
 
 .share-image__error {

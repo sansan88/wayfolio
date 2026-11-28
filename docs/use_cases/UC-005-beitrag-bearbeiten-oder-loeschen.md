@@ -36,7 +36,7 @@
 
 1. Reisende:r tippt auf «Ort» und wählt per Suche oder Pin einen anderen Ort, oder tippt auf «Zeitpunkt» und wählt
    Datum und Uhrzeit.
-2. System übernimmt die Wahl; an einem neuen Ort ersetzt es das Routenbild des Beitrags.
+2. System übernimmt die Wahl.
 3. Der Beitrag erscheint nach dem Sichern am neuen Tag in Feed und Zeitleiste.
 
 ### A2: Links ändern

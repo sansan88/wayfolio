@@ -783,6 +783,120 @@
 }
 
 /* ---------- Breitere Bildschirme ---------- */
+/* ---------- Vergleich mit typischen Reise-Apps ---------- */
+.lp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lp-compare__wrap {
+  margin-top: 28px;
+  overflow: hidden;
+  border: 1.5px solid var(--lp-line);
+  border-radius: 20px;
+  background: var(--lp-card);
+}
+
+.lp-compare__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.lp-compare__table th,
+.lp-compare__table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.lp-compare__table thead th {
+  color: var(--lp-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lp-compare__table tbody tr + tr th,
+.lp-compare__table tbody tr + tr td {
+  border-top: 1.5px dashed var(--lp-line);
+}
+
+.lp-compare__table thead th:first-child {
+  width: 34%;
+}
+
+.lp-compare__table tbody th {
+  color: var(--lp-ink);
+  font-weight: 600;
+}
+
+.lp-compare__table td {
+  color: var(--lp-muted);
+}
+
+/* Spalte Little Footnotes leicht in Mint hinterlegt */
+.lp-compare__table .lp-compare__us {
+  background: color-mix(in srgb, var(--lp-accent) 9%, transparent);
+  color: var(--lp-ink);
+}
+
+.lp-compare__table thead .lp-compare__us {
+  color: var(--lp-highlight);
+}
+
+.lp-compare__table td.lp-compare__us ion-icon {
+  margin-right: 2px;
+  color: var(--lp-accent);
+  font-size: 1rem;
+  vertical-align: -3px;
+}
+
+.lp-compare__promise {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 20px !important;
+  padding: 16px 18px;
+  border: 1.5px dashed var(--lp-accent);
+  border-radius: 16px;
+  color: var(--lp-ink);
+}
+
+.lp-compare__promise ion-icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--lp-accent);
+  font-size: 1.4rem;
+}
+
+.lp-compare__note {
+  margin-top: 12px !important;
+  color: var(--lp-muted);
+  font-size: 0.82rem;
+}
+
+/* schmale Handys: Tabelle kompakter */
+@media (max-width: 440px) {
+  .lp-compare__table {
+    font-size: 0.84rem;
+  }
+
+  .lp-compare__table th,
+  .lp-compare__table td {
+    padding: 10px 9px;
+  }
+}
+
 @media (min-width: 640px) {
   .lp-steps {
     grid-template-columns: repeat(3, 1fr);

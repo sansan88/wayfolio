@@ -106,13 +106,23 @@ const PostCard = ({ post, mode, onMenu, onShare, day, onPlace }: Props) => {
   return (
     <IonCard className={`post post--${post.kind}${onShare || onMenu ? (media.length > 0 ? ' post--actions-edge' : ' post--actions-top') : ''}`}>
       {/* Ionic-Card-Standard: Medien oben, dann Kopf (Titel + Untertitel), dann Inhalt */}
-      {media.length > 0 && <PhotoCarousel photos={media} />}
+      {media.length > 0 && (
+        <div className="post__media-wrap">
+          <PhotoCarousel photos={media} />
+          {onShare && (
+            // Teilen oben links im Bild
+            <IonFabButton size="small" className="post__share" onClick={() => onShare(post)} aria-label="Beitrag teilen">
+              <IonIcon icon={shareOutline} />
+            </IonFabButton>
+          )}
+        </div>
+      )}
 
       <IonCardHeader className="post__header">
         {(onShare || onMenu) && (
-          // Aktionen als kleine FAB-Knöpfe am unteren Rand des Bildes (ohne Bild oben rechts)
+          // «…» als kleiner FAB-Knopf am unteren Bildrand; ohne Bild oben rechts, dann auch mit Teilen
           <div className={`post__actions${media.length > 0 ? ' post__actions--edge' : ''}`}>
-            {onShare && (
+            {onShare && media.length === 0 && (
               <IonFabButton size="small" onClick={() => onShare(post)} aria-label="Beitrag teilen">
                 <IonIcon icon={shareOutline} />
               </IonFabButton>

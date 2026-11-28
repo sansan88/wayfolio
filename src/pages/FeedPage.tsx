@@ -50,7 +50,6 @@ import {
   hideReply,
   loadUpdates,
   fillLinkTitles,
-  regenerateRouteImages,
   revokePostLinks,
   updatePost,
   type FeedPost,
@@ -89,8 +88,6 @@ const FeedPage = () => {
     [capture.at, capture.place, capture.position],
   )
   const timeline = useTimeline(posts.map((p) => p.id))
-  const [regen, setRegen] = useState<{ done: number; total: number } | null>(null)
-  const regenStarted = useRef<string | null>(null)
   const editInitial = useMemo(() => {
     if (!editing) return undefined
     const point = points.find((p) => p.id === editing.checkin_id)
@@ -202,19 +199,6 @@ const FeedPage = () => {
       ],
     })
 
-  // ältere Routenbilder einmalig im Hintergrund neu zeichnen (näher am jeweiligen Ort)
-  useEffect(() => {
-    if (!trip || regenStarted.current === trip.id) return
-    regenStarted.current = trip.id
-    regenerateRouteImages(trip.id, (done, total) => setRegen({ done, total }))
-      .then((n) => {
-        if (n > 0) void refresh()
-      })
-      .catch((e: Error) => console.warn('Routenbilder nicht aktualisiert', e))
-      .finally(() => setRegen(null))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip?.id])
-
   // Links ohne gespeicherten Titel (ältere Beiträge) einmalig im Hintergrund ergänzen
   const titlesRunning = useRef(false)
   useEffect(() => {
@@ -297,12 +281,6 @@ const FeedPage = () => {
       <IonContent ref={timeline.contentRef} color="light" scrollEvents onIonScroll={timeline.onScroll}>
         <CamperRefresher onRefresh={() => refresh()} />
         <GeoPermissionBanner />
-        {regen && (
-          <p className="regen-note" role="status">
-            Kartenausschnitte werden aktualisiert … {regen.done}/{regen.total}
-          </p>
-        )}
-
         {error && (
           <IonText color="danger">
             <p className="ion-padding">{error}</p>

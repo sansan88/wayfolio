@@ -62,7 +62,7 @@
 
 ### A3: Beitrag ohne Foto
 
-**Trigger:** Der Beitrag hat weder Foto noch Routenbild (Schritt 4)
+**Trigger:** Der Beitrag hat kein Foto (Schritt 4)
 **Flow:**
 
 1. System zeigt statt des Fotos den Anfang des Textes als Zitat.
@@ -102,6 +102,11 @@ Foto, weil Instagram sie überdeckt.
 
 In der Story steht «Little Footnotes · littlefootnotes.app» dezent in einer Zeile in gedämpfter Farbe unterhalb der
 Schutzzone; im Beitragsformat bleibt die Fusszeile mit Trennlinie.
+
+### BR-061: Vorschau zuerst
+
+Die Vorschau bleibt im Dialog immer sichtbar. Design, Symbol, Foto und Hinweise stehen darunter als Akkordeon,
+anfangs zugeklappt; geöffnet ist höchstens ein Bereich.
 
 ### BR-052: Inhalt
 
