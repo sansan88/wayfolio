@@ -107,7 +107,7 @@ const de: LandingText = {
   shotLabels: ['Tagebuch', 'Route', 'Ort im Detail', 'Beitrag erfassen'],
   shotAlts: [
     'Tagebuch mit einem Beitrag aus Wellington',
-    'Tagebuch mit einem Beitrag aus Auckland',
+    'Tagebuch mit einem Beitrag aus Piha bei Auckland',
     'Karte mit der Route von Zürich über Dubai nach Auckland und Wellington',
     'Details zu Wellington mit Fotos',
     'Beitrag erfassen mit Ort, Zeitpunkt und drei Fotos',
@@ -214,7 +214,7 @@ const en: LandingText = {
   shotLabels: ['Journal', 'Route', 'Place details', 'New post'],
   shotAlts: [
     'Journal with a post from Wellington',
-    'Journal with a post from Auckland',
+    'Journal with a post from Piha near Auckland',
     'Map with the route from Zurich via Dubai to Auckland and Wellington',
     'Details for Wellington with photos',
     'New post with place, time and three photos',
@@ -321,7 +321,7 @@ const fr: LandingText = {
   shotLabels: ['Carnet', 'Itinéraire', 'Détail du lieu', 'Nouvel article'],
   shotAlts: [
     'Carnet avec un article de Wellington',
-    'Carnet avec un article d’Auckland',
+    'Carnet avec un article de Piha, près d’Auckland',
     'Carte avec l’itinéraire de Zurich à Auckland et Wellington via Dubaï',
     'Détails de Wellington avec photos',
     'Nouvel article avec lieu, heure et trois photos',
@@ -428,7 +428,7 @@ const es: LandingText = {
   shotLabels: ['Diario', 'Ruta', 'Detalle del lugar', 'Nueva entrada'],
   shotAlts: [
     'Diario con una entrada desde Wellington',
-    'Diario con una entrada desde Auckland',
+    'Diario con una entrada desde Piha, cerca de Auckland',
     'Mapa con la ruta de Zúrich a Auckland y Wellington pasando por Dubái',
     'Detalles de Wellington con fotos',
     'Nueva entrada con lugar, hora y tres fotos',

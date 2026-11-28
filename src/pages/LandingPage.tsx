@@ -53,7 +53,7 @@ const screens = [
   { src: 'feed2.webp', alt: 1, label: 0 },
   { src: 'map.webp', alt: 2, label: 1 },
   { src: 'sheet.webp', alt: 3, label: 2 },
-  { src: 'checkin.webp', alt: 4, label: 3 },
+  { src: 'compose.webp', alt: 4, label: 3 },
 ]
 
 const prefersDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
