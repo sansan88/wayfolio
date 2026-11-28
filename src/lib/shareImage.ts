@@ -1,3 +1,4 @@
+import { supabase } from './supabase'
 import { canvasToJpeg, type FeedPost } from './updates'
 
 /**
@@ -44,12 +45,36 @@ export const shareHeadline = (post: FeedPost) => {
   }
 }
 
+/**
+ * Foto für die Leinwand laden. Nicht über die signierte URL: Der Service Worker hat sie vom Feed her
+ * als «opake» Antwort (ohne CORS) im Cache, und die lässt sich weder per fetch lesen noch zeichnen –
+ * das Bild blieb dann leer. Darum direkt aus dem Speicher laden (anderer Pfad, mit Anmeldung).
+ */
 const loadImage = async (url: string): Promise<ImageBitmap | null> => {
+  const blob = (await downloadFromStorage(url)) ?? (await fetchBlob(url))
+  if (!blob) return null
   try {
-    // über fetch statt <img>, damit die Leinwand nicht «tainted» wird
-    const res = await fetch(url)
-    if (!res.ok) return null
-    return await createImageBitmap(await res.blob())
+    return await createImageBitmap(blob)
+  } catch {
+    return null
+  }
+}
+
+const downloadFromStorage = async (signedUrl: string): Promise<Blob | null> => {
+  try {
+    const m = new URL(signedUrl).pathname.match(/\/storage\/v1\/object\/sign\/media\/(.+)$/)
+    if (!m) return null
+    const { data } = await supabase.storage.from('media').download(decodeURIComponent(m[1]))
+    return data ?? null
+  } catch {
+    return null
+  }
+}
+
+const fetchBlob = async (url: string): Promise<Blob | null> => {
+  try {
+    const res = await fetch(url, { cache: 'reload' })
+    return res.ok ? await res.blob() : null
   } catch {
     return null
   }

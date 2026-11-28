@@ -58,7 +58,8 @@ export default defineConfig({
                 {
                   cacheKeyWillBeUsed: async ({ request }) => {
                     const u = new URL(request.url)
-                    return `${u.origin}${u.pathname}`
+                    // CORS-Abrufe (fetch, Leinwand) getrennt ablegen: eine opake <img>-Antwort wäre für sie unlesbar
+                    return `${u.origin}${u.pathname}${request.mode === 'cors' ? '?cors' : ''}`
                   },
                 },
               ],

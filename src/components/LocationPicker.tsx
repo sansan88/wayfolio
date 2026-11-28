@@ -101,7 +101,13 @@ const LocationPicker = ({ isOpen, initial, withTime = false, at = null, onClose,
   }
 
   return (
-    <IonModal isOpen={isOpen} presentingElement={presenter} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={isOpen}
+      presentingElement={presenter}
+      // Nicht per Wischen schliessen: die Karte braucht die Geste, Schliessen nur über Abbrechen/Übernehmen
+      canDismiss={async (_data?: unknown, role?: string) => role !== 'gesture'}
+      onDidDismiss={onClose}
+    >
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
