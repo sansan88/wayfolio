@@ -98,7 +98,7 @@ der Reise.
 | [UC-015](use_cases/UC-015-newsletter-versenden.md) | Newsletter versenden            | System                        | FR-064                                 |
 | [UC-016](use_cases/UC-016-in-warteliste-eintragen.md) | In Warteliste eintragen         | Besucher:in                   | FR-073, FR-074                         |
 | [UC-017](use_cases/UC-017-produkt-ziel-messen.md) | Produkt-Ziel messen             | Betreiber                     | FR-080, FR-081, FR-083                 |
-| [UC-018](use_cases/UC-018-bild-fuer-instagram-erstellen.md) | Bild für Instagram erstellen | Reisende:r, Mitreisende:r | FR-047, FR-048, FR-057 – FR-059 |
+| [UC-018](use_cases/UC-018-bild-fuer-instagram-erstellen.md) | Bild für Instagram erstellen | Reisende:r, Mitreisende:r | FR-047 – FR-049, FR-057 – FR-059 |
 | [UC-019](use_cases/UC-019-reise-link-mit-passwort-schuetzen.md) | Reise-Link mit Passwort schützen | Reisende:r, Follower | FR-090 – FR-095 |
 | [UC-020](use_cases/UC-020-zugang-anfragen-und-freigeben.md) | Zugang anfragen und freigeben | Follower, Reisende:r | FR-096 – FR-099 |
 | [UC-021](use_cases/UC-021-erinnerung-bei-funkstille.md) | Erinnerung bei Funkstille | System, Reisende:r | FR-084, FR-085 |

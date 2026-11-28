@@ -52,6 +52,14 @@
 2. Beim Design «Foto» entsteht der Hintergrund als Verlauf aus den Farben der oberen und unteren Hälfte des
    gewählten Fotos; ein dunkles Foto ergibt einen dunklen Verlauf mit heller Schrift, ein helles einen hellen.
 
+### A7: Anderes Symbol wählen
+
+**Trigger:** Reisende:r tippt auf ein Symbol (Schritt 4)
+**Flow:**
+
+1. System zeichnet das Bild mit dem gewählten Symbol in der Farbe des Designs neu (oder ohne Symbol) und merkt
+   sich die Wahl auf diesem Gerät.
+
 ### A3: Beitrag ohne Foto
 
 **Trigger:** Der Beitrag hat weder Foto noch Routenbild (Schritt 4)

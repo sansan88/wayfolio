@@ -237,10 +237,10 @@ const wrap = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
   return kept
 }
 
-const drawSun = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) => {
+const drawSunIn = (ctx: CanvasRenderingContext2D, color: string, cx: number, cy: number, r: number) => {
   ctx.save()
-  ctx.fillStyle = alpha(C.sun, 0.22)
-  ctx.strokeStyle = alpha(C.sun, 0.55)
+  ctx.fillStyle = alpha(color, 0.22)
+  ctx.strokeStyle = alpha(color, 0.55)
   ctx.lineWidth = r * 0.08
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
@@ -255,6 +255,95 @@ const drawSun = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
     ctx.stroke()
   }
   ctx.restore()
+}
+
+// ---- Symbole oben rechts --------------------------------------------------------------------------------------
+
+export type ShareImageSymbol = 'sonne' | 'mond' | 'palme' | 'camper' | 'haus' | 'zelt' | 'fahrrad' | 'berge' | 'welle' | 'keins'
+
+/**
+ * Linienzeichnungen im Raster 100 × 100, im selben Stil wie die Sonne: Strich in der Symbolfarbe, Flächen leicht
+ * gefüllt. `fill` = Pfade, deren Fläche getönt wird; `line` = nur Strich.
+ */
+const SYMBOL_PATHS: Record<Exclude<ShareImageSymbol, 'sonne' | 'keins'>, { fill?: string[]; line?: string[] }> = {
+  mond: { fill: ['M60 14 A36 36 0 1 0 86 68 A30 30 0 1 1 60 14 Z'], line: ['M78 22 l0 8 M74 26 l8 0', 'M86 40 l0 6 M83 43 l6 0'] },
+  palme: {
+    line: [
+      'M52 92 C54 72 56 54 50 34',
+      'M50 34 C38 22 22 24 14 36',
+      'M50 34 C40 32 30 40 26 52',
+      'M50 34 C62 22 78 24 86 36',
+      'M50 34 C60 32 70 40 74 52',
+      'M50 34 C48 22 54 12 64 8',
+      'M30 92 H74',
+    ],
+    fill: ['M44 38 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 Z'],
+  },
+  camper: {
+    fill: ['M14 70 V46 C14 38 20 32 28 32 H70 C78 32 84 38 84 46 V70 Z'],
+    line: ['M22 40 h18 v12 h-18 Z', 'M50 40 h12 v24 h-12 Z', 'M84 64 H94', 'M30 78 a8 8 0 1 0 0.1 0', 'M68 78 a8 8 0 1 0 0.1 0', 'M8 86 H94'],
+  },
+  haus: {
+    fill: ['M26 46 V84 H74 V46 L50 26 Z'],
+    line: ['M16 52 L50 22 L84 52', 'M44 84 V64 H56 V84', 'M60 54 h10 v10 h-10 Z', 'M66 34 V22 H74 V40', 'M10 84 H90'],
+  },
+  zelt: { fill: ['M14 82 L50 22 L86 82 Z'], line: ['M42 82 L50 58 L58 82', 'M50 22 L44 12 M50 22 L56 12', 'M6 82 H94'] },
+  fahrrad: {
+    line: [
+      'M26 66 m-16 0 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0',
+      'M76 66 m-16 0 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0',
+      'M26 66 L42 40 H64 L76 66',
+      'M42 40 L52 66 L64 40',
+      'M52 66 H26',
+      'M38 32 H50',
+      'M62 40 L60 28 H70',
+    ],
+  },
+  berge: { fill: ['M6 82 L36 34 L52 58 L66 40 L94 82 Z'], line: ['M29 45 L36 34 L43 45 L39 42 L33 46 Z', 'M2 82 H98'] },
+  welle: {
+    line: [
+      'M8 44 C18 34 28 34 38 44 S58 54 68 44 S86 34 94 40',
+      'M8 62 C18 52 28 52 38 62 S58 72 68 62 S86 52 94 58',
+      'M8 80 C18 70 28 70 38 80 S58 90 68 80 S86 70 94 76',
+    ],
+  },
+}
+
+/** Symbol zentriert bei (cx, cy); `size` = Kantenlänge. */
+const drawSymbol = (ctx: CanvasRenderingContext2D, symbol: ShareImageSymbol, color: string, cx: number, cy: number, size: number) => {
+  if (symbol === 'keins') return
+  if (symbol === 'sonne') return drawSunIn(ctx, color, cx, cy, size / 3.4)
+  const def = SYMBOL_PATHS[symbol]
+  const scale = size / 100
+  ctx.save()
+  ctx.translate(cx - size / 2, cy - size / 2)
+  ctx.scale(scale, scale)
+  ctx.lineWidth = 5
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = alpha(color, 0.7)
+  ctx.fillStyle = alpha(color, 0.22)
+  for (const d of def.fill ?? []) {
+    const path = new Path2D(d)
+    ctx.fill(path)
+    ctx.stroke(path)
+  }
+  for (const d of def.line ?? []) ctx.stroke(new Path2D(d))
+  ctx.restore()
+}
+
+/** Kleine Vorschau eines Symbols für die Auswahl im Dialog (PNG als Data-URL). */
+export const symbolPreview = (symbol: ShareImageSymbol, color: string, px = 96) => {
+  const c = document.createElement('canvas')
+  c.width = px
+  c.height = px
+  const ctx = c.getContext('2d')
+  if (!ctx) return ''
+  drawSymbol(ctx, symbol, color, px / 2, px / 2, symbol === 'sonne' ? px * 0.95 : px * 0.8)
+  const url = c.toDataURL('image/png')
+  c.width = 0
+  c.height = 0
+  return url
 }
 
 /** Gestricheltes Etikett wie «Open-Source-Reisetagebuch» auf der Startseite. */
@@ -334,10 +423,11 @@ export interface ShareImageOptions {
   /** Reisetag (1 = erster Tag) */
   day?: number | null
   theme?: ShareImageTheme
+  symbol?: ShareImageSymbol
 }
 
 /** Zeichnet das Bild und liefert es als JPEG. */
-export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0, day, theme = 'sand' }: ShareImageOptions): Promise<Blob> => {
+export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0, day, theme = 'sand', symbol = 'sonne' }: ShareImageOptions): Promise<Blob> => {
   const { w: W, h: H } = SHARE_IMAGE_SIZE[format]
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -365,7 +455,9 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
     ctx.fillStyle = g
   } else ctx.fillStyle = C.bg
   ctx.fillRect(0, 0, W, H)
-  drawSun(ctx, W - 120, story ? 190 : 120, story ? 92 : 70)
+  // Sonne wie bisher angeschnitten am Rand, die übrigen Symbole ganz im Bild
+  if (symbol === 'sonne') drawSymbol(ctx, 'sonne', C.sun, W - 120, story ? 190 : 120, (story ? 92 : 70) * 3.4)
+  else drawSymbol(ctx, symbol, C.sun, W - (story ? 170 : 140), story ? 190 : 124, story ? 220 : 170)
 
   // Etikett: Reisetag und Datum
   const date = new Date(post.published_at).toLocaleDateString('de-CH', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -379,7 +471,9 @@ export const renderShareImage = async (post: FeedPost, { format, photoIndex = 0,
   ctx.font = `600 ${titleSize}px ${SERIF}`
   ctx.fillStyle = C.ink
   ctx.textBaseline = 'top'
-  for (const l of wrap(ctx, title, W - M * 2, 2)) {
+  // Im Beitrag steht der Titel auf Höhe des Symbols: rechts Platz lassen, damit nichts überlappt
+  const titleWidth = !story && symbol !== 'keins' ? W - M * 2 - 190 : W - M * 2
+  for (const l of wrap(ctx, title, titleWidth, 2)) {
     ctx.fillText(l, M, y)
     y += titleSize * 1.1
   }
