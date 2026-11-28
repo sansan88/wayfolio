@@ -103,6 +103,11 @@ Foto, weil Instagram sie überdeckt.
 In der Story steht «Little Footnotes · littlefootnotes.app» dezent in einer Zeile in gedämpfter Farbe unterhalb der
 Schutzzone; im Beitragsformat bleibt die Fusszeile mit Trennlinie.
 
+### BR-061: Vorschau zuerst
+
+Die Vorschau bleibt im Dialog immer sichtbar. Design, Symbol, Foto und Hinweise stehen darunter als Akkordeon,
+anfangs zugeklappt; geöffnet ist höchstens ein Bereich.
+
 ### BR-052: Inhalt
 
 Das Bild zeigt Reisetag (falls die Reise ein Startdatum hat), Datum, eigenen Titel oder sonst die Ortschaft,
