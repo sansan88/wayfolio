@@ -580,7 +580,7 @@ const ComposeModal = ({ kind, tripId, initial, onCancel, onSubmit }: Props) => {
                     {m.file ? (
                       <FilePreview file={m.file} />
                     ) : m.existing!.kind === 'photo' ? (
-                      <img src={m.existing!.url} alt="" />
+                      <img src={m.existing!.url} alt="" decoding="async" />
                     ) : (
                       <IonIcon icon={m.existing!.kind === 'video' ? videocamOutline : micOutline} />
                     )}

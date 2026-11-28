@@ -101,7 +101,8 @@ const FeedPage = () => {
       position: point ? { lat: point.lat, lon: point.lon, accuracy: 0 } : null,
       media: editing.blocks
         .filter((b) => b.id && b.mediaUrl && !b.route && ['photo', 'video', 'audio'].includes(b.kind))
-        .map((b) => ({ blockId: b.id!, kind: b.kind, url: b.mediaUrl! })),
+        // kleine Vorschau statt des grossen Fotos: sechs volle Bilder im Dialog sprengen auf dem iPhone den Speicher
+        .map((b) => ({ blockId: b.id!, kind: b.kind, url: (b.kind === 'photo' ? b.thumbUrl : null) ?? b.mediaUrl! })),
     }
   }, [editing, points])
 

@@ -39,7 +39,7 @@ export const MediaBlocks = ({ post, route = false, other = false }: { post: Feed
       .filter((b) => (route ? b.route : other ? !b.route && b.kind !== 'photo' : !b.route))
       .map((b) => {
         if (b.kind === 'photo' && b.mediaUrl)
-          return <img key={b.position} className={route ? 'post__media post__route' : 'post__media'} src={b.mediaUrl} alt={route ? 'Routenkarte' : ''} loading="lazy" />
+          return <img key={b.position} className={route ? 'post__media post__route' : 'post__media'} src={b.mediaUrl} alt={route ? 'Routenkarte' : ''} loading="lazy" decoding="async" />
         if (b.kind === 'video' && b.mediaUrl)
           return <video key={b.position} className="post__media" src={b.mediaUrl} controls controlsList="nodownload" disablePictureInPicture playsInline preload="metadata" />
         if (b.kind === 'audio' && b.mediaUrl)
@@ -53,7 +53,7 @@ export const MediaBlocks = ({ post, route = false, other = false }: { post: Feed
 export const PhotoCarousel = ({ photos }: { photos: FeedPost['blocks'] }) => {
   const [index, setIndex] = useState(0)
   if (photos.length === 1)
-    return <img className="post__media post__photo" src={photos[0].mediaUrl!} alt="" loading="lazy" />
+    return <img className="post__media post__photo" src={photos[0].mediaUrl!} alt="" loading="lazy" decoding="async" />
   return (
     <div className="carousel">
       <div
@@ -66,7 +66,7 @@ export const PhotoCarousel = ({ photos }: { photos: FeedPost['blocks'] }) => {
         {photos.map((p) => (
           // Rahmen mit festem Seitenverhältnis, das Foto füllt ihn zugeschnitten – nie gestreckt (auch in Safari)
           <div key={p.position} className="carousel__slide">
-            <img src={p.mediaUrl!} alt="" loading="lazy" />
+            <img src={p.mediaUrl!} alt="" loading="lazy" decoding="async" />
           </div>
         ))}
       </div>
